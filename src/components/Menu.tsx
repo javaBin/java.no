@@ -3,11 +3,14 @@ import { useState } from "react";
 import Image from "next/image";
 import norwegianFlag from "../../public/img/no.png";
 import americanFlag from "../../public/img/us.png";
+import { useRouter } from "next/router";
+import { useTranslation } from "next-i18next";
 
 export const Menu = () => {
   const [visible, setState] = useState<boolean | undefined>(undefined);
-  const [lang, setLang] = useState<"en" | "no">("no");
-  const flagselected = `flagselected`;
+  const router = useRouter();
+  const { t } = useTranslation("common", { keyPrefix: "menu" });
+
   return (
     <>
       <nav
@@ -30,18 +33,22 @@ export const Menu = () => {
             <Link className="navbar-brand" href="/">
               {"< javaBin />"}
             </Link>
-            <Link className="navbar-brand" href="#en">
+            <Link className="navbar-brand" locale="en" href="/">
               <Image
-                className={`flag ${lang === "en" ? flagselected : ""}`}
+                className={`flag ${
+                  router.locale === "en" ? `flagselected` : ""
+                }`}
                 src={americanFlag}
                 alt="English"
                 width={16}
                 height={11}
               />
             </Link>
-            <Link className="navbar-brand" href="#no">
+            <Link className="navbar-brand" locale="no" href="/">
               <Image
-                className={`flag ${lang === "no" ? flagselected : ""}`}
+                className={`flag ${
+                  router.locale === "no" ? `flagselected` : ""
+                }`}
                 src={norwegianFlag}
                 alt="Norsk"
                 width={16}
@@ -57,39 +64,27 @@ export const Menu = () => {
           >
             <ul className="nav navbar-nav navbar-right">
               <li>
-                <Link href="/#about">
-                  Om javaBin <span className="sr-only">(current)</span>
-                </Link>
+                <Link href="/#about">{t("about")}</Link>
               </li>
 
               <li>
-                <Link href="/#contribute">
-                  Vil du være med? <span className="sr-only">(current)</span>
-                </Link>
+                <Link href="/#contribute">{t("contribute")}</Link>
               </li>
 
               <li>
-                <Link href="/#locations">
-                  Regioner <span className="sr-only">(current)</span>
-                </Link>
+                <Link href="/#locations">{t("locations")}</Link>
               </li>
 
               <li>
-                <Link href="/#board">
-                  Styret <span className="sr-only">(current)</span>
-                </Link>
+                <Link href="/#board">{t("board")}</Link>
               </li>
 
-              <li>
-                <Link href="/#membership">
-                  Medlemskap <span className="sr-only">(current)</span>
-                </Link>
-              </li>
+              {/*<li>*/}
+              {/*  <Link href="/#membership">{t("membership")}</Link>*/}
+              {/*</li>*/}
 
               <li>
-                <Link href="/#contact">
-                  Kontakt <span className="sr-only">(current)</span>
-                </Link>
+                <Link href="/#contact">{t("contact")}</Link>
               </li>
             </ul>
           </div>

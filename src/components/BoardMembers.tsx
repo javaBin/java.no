@@ -1,19 +1,24 @@
 import Image from "next/image";
 import { BoardMemberType } from '../../data/boardmembers'
+import { useTranslation } from 'next-i18next'
 
-const BoardMember = (props: BoardMemberType) => (
-  <div className="board-member">
-    <Image
-      src={`/img/styret/${props.img}`}
-      className="img-circle"
-      height={150}
-      width={150}
-      alt={props.name}
-    />
-    <h4>{props.name}</h4>
-    <p className="text-muted">{props.title}</p>
-  </div>
-);
+const BoardMember = (props: BoardMemberType) => {
+  const { t } = useTranslation("common", { keyPrefix: "boardMember" });
+
+  return (
+    <div className="board-member">
+      <Image
+        src={`/img/styret/${props.img}`}
+        className="img-circle"
+        height={150}
+        width={150}
+        alt={props.name}
+      />
+      <h4>{props.name}</h4>
+      <p className="text-muted">{t(props.title)}</p>
+    </div>
+  );
+};
 
 type Props = {
   boardMembers: BoardMemberType[];

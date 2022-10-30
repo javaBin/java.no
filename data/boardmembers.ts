@@ -1,53 +1,53 @@
 export type BoardMemberType = {
   name: string;
-  title: string;
+  title: "Chairman" | "Deputy Chairman" | "Financial Controller" | "Board Member";
   img: string;
 };
 
 const members: BoardMemberType[] = [
   {
     name: "Dervis Mansuroglu",
-    title: "Styreleder",
+    title: "Chairman",
     img: "dervis_mansuroglu.jpg",
   },
   {
     name: "Kristian Berg",
-    title: "Nestleder",
+    title: "Deputy Chairman",
     img: "kristian_berg.jpg",
   },
   {
     name: "Rafael Winterhalter",
-    title: "Økonomisjef",
+    title: "Financial Controller",
     img: "rafael_winterhalter.jpg",
   },
   {
     name: "Alexander Samsig",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "alexander_samsig.jpg",
   },
   {
     name: "Karl Syvert Løland",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "karl_syvert_loland.jpg",
   },
   {
     name: "Patricia Zemer",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "patricia_zemer.jpg",
   },
   {
     name: "Alexander Svendsen",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "alexander_svendsen.jpg",
   },
   {
     name: "Sverre Moe",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "sverre_moe.jpg",
   },
   {
     name: "Dorna Misaghian",
-    title: "Styremedlem",
+    title: "Board Member",
     img: "dorna_misaghian.jpg",
   },
 ];
