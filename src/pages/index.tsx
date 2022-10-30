@@ -57,7 +57,9 @@ const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
                 <Trans
                   i18nKey="aboutJavaZone"
                   t={t}
-                  components={[<Link href="http://javazone.no" />]}
+                  components={{
+                    javaZoneLink: <Link href="http://javazone.no" />,
+                  }}
                 />
               </p>
               <p>{t("aboutMeetups")}</p>
@@ -95,9 +97,11 @@ const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
                         <Trans
                           i18nKey="aboutBecomingActive"
                           t={t}
-                          components={[
-                            <Link href="https://goo.gl/maps/wpaA5nxxHM5ao3Rr9" />,
-                          ]}
+                          components={{
+                            teknologiHustetLocationLink: (
+                              <Link href="https://goo.gl/maps/wpaA5nxxHM5ao3Rr9" />
+                            ),
+                          }}
                         />
                       </p>
                     </div>
@@ -125,10 +129,12 @@ const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
                           values={{
                             yearsArrangingJavaZone: yearsArrangingJavaZone,
                           }}
-                          components={[
-                            <Link href="http://javazone.no" />,
-                            <Link href="mailto:javazone@java.no" />,
-                          ]}
+                          components={{
+                            javaZoneLink: <Link href="http://javazone.no" />,
+                            javaZoneEmail: (
+                              <Link href="mailto:javazone@java.no" />
+                            ),
+                          }}
                         />
                       </p>
                     </div>
@@ -153,9 +159,11 @@ const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
                         <Trans
                           i18nKey="aboutGithub"
                           t={t}
-                          components={[
-                            <Link href="http://github.com/javabin" />,
-                          ]}
+                          components={{
+                            githubLink: (
+                              <Link href="http://github.com/javabin" />
+                            ),
+                          }}
                         />
                       </p>
                     </div>

@@ -15,7 +15,7 @@
   },
   "region": {
     "nextMeetups": "Next meetups",
-    "proposeMeetup": "What about proposing a meetup at <0>meetup.com</0>?",
+    "proposeMeetup": "What about proposing a meetup at <meetupLink>meetup.com</meetupLink>?",
     "oslo": {
       "description": "javaBin Oslo organizes meetups in Oslo."
     },
@@ -47,15 +47,15 @@
     "aboutUs": "Read more about us",
     "about": "About javaBin",
     "aboutJavaBin": "javaBin is one of the largest communities in Norway. It is driven by volunteer enthusiasts from across the country. We have branches throughout the country – in Stavanger, Bergen, Trondheim, Vestfold, Sogn, Tromsø, Southern Norway and Oslo.     We organize events almost every month in all branches of javaBin, including meetups, events for students, events for kids, and other exciting stuff!",
-    "aboutJavaZone": "Our biggest event of the year – <0>JavaZone</0> – takes place every September. That's right! One of the world's biggest Java conferences is run by a non-profit organization! Approximately 3,100 participants, 200 speakers, 50+ partners, and generally lots of knowledge sharing and fun",
+    "aboutJavaZone": "Our biggest event of the year – <javaZoneLink>JavaZone</javaZoneLink> – takes place every September. That's right! One of the world's biggest Java conferences is run by a non-profit organization! Approximately 3,100 participants, 200 speakers, 50+ partners, and generally lots of knowledge sharing and fun",
     "aboutMeetups": "So what are you waiting for? Come and join one of our events! And if you want to give something back then just ask about becoming an organizer, or how you can contribute in other ways. We currently have over 50 people who contribute, creating events for our nearly 3,000 members! We are always looking for new friends.",
     "contribute": "Join us",
     "becomeActive": "Want to become an active member of JavaBin?",
-    "aboutBecomingActive": "Want to join javaBin and help us to organize meetups and JavaZone? In Oslo we meet at 18:00 every Tuesday at <0>Teknologihuset</0> in central Oslo; other regions meet less frequently, so check out your region's upcoming events for more details. Just show up at any of the meetings or scheduled meetups and say hi!",
+    "aboutBecomingActive": "Want to join javaBin and help us to organize meetups and JavaZone? In Oslo we meet at 18:00 every Tuesday at <teknologiHustetLocationLink>Teknologihuset</teknologiHustetLocationLink> in central Oslo; other regions meet less frequently, so check out your region's upcoming events for more details. Just show up at any of the meetings or scheduled meetups and say hi!",
     "ideasJavaZone": "Ideas for JavaZone?",
-    "aboutIdeasJavaZone": "javaBin has been organizing <0>JavaZone</0> for over {{yearsArrangingJavaZone}} years. If you want to contribute there, you are more than welcome to join us! Please contact us at <1>javazone@java.no</1> if you have any ideas, or want to join the crew.",
+    "aboutIdeasJavaZone": "javaBin has been organizing <javaZoneLink>JavaZone</javaZoneLink> for over {{yearsArrangingJavaZone}} years. If you want to contribute there, you are more than welcome to join us! Please contact us at <javaZoneEmail>javazone@java.no</javaZoneEmail> if you have any ideas, or want to join the crew.",
     "github": "Do you like to code? Contribute on GitHub!",
-    "aboutGithub": "javaBin is run by volunteer developers. This means that we develop most of our systems ourselves – all of them are open source and available on <0>Github</0>.",
+    "aboutGithub": "javaBin is run by volunteer developers. This means that we develop most of our systems ourselves – all of them are open source and available on <githubLink>Github</githubLink>.",
     "contact": "Contact",
     "name": "Name",
     "yourName": "Your name",

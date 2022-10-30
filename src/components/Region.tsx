@@ -29,7 +29,7 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
         <Trans
           i18nKey="proposeMeetup"
           t={t}
-          components={[<Link href={meetupUrl} />]}
+          components={{ meetupLink: <Link href={meetupUrl} /> }}
         />
       </p>
     );
