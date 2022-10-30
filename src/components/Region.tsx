@@ -11,7 +11,7 @@ export type RegionType = {
 export type MeetingType = {
   event_url: string;
   name: string;
-  time: string;
+  time: number;
 };
 type Props = {
   region: RegionType;

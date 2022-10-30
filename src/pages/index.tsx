@@ -353,38 +353,92 @@ const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
   );
 };
 
-// @ts-ignore
+interface Venue {
+  country: string;
+  localized_country_name: string;
+  city: string;
+  name: string;
+  lon: number;
+  id: number;
+  lat: number;
+  repinned: boolean;
+  address_1: string;
+}
+
+interface Group {
+  join_mode: string;
+  created: number;
+  name: string;
+  group_lon: number;
+  id: number;
+  urlname: string;
+  group_lat: number;
+  who: string;
+}
+
+interface Result {
+  utc_offset: number;
+  venue: Venue;
+  headcount: number;
+  visibility: string;
+  waitlist_count: number;
+  created: number;
+  maybe_rsvp_count: number;
+  description: string;
+  event_url: string;
+  yes_rsvp_count: number;
+  duration: number;
+  name: string;
+  id: string;
+  time: number;
+  updated: number;
+  group: Group;
+  status: string;
+  rsvp_limit?: number;
+  photo_url: string;
+}
+
+interface Meta {
+  next: string;
+  method: string;
+  total_count: number;
+  link: string;
+  count: number;
+  description: string;
+  lon: string;
+  title: string;
+  url: string;
+  id: string;
+  updated: number;
+  lat: string;
+}
+
+interface MeetupResponse {
+  results?: Result[];
+  meta?: Meta;
+}
+
 export const getStaticProps = async ({ locale }: { locale: string }) => {
-  // TODO: Fix this
-  const meetupRequest = await fetch(
-    `https://api.meetup.com/2/events?group_id=7480032%2C8449272%2C7371452%2C4060032%2C10847532%2C1764379%2C30349557%2C32757331&status=upcoming&order=time&limited_events=False&desc=false&offset=0&format=json&page=20&fields=&sig_id=14499833`,
-  )
-  const events = await meetupRequest.json()
-  // const events = {};
-
-  const regionsnavnoverride = {
-    javaBin: "Oslo",
-    "javaBin-Bergen": "Bergen",
-    "javaBin-Stavanger": "Stavanger",
-    "javaBin-Sorlandet": "Sørlandet",
-    "javaBin-Trondheim": "Trondheim",
-    "javaBin-Vestfold": "Vestfold",
-    "javaBin-Sogn": "Sogn",
-    "javaBin-Tromso": "Tromsø",
-  };
-
-  const mapOfRegionsWithEvents = events?.results?.reduce((acc, current) => {
-    const city = current?.venue?.city ?? "Ukjent region";
-
-    const index = regionsnavnoverride[current?.group?.urlname] || city;
-
-    (acc[index] = acc[index] || []).push(current);
-    return acc;
-  }, {});
+  // const meetupRequest = await fetch(
+  //   `https://api.meetup.com/2/events?group_id=7480032%2C8449272%2C7371452%2C4060032%2C10847532%2C1764379%2C30349557%2C32757331&status=upcoming&order=time&limited_events=False&desc=false&offset=0&format=json&page=20&fields=&sig_id=14499833`
+  // );
+  // const events: MeetupResponse = await meetupRequest.json();
+  const events: MeetupResponse = {};
 
   const regionsWithUpcomingMeetups = regions.map((region) => {
-    region.events = mapOfRegionsWithEvents?.[region.region] ?? [];
-    return region;
+    return {
+      events:
+        events?.results
+          ?.filter((result) => result.group.urlname === region.meetupUrl)
+          ?.map((result) => {
+            return {
+              event_url: result.event_url,
+              name: result.name,
+              time: result.time,
+            };
+          }) || [],
+      ...region,
+    };
   });
 
   return {
