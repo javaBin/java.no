@@ -1,0 +1,55 @@
+export type BoardMemberType = {
+  name: string;
+  title: string;
+  img: string;
+};
+
+const members: BoardMemberType[] = [
+  {
+    name: "Dervis Mansuroglu",
+    title: "Styreleder",
+    img: "dervis_mansuroglu.jpg",
+  },
+  {
+    name: "Kristian Berg",
+    title: "Nestleder",
+    img: "kristian_berg.jpg",
+  },
+  {
+    name: "Rafael Winterhalter",
+    title: "Økonomisjef",
+    img: "rafael_winterhalter.jpg",
+  },
+  {
+    name: "Alexander Samsig",
+    title: "Styremedlem",
+    img: "alexander_samsig.jpg",
+  },
+  {
+    name: "Karl Syvert Løland",
+    title: "Styremedlem",
+    img: "karl_syvert_loland.jpg",
+  },
+  {
+    name: "Patricia Zemer",
+    title: "Styremedlem",
+    img: "patricia_zemer.jpg",
+  },
+  {
+    name: "Alexander Svendsen",
+    title: "Styremedlem",
+    img: "alexander_svendsen.jpg",
+  },
+  {
+    name: "Sverre Moe",
+    title: "Styremedlem",
+    img: "sverre_moe.jpg",
+  },
+  {
+    name: "Dorna Misaghian",
+    title: "Styremedlem",
+    img: "dorna_misaghian.jpg",
+  },
+];
+
+export default members;

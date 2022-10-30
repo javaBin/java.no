@@ -1,0 +1,26 @@
+body {
+    webkit-tap-highlight-color: $jzYellow2;
+    overflow-x: hidden;
+    font-family: "Roboto Slab", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.bg-light-gray {
+    background-color: #eeeeee;
+}
+.bg-darkest-gray {
+    background-color: #222222;
+}
+
+::-moz-selection {
+    text-shadow: none;
+    background: #fed136;
+}
+::selection {
+    text-shadow: none;
+    background: #fed136;
+}
+.flagselected {
+  border: 1px #ff0000 solid;
+}
+.flag {
+  margin-top: 5px;
+}
