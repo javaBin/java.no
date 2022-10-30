@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Trans, useTranslation } from "next-i18next";
+import { useRouter } from "next/router";
 
 export type RegionType = {
   region: string;
@@ -20,6 +21,7 @@ type MeetingProps = { meetings?: MeetingType[]; meetupUrl: string };
 
 const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
   const { t } = useTranslation("common", { keyPrefix: "region" });
+  const router = useRouter();
 
   if (!meetings || meetings.length === 0) {
     return (
@@ -35,15 +37,25 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
 
   return (
     <ul>
-      {meetings.map((meeting) => (
-        <li key={meeting.name}>
-          <h3>
-            <a href={meeting.event_url}>{meeting.name}</a>
-          </h3>
-          {/* TODO: Fix datetime formatting*/}
-          <p>{new Date(meeting.time).toLocaleString("no")}</p>
-        </li>
-      ))}
+      {meetings.map((meeting) => {
+        const date = new Date(meeting.time);
+        const weekDay = date.toLocaleString(router.locale, { weekday: "long" });
+        const month = date.toLocaleString(router.locale, { month: "long" });
+        // Force norwegian time formatting
+        const time = date.toLocaleTimeString("no", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        return (
+          <li key={meeting.name}>
+            <h3>
+              <a href={meeting.event_url}>{meeting.name}</a>
+            </h3>
+            <p>{`${weekDay}, ${month} ${date.getDay()}, ${time}`}</p>
+          </li>
+        );
+      })}
     </ul>
   );
 };
