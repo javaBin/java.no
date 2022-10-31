@@ -1,4 +1,3 @@
-import type { InferGetServerSidePropsType } from "next";
 import Head from "next/head";
 import { Menu } from "../components/Menu";
 import Image from "next/image";
@@ -13,8 +12,10 @@ import Link from "next/link";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import nextI18nConfig from "../../next-i18next.config.mjs";
 import { Trans, useTranslation } from "next-i18next";
+import { InferGetStaticPropsType } from "next/types";
+import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
-const Home = (props: InferGetServerSidePropsType<typeof getStaticProps>) => {
+const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   const { t } = useTranslation("common", { keyPrefix: "main" });
   const yearsArrangingJavaZone = new Date().getFullYear() - 2002;
 
@@ -419,11 +420,14 @@ interface MeetupResponse {
 }
 
 export const getStaticProps = async ({ locale }: { locale: string }) => {
-  // const meetupRequest = await fetch(
-  //   `https://api.meetup.com/2/events?group_id=7480032%2C8449272%2C7371452%2C4060032%2C10847532%2C1764379%2C30349557%2C32757331&status=upcoming&order=time&limited_events=False&desc=false&offset=0&format=json&page=20&fields=&sig_id=14499833`
-  // );
-  // const events: MeetupResponse = await meetupRequest.json();
-  const events: MeetupResponse = {};
+  const meetupRequest = await fetch(
+    `https://api.meetup.com/2/events?group_id=7480032%2C8449272%2C7371452%2C4060032%2C10847532%2C1764379%2C30349557%2C32757331&status=upcoming&order=time&limited_events=False&desc=false&offset=0&format=json&page=20&fields=&sig_id=14499833`
+  ).catch((err) => {
+    console.error(err);
+    return NextResponse.json({});
+  });
+  const events: MeetupResponse = await meetupRequest.json();
+  // const events: MeetupResponse = {};
 
   const regionsWithUpcomingMeetups = regions.map((region) => {
     return {
@@ -445,10 +449,12 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
     props: {
       regions: regionsWithUpcomingMeetups,
       boardMembers: members,
-      ...(await serverSideTranslations(locale, ["common"], nextI18nConfig, [
-        "en",
-        "no",
-      ])),
+      ...(await serverSideTranslations(
+        locale ?? "no",
+        ["common"],
+        nextI18nConfig,
+        ["no", "en"]
+      )),
       revalidate: 3600,
     },
   };
