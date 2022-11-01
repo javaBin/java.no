@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { BoardMemberType } from '../../data/boardmembers'
-import { useTranslation } from 'next-i18next'
+import { BoardMemberType } from "../../data/boardmembers";
+import { useTranslation } from "next-i18next";
 
 const BoardMember = (props: BoardMemberType) => {
   const { t } = useTranslation("common", { keyPrefix: "boardMember" });
@@ -24,19 +24,23 @@ type Props = {
   boardMembers: BoardMemberType[];
 };
 
-const BoardMembers = (props: Props) => (
-  <div className="container">
-    <div className="row">
-      <div className="col-md-12 text-center">
-        <h1 className="section-heading">Styret</h1>
+const BoardMembers = (props: Props) => {
+  const { t } = useTranslation("common", { keyPrefix: "main" });
+
+  return (
+    <div className="container">
+      <div className="row">
+        <div className="col-md-12 text-center">
+          <h1 className="section-heading">{t("theBoard")}</h1>
+        </div>
+      </div>
+      <div className="board-members">
+        {props.boardMembers.map((boardMember) => (
+          <BoardMember key={boardMember.name} {...boardMember} />
+        ))}
       </div>
     </div>
-    <div className="board-members">
-      {props.boardMembers.map((boardMember) => (
-        <BoardMember key={boardMember.name} {...boardMember} />
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 export default BoardMembers;

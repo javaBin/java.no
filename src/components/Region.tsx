@@ -39,12 +39,14 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
     <ul>
       {meetings.map((meeting) => {
         const date = new Date(meeting.time);
-        const weekDay = date.toLocaleString(router.locale, { weekday: "long" });
-        const month = date.toLocaleString(router.locale, { month: "long" });
-        // Force norwegian time formatting
-        const time = date.toLocaleTimeString("no", {
+        const dateTimeFormatted = date.toLocaleString(router.locale, {
+          weekday: "long",
+          month: "long",
           hour: "2-digit",
           minute: "2-digit",
+          day: "2-digit",
+          hour12: false,
+          timeZone: "CET",
         });
 
         return (
@@ -52,7 +54,7 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
             <h3>
               <a href={meeting.event_url}>{meeting.name}</a>
             </h3>
-            <p>{`${weekDay}, ${month} ${date.getDay()}, ${time}`}</p>
+            <p>{`${dateTimeFormatted}`}</p>
           </li>
         );
       })}

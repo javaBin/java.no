@@ -33,7 +33,7 @@ export const Menu = () => {
             <Link className="navbar-brand" href="/">
               {"< javaBin />"}
             </Link>
-            <Link className="navbar-brand" locale="en" href="/">
+            <Link className="navbar-brand" locale="en" href={router.asPath} scroll={false}>
               <Image
                 className={`flag ${
                   router.locale === "en" ? `flagselected` : ""
@@ -44,7 +44,7 @@ export const Menu = () => {
                 height={11}
               />
             </Link>
-            <Link className="navbar-brand" locale="no" href="/">
+            <Link className="navbar-brand" locale="no" href={router.asPath} scroll={false}>
               <Image
                 className={`flag ${
                   router.locale === "no" ? `flagselected` : ""

@@ -180,7 +180,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">Regioner</h1>
+              <h1 className="section-heading">{t("branches")}</h1>
             </div>
           </div>
           {props.regions.map((region) => (

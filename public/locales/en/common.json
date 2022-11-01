@@ -56,6 +56,8 @@
     "aboutIdeasJavaZone": "javaBin has been organizing <javaZoneLink>JavaZone</javaZoneLink> for over {{yearsArrangingJavaZone}} years. If you want to contribute there, you are more than welcome to join us! Please contact us at <javaZoneEmail>javazone@java.no</javaZoneEmail> if you have any ideas, or want to join the crew.",
     "github": "Do you like to code? Contribute on GitHub!",
     "aboutGithub": "javaBin is run by volunteer developers. This means that we develop most of our systems ourselves – all of them are open source and available on <githubLink>Github</githubLink>.",
+    "branches": "Branches",
+    "theBoard": "The board",
     "contact": "Contact",
     "name": "Name",
     "yourName": "Your name",

@@ -56,6 +56,8 @@
     "aboutIdeasJavaZone": "javaBin har arrangert <javaZoneLink>JavaZone</javaZoneLink> i over {{yearsArrangingJavaZone}} år nå. Ønsker du å bidra er du hjertelig velkommen til dette! Ta kontakt med oss på <javaZoneEmail>javazone@java.no</javaZoneEmail> om du har ideer eller vil være med.",
     "github": "Liker du å kode? Bidra på GitHub!",
     "aboutGithub": "javaBin drives av utviklere og det fører med seg at vi koder på en rekke prosjekter — alle er Open Source og tilgjengelige på <githubLink>Github</githubLink>.",
+    "branches": "Regioner",
+    "theBoard": "Styret",
     "contact": "Kontakt",
     "name": "Navn",
     "yourName": "Ditt navn",
