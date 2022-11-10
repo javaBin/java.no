@@ -455,8 +455,9 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
         nextI18nConfig,
         ["no", "en"]
       )),
-      revalidate: 3600,
     },
+    // Recreates the page server-side at most once per hour
+    revalidate: 3600,
   };
 };
 
