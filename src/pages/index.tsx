@@ -47,12 +47,12 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("about")}</h1>
+              <h2 className="section-heading">{t("about")}</h2>
             </div>
           </div>
           <br />
           <div className="row">
-            <div className="col-xs-12 col-sm-12 col-md-8 col-md-offset-2 center-justified">
+            <div className="col-xs-12 col-sm-12 col-md-8 col-md-offset-2">
               <p>{t("aboutJavaBin")}</p>
               <p>
                 <Trans
@@ -73,7 +73,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("contribute")}</h1>
+              <h2 className="section-heading">{t("contribute")}</h2>
             </div>
           </div>
           <br />
@@ -179,8 +179,8 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       <section id="locations">
         <div className="container">
           <div className="row">
-            <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("branches")}</h1>
+            <div className="col-md-12  text-center">
+              <h2 className="section-heading">{t("branches")}</h2>
             </div>
           </div>
           {props.regions.map((region) => (
@@ -199,11 +199,12 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("contact")}</h1>
+              <h2 className="section-heading">{t("contact")}</h2>
             </div>
           </div>
           <div className="row">
             <div className="col-md-12 center-justified">
+              <div className="">{t("contactHelpText")}</div>
               <form
                 action="https://formspree.io/styret@java.no"
                 method="POST"

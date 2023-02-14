@@ -59,6 +59,7 @@
     "branches": "Regioner",
     "theBoard": "Styret",
     "contact": "Kontakt",
+    "contactHelpText": "Har du noe du lurer på? Ta kontakt med oss her, så svarer vi deg!",
     "name": "Navn",
     "yourName": "Ditt navn",
     "email": "Epost",

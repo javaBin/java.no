@@ -69,7 +69,7 @@ export const Region = ({ region }: Props) => {
   return (
     <>
       <div className="row">
-        <div className="col-md-12 center-justified">
+        <div className="col-md-12 col-md-offset-2">
           <h3>{region.region}</h3>
           <div>
             <p>
