@@ -52,7 +52,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
           </div>
           <br />
           <div className="row">
-            <div className="col-xs-12 col-sm-12 col-md-8 col-md-offset-2 center-justified">
+            <div className="col-xs-12 col-sm-12 col-md-8 col-md-offset-2">
               <p>{t("aboutJavaBin")}</p>
               <p>
                 <Trans
@@ -179,7 +179,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       <section id="locations">
         <div className="container">
           <div className="row">
-            <div className="col-md-12 text-center">
+            <div className="col-md-12  text-center">
               <h1 className="section-heading">{t("branches")}</h1>
             </div>
           </div>
