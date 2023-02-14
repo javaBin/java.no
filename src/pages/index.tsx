@@ -47,7 +47,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("about")}</h1>
+              <h2 className="section-heading">{t("about")}</h2>
             </div>
           </div>
           <br />
@@ -73,7 +73,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("contribute")}</h1>
+              <h2 className="section-heading">{t("contribute")}</h2>
             </div>
           </div>
           <br />
@@ -180,7 +180,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12  text-center">
-              <h1 className="section-heading">{t("branches")}</h1>
+              <h2 className="section-heading">{t("branches")}</h2>
             </div>
           </div>
           {props.regions.map((region) => (
@@ -199,7 +199,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
-              <h1 className="section-heading">{t("contact")}</h1>
+              <h2 className="section-heading">{t("contact")}</h2>
             </div>
           </div>
           <div className="row">
