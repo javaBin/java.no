@@ -204,6 +204,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
           </div>
           <div className="row">
             <div className="col-md-12 center-justified">
+              <div className="">{t("contactHelpText")}</div>
               <form
                 action="https://formspree.io/styret@java.no"
                 method="POST"
