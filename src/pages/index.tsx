@@ -1,23 +1,23 @@
-import Head from "next/head";
-import { Menu } from "../components/Menu";
-import Image from "next/image";
-import mariusDuke from "../../public/img/marius_duke.svg";
-import javaZoneLogo from "../../public/img/logos/javazone-logo.jpg";
-import octocat from "../../public/img/logos/github-logo.png";
-import { Region } from "../components/Region";
-import regions from "../../data/regions";
-import members from "../../data/boardmembers";
-import BoardMembers from "../components/BoardMembers";
-import Link from "next/link";
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import nextI18nConfig from "../../next-i18next.config.mjs";
-import { Trans, useTranslation } from "next-i18next";
-import { InferGetStaticPropsType } from "next/types";
-import { NextResponse } from "next/dist/server/web/spec-extension/response";
+import Head from "next/head"
+import { Menu } from "../components/Menu"
+import Image from "next/image"
+import mariusDuke from "../../public/img/marius_duke.svg"
+import javaZoneLogo from "../../public/img/logos/javazone-logo.jpg"
+import octocat from "../../public/img/logos/github-logo.png"
+import { Region } from "../components/Region"
+import regions from "../../data/regions"
+import members from "../../data/boardmembers"
+import BoardMembers from "../components/BoardMembers"
+import Link from "next/link"
+import { serverSideTranslations } from "next-i18next/serverSideTranslations"
+import nextI18nConfig from "../../next-i18next.config.mjs"
+import { Trans, useTranslation } from "next-i18next"
+import { InferGetStaticPropsType } from "next/types"
+import { load } from "cheerio"
 
 const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
-  const { t } = useTranslation("common", { keyPrefix: "main" });
-  const yearsArrangingJavaZone = new Date().getFullYear() - 2002;
+  const { t } = useTranslation("common", { keyPrefix: "main" })
+  const yearsArrangingJavaZone = new Date().getFullYear() - 2002
 
   return (
     <>
@@ -352,99 +352,48 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         </ul>
       </footer>
     </>
-  );
-};
-
-interface Venue {
-  country: string;
-  localized_country_name: string;
-  city: string;
-  name: string;
-  lon: number;
-  id: number;
-  lat: number;
-  repinned: boolean;
-  address_1: string;
-}
-
-interface Group {
-  join_mode: string;
-  created: number;
-  name: string;
-  group_lon: number;
-  id: number;
-  urlname: string;
-  group_lat: number;
-  who: string;
-}
-
-interface Result {
-  utc_offset: number;
-  venue: Venue;
-  headcount: number;
-  visibility: string;
-  waitlist_count: number;
-  created: number;
-  maybe_rsvp_count: number;
-  description: string;
-  event_url: string;
-  yes_rsvp_count: number;
-  duration: number;
-  name: string;
-  id: string;
-  time: number;
-  updated: number;
-  group: Group;
-  status: string;
-  rsvp_limit?: number;
-  photo_url: string;
-}
-
-interface Meta {
-  next: string;
-  method: string;
-  total_count: number;
-  link: string;
-  count: number;
-  description: string;
-  lon: string;
-  title: string;
-  url: string;
-  id: string;
-  updated: number;
-  lat: string;
-}
-
-interface MeetupResponse {
-  results?: Result[];
-  meta?: Meta;
+  )
 }
 
 export const getStaticProps = async ({ locale }: { locale: string }) => {
-  const meetupRequest = await fetch(
-    `https://api.meetup.com/2/events?group_id=7480032%2C8449272%2C7371452%2C4060032%2C10847532%2C1764379%2C30349557%2C32757331&status=upcoming&order=time&limited_events=False&desc=false&offset=0&format=json&page=20&fields=&sig_id=14499833`
-  ).catch((err) => {
-    console.error(err);
-    return NextResponse.json({});
-  });
-  const events: MeetupResponse = await meetupRequest.json();
-  // const events: MeetupResponse = {};
+  const regionsWithUpcomingMeetups = await Promise.all(
+    regions.map(async (region) => {
+      const meetupEventsPageHtml = await fetch(
+        `https://www.meetup.com/${region.meetupName}/events/`
+      )
+        .then((res) => res.text())
+        // If the call fails for some reason, return an empty string, so the whole thing becomes a noop.
+        .catch((err) => {
+          console.error(err)
+          return ""
+        })
 
-  const regionsWithUpcomingMeetups = regions.map((region) => {
-    return {
-      events:
-        events?.results
-          ?.filter((result) => result.group.urlname === region.meetupUrl)
-          ?.map((result) => {
+      const $ = load(meetupEventsPageHtml)
+
+      const events = $("ul.eventList-list > li.list-item")
+        .map((index, eventCard) => {
+          const eventLink = $("a.eventCard--link", eventCard)
+          const name = eventLink.text()
+          const eventUrl = eventLink.attr("href")
+          const time = $("time").attr("datetime")
+          if (name && eventUrl && time) {
             return {
-              event_url: result.event_url,
-              name: result.name,
-              time: result.time,
-            };
-          }) || [],
-      ...region,
-    };
-  });
+              name,
+              eventUrl: "https://www.meetup.com" + eventUrl,
+              time: Number(time),
+            }
+          } else {
+            return null
+          }
+        })
+        .toArray()
+
+      return {
+        events,
+        ...region,
+      }
+    })
+  )
 
   return {
     props: {
@@ -459,7 +408,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
     },
     // Recreates the page server-side at most once per hour
     revalidate: 3600,
-  };
-};
+  }
+}
 
-export default Home;
+export default Home

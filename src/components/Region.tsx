@@ -1,27 +1,26 @@
-import Link from "next/link";
-import { Trans, useTranslation } from "next-i18next";
-import { useRouter } from "next/router";
+import Link from "next/link"
+import { Trans, useTranslation } from "next-i18next"
+import { useRouter } from "next/router"
+import { Region as RegionType } from "../../data/regions"
 
-export type RegionType = {
-  region: string;
-  description: string;
-  meetupUrl: string;
-  events?: MeetingType[];
-};
-export type MeetingType = {
-  event_url: string;
-  name: string;
-  time: number;
-};
+export type RegionWithEvents = RegionType & {
+  events: Meeting[]
+}
+
+export type Meeting = {
+  eventUrl: string
+  name: string
+  time: number
+}
 type Props = {
-  region: RegionType;
-};
+  region: RegionWithEvents
+}
 
-type MeetingProps = { meetings?: MeetingType[]; meetupUrl: string };
+type MeetingProps = { meetings?: Meeting[]; meetupUrl: string }
 
 const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
-  const { t } = useTranslation("common", { keyPrefix: "region" });
-  const router = useRouter();
+  const { t } = useTranslation("common", { keyPrefix: "region" })
+  const router = useRouter()
 
   if (!meetings || meetings.length === 0) {
     return (
@@ -32,13 +31,13 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
           components={{ meetupLink: <Link href={meetupUrl} /> }}
         />
       </p>
-    );
+    )
   }
 
   return (
     <ul>
       {meetings.map((meeting) => {
-        const date = new Date(meeting.time);
+        const date = new Date(meeting.time)
         const dateTimeFormatted = date.toLocaleString(router.locale, {
           weekday: "long",
           month: "long",
@@ -47,24 +46,24 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
           day: "2-digit",
           hour12: false,
           timeZone: "CET",
-        });
+        })
 
         return (
           <li key={meeting.name}>
             <h3>
-              <a href={meeting.event_url}>{meeting.name}</a>
+              <a href={meeting.eventUrl}>{meeting.name}</a>
             </h3>
             <p>{`${dateTimeFormatted}`}</p>
           </li>
-        );
+        )
       })}
     </ul>
-  );
-};
+  )
+}
 
 export const Region = ({ region }: Props) => {
-  const { t } = useTranslation("common", { keyPrefix: "region" });
-  const meetupUrl = `https://meetup.com/${region.meetupUrl}`;
+  const { t } = useTranslation("common", { keyPrefix: "region" })
+  const meetupUrl = `https://meetup.com/${region.meetupName}`
 
   return (
     <>
@@ -74,8 +73,8 @@ export const Region = ({ region }: Props) => {
           <div>
             <p>
               {t(region.region.toLowerCase() + ".description")} –{" "}
-              <Link href={`https://meetup.com/${region.meetupUrl}`}>
-                meetup.com/{region.meetupUrl}
+              <Link href={`https://meetup.com/${region.meetupName}`}>
+                meetup.com/{region.meetupName}
               </Link>
               .
             </p>
@@ -88,5 +87,5 @@ export const Region = ({ region }: Props) => {
       </div>
       <br />
     </>
-  );
-};
+  )
+}
