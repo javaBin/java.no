@@ -1,9 +1,9 @@
-import Image from "next/image";
-import { BoardMemberType } from "../../data/boardmembers";
-import { useTranslation } from "next-i18next";
+import Image from "next/image"
+import { BoardMemberType } from "../../data/boardmembers"
+import { useTranslation } from "next-i18next"
 
 const BoardMember = (props: BoardMemberType) => {
-  const { t } = useTranslation("common", { keyPrefix: "boardMember" });
+  const { t } = useTranslation("common", { keyPrefix: "boardMember" })
 
   return (
     <div className="board-member">
@@ -17,8 +17,8 @@ const BoardMember = (props: BoardMemberType) => {
       <h4>{props.name}</h4>
       <p className="text-muted">{t(props.title)}</p>
     </div>
-  );
-};
+  )
+}
 
 type Props = {
   boardMembers: BoardMemberType[];

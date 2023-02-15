@@ -10,4 +10,4 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   return <Component {...pageProps} />
 }
 
-export default appWithTranslation(MyApp, nextI18nConfig);
+export default appWithTranslation(MyApp, nextI18nConfig)

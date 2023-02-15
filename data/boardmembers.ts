@@ -1,8 +1,12 @@
 export type BoardMemberType = {
-  name: string;
-  title: "Chairman" | "Deputy Chairman" | "Financial Controller" | "Board Member";
-  img: string;
-};
+  name: string
+  title:
+    | "Chairman"
+    | "Deputy Chairman"
+    | "Financial Controller"
+    | "Board Member"
+  img: string
+}
 
 const members: BoardMemberType[] = [
   {
@@ -50,6 +54,6 @@ const members: BoardMemberType[] = [
     title: "Board Member",
     img: "dorna_misaghian.jpg",
   },
-];
+]
 
-export default members;
+export default members

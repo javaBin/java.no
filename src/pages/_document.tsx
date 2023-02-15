@@ -1,10 +1,10 @@
-import Document, { Head, Html, Main, NextScript } from "next/document";
-import nextI18nextConfig from '../../next-i18next.config.mjs'
+import Document, { Head, Html, Main, NextScript } from "next/document"
+import nextI18nextConfig from "../../next-i18next.config.mjs"
 
 class CustomDocument extends Document {
-  render() {
+  render () {
     const currentLocale =
-      this.props.__NEXT_DATA__.locale ?? nextI18nextConfig.i18n.defaultLocale;
+      this.props.__NEXT_DATA__.locale ?? nextI18nextConfig.i18n.defaultLocale
     return (
       <Html lang={currentLocale}>
         <Head>
@@ -25,11 +25,11 @@ class CustomDocument extends Document {
           />
         </Head>
         <body>
-          <Main />
-          <NextScript />
+        <Main />
+        <NextScript />
         </body>
       </Html>
-    );
+    )
   }
 }
 

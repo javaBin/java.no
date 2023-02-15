@@ -52,6 +52,6 @@ const regions: Region[] = [
     description:
       "javaBin Tromsø er regionslaget som dekker Tromsø og områdene rundt.",
   },
-];
+]
 
-export default regions;
+export default regions

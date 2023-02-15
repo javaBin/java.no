@@ -1,15 +1,15 @@
-import Link from "next/link";
-import { useState } from "react";
-import Image from "next/image";
-import norwegianFlag from "../../public/img/no.png";
-import americanFlag from "../../public/img/us.png";
-import { useRouter } from "next/router";
-import { useTranslation } from "next-i18next";
+import Link from "next/link"
+import { useState } from "react"
+import Image from "next/image"
+import norwegianFlag from "../../public/img/no.png"
+import americanFlag from "../../public/img/us.png"
+import { useRouter } from "next/router"
+import { useTranslation } from "next-i18next"
 
 export const Menu = () => {
-  const [visible, setState] = useState<boolean | undefined>(undefined);
-  const router = useRouter();
-  const { t } = useTranslation("common", { keyPrefix: "menu" });
+  const [visible, setState] = useState<boolean | undefined>(undefined)
+  const router = useRouter()
+  const { t } = useTranslation("common", { keyPrefix: "menu" })
 
   return (
     <>
@@ -33,7 +33,12 @@ export const Menu = () => {
             <Link className="navbar-brand" href="/">
               {"< javaBin />"}
             </Link>
-            <Link className="navbar-brand" locale="en" href={router.asPath} scroll={false}>
+            <Link
+              className="navbar-brand"
+              locale="en"
+              href={router.asPath}
+              scroll={false}
+            >
               <Image
                 className={`flag ${
                   router.locale === "en" ? `flagselected` : ""
@@ -44,7 +49,12 @@ export const Menu = () => {
                 height={11}
               />
             </Link>
-            <Link className="navbar-brand" locale="no" href={router.asPath} scroll={false}>
+            <Link
+              className="navbar-brand"
+              locale="no"
+              href={router.asPath}
+              scroll={false}
+            >
               <Image
                 className={`flag ${
                   router.locale === "no" ? `flagselected` : ""
@@ -91,5 +101,5 @@ export const Menu = () => {
         </div>
       </nav>
     </>
-  );
-};
+  )
+}

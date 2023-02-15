@@ -1,4 +1,4 @@
-import path from "path";
+import path from "path"
 
 /** @type {import("next-i18next").UserConfig} */
 const config = {
@@ -10,5 +10,5 @@ const config = {
     localeDetection: false,
   },
   localePath: path.resolve("./public/locales"),
-};
-export default config;
+}
+export default config

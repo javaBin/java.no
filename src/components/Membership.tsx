@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "next/link"
 
 export const Membership = () => (
   <section id="membership">
@@ -47,4 +47,4 @@ export const Membership = () => (
       </div>
     </div>
   </section>
-);
+)
