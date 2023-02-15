@@ -1,27 +1,25 @@
-# Create T3 App
+## Getting Started
 
-This is an app bootstrapped according to the [init.tips](https://init.tips) stack, also known as the T3-Stack.
+You need to:
 
-## What's next? How do I make an app with this?
+- Install the javascript libraries:
 
-We try to keep this project as simple as possible, so you can start with the most basic configuration and then move on to more advanced configuration.
+  > yarn
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- Run Next.js dev server:
 
-- [Next-Auth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [TailwindCSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+  > yarn dev
 
-We also [roll our own docs](https://beta.create.t3.gg) with some summary information and links to the respective documentation.
+## Meetup.com API
+Since the meetup.com API was deprecated we've implemented web scraping instead, it might be brittle, if it fails, it will simply not show any events.
 
-Also checkout these awesome tutorials on `create-t3-app`.
+Events are regenerated through Next.js [Incremental Static Regeneration
+](https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration) with a revalidate timer set to 1 hour.
 
-- [Build a Blog With the T3 Stack - tRPC, TypeScript, Next.js, Prisma & Zod](https://www.youtube.com/watch?v=syEWlxVFUrY)
-- [Build a Live Chat Application with the T3 Stack - TypeScript, Tailwind, tRPC](https://www.youtube.com/watch?v=dXRRY37MPuk)
-- [Build a full stack app with create-t3-app](https://www.nexxel.dev/blog/ct3a-guestbook)
-- [A first look at create-t3-app](https://dev.to/ajcwebdev/a-first-look-at-create-t3-app-1i8f)
+This will recreate the page server-side at most once per hour
 
-## How do I deploy this?
+## Styling
+The site currently uses Bootstrap, since that is what the old site used, but we wish to switch to styling done in Tailwindcss.
 
-Follow our deployment guides for [Vercel](https://beta.create.t3.gg/en/deployment/vercel) and [Docker](https://beta.create.t3.gg/en/deployment/docker) for more information.
+**HELP WANTED WITH DESIGN AND STYLING**
+
