@@ -375,7 +375,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
           const eventLink = $("a.eventCard--link", eventCard)
           const name = eventLink.text()
           const eventUrl = eventLink.attr("href")
-          const time = $("time").attr("datetime")
+          const time = $("time", eventCard).attr("datetime")
           if (name && eventUrl && time) {
             return {
               name,
