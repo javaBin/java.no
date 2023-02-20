@@ -1,12 +1,12 @@
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
-import nextI18nConfig from "../../../next-i18next.config.mjs"
-import Policy from "../../components/Policy"
+import nextI18nConfig from "../../next-i18next.config.mjs"
+import Principles from "../components/Principles"
 
-const PolicyPage = () => {
-  return Policy()
+const PrinciplesPage = () => {
+  return Principles()
 }
 
-export default PolicyPage
+export default PrinciplesPage
 
 export const getStaticProps = async ({ locale }: { locale: string }) => {
   return {

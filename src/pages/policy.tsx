@@ -1,6 +1,6 @@
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
-import nextI18nConfig from "../../../next-i18next.config.mjs"
-import Policy from "../../components/Policy"
+import nextI18nConfig from "../../next-i18next.config.mjs"
+import Policy from "../components/Policy"
 
 const PolicyPage = () => {
   return Policy()
