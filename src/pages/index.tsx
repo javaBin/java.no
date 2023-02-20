@@ -24,12 +24,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       <Head>
         <title>{t("title")}</title>
         <meta name="description" content={t("title")} />
-        <meta charSet="UTF-8" />
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/icon" href="/img/favicon.ico" />
       </Head>
-      <Menu />
       <header>
         <div className="container">
           <div className="intro-text">
