@@ -1,5 +1,4 @@
 import Head from "next/head"
-import { Menu } from "../components/Menu"
 import Image from "next/image"
 import mariusDuke from "../../public/img/marius_duke.svg"
 import javaZoneLogo from "../../public/img/logos/javazone-logo.jpg"

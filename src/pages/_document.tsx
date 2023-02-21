@@ -23,10 +23,6 @@ class CustomDocument extends Document {
             rel="stylesheet"
             type="text/css"
           />
-          <meta charSet="UTF-8" />
-          <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <link rel="icon" type="image/icon" href="/img/favicon.ico" />
         </Head>
         <body>
         <Main />
