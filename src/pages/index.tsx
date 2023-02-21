@@ -371,10 +371,21 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
           const eventUrl = eventLink.attr("href")
           const time = $("time", eventCard).attr("datetime")
           if (name && eventUrl && time) {
+            const date = new Date(Number(time))
+            const dateTimeFormatted = date.toLocaleString(locale, {
+              weekday: "long",
+              month: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              hour12: false,
+              timeZone: "CET",
+            })
             return {
               name,
               eventUrl: "https://www.meetup.com" + eventUrl,
-              time: Number(time),
+              time,
+              dateTimeFormatted: dateTimeFormatted,
             }
           } else {
             return null

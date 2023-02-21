@@ -25,18 +25,16 @@ export default defineNextConfig({
    * @see https://github.com/juliusmarminge/t3-i18n
    **/
   i18n: config.i18n,
-  async redirects () {
-    return [
-      {
-        source: '/policy.html',
-        destination: '/policy',
-        permanent: true,
-      },
-      {
-        source: '/principles.html',
-        destination: '/principles',
-        permanent: true,
-      },
-    ]
-  },
+  redirects: () => [
+    {
+      source: '/policy.html',
+      destination: '/policy',
+      permanent: true,
+    },
+    {
+      source: '/principles.html',
+      destination: '/principles',
+      permanent: true,
+    },
+  ],
 })
