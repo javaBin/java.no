@@ -68,5 +68,16 @@
     "message": "Message",
     "yourMessage": "Your message",
     "send": "Send"
+  },
+  "footer": {
+    "aboutShortText": "javaBin is one of the largest tech communities in Norway, driven by volunteers all over Norway.",
+    "links": "Links",
+    "external": "External",
+
+    "home": "Home",
+    "meetups": "Meetups",
+    "github": "GitHub repos",
+    "codeOfConduct": "Code of Conduct",
+    "contact": "Contact"
   }
 }

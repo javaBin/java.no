@@ -68,5 +68,16 @@
     "message": "Melding",
     "yourMessage": "Din melding",
     "send": "Send"
+  },
+  "footer": {
+    "aboutShortText": "javaBin er et av de største teknologimiljøene i Norge, drevet av frivillige ildsjeler over hele landet.",
+    "links": "Lenker",
+    "external": "Eksternt",
+
+    "home": "Hjem",
+    "meetups": "Meetups",
+    "github": "GitHub repos",
+    "codeOfConduct": "Code of Conduct",
+    "contact": "Kontakt oss"
   }
 }

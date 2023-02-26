@@ -1,19 +1,62 @@
 footer {
-    padding: 25px 0;
-    text-align: center;
+  //text-align: center;
+  background-color: rgb(90, 90, 90);
+  color: white;
+  background: url("/img/banner/bg.jpg");
 
-    & span.copyright {
-        line-height: 40px;
-        font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        text-transform: uppercase;
-        text-transform: none;
-    }
+  & span.copyright {
+    line-height: 40px;
+    font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-transform: uppercase;
+    text-transform: none;
+  }
 
-    & ul.quicklinks {
-        margin-bottom: 0;
-        line-height: 40px;
-        font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        text-transform: uppercase;
-        text-transform: none;
+  & ul.quicklinks {
+    margin-bottom: 0;
+    line-height: 40px;
+    font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-transform: uppercase;
+    text-transform: none;
+  }
+
+  strong {
+    color: #fed136;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    text-transform: uppercase;
+  }
+
+  .socials {
+    padding: 20px 20px;
+    background-color: rgb(0, 0, 0);
+  }
+  .footer-main .footer-content {
+    background-color: hsl(0deg 57% 31% / 74%);
+    padding: 20px 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    @media screen and (max-width: 900px) {
+      justify-content: flex-start;
     }
+    .col {
+      padding: 10px 20px;
+      min-width: 200px;
+      flex-basis: auto;
+      &.main {
+        p {
+          max-width: 500px;
+        }
+        @media screen and (max-width: 900px) {
+          flex: 0 100%;
+        }
+      }
+      li {
+        padding-bottom: 2 px;
+      }
+    }
+  }
 }
