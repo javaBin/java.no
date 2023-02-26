@@ -7,6 +7,7 @@ import nextI18nConfig from "../../next-i18next.config.mjs"
 import { AppType } from "next/app"
 import { Menu } from "../components/Menu"
 import Head from "next/head"
+import { Footer } from "../components/Footer"
 
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
@@ -19,6 +20,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       </Head>
       <Menu />
       <Component {...pageProps} />
+      <Footer />
     </>
   )
 }
