@@ -32,31 +32,36 @@ footer {
     padding: 20px 20px;
     background-color: rgb(0, 0, 0);
   }
-  .footer-main .footer-content {
-    background-color: hsl(0deg 57% 31% / 74%);
-    padding: 20px 20px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-    @media screen and (max-width: 900px) {
-      justify-content: flex-start;
+}
+
+.footer-main .footer-content {
+  background-color: hsl(0deg 57% 31% / 74%);
+  padding: 20px 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  @media screen and (max-width: 900px) {
+    justify-content: flex-start;
+  }
+
+  .col {
+    padding: 10px 20px;
+    min-width: 200px;
+    flex-basis: auto;
+
+    &.main {
+      p {
+        max-width: 500px;
+      }
+
+      @media screen and (max-width: 900px) {
+        flex: 0 100%;
+      }
     }
-    .col {
-      padding: 10px 20px;
-      min-width: 200px;
-      flex-basis: auto;
-      &.main {
-        p {
-          max-width: 500px;
-        }
-        @media screen and (max-width: 900px) {
-          flex: 0 100%;
-        }
-      }
-      li {
-        padding-bottom: 2 px;
-      }
+
+    li {
+      padding-bottom: 2px;
     }
   }
 }

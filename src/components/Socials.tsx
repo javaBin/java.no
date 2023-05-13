@@ -1,18 +1,9 @@
 import Link from "next/link"
-import { useState } from "react"
-import Image from "next/image"
-import { useRouter } from "next/router"
-import { useTranslation } from "next-i18next"
 
 export const Socials = () => {
-  const [visible, setState] = useState<boolean | undefined>(undefined)
-  const router = useRouter()
-  const { t } = useTranslation("common", { keyPrefix: "menu" })
-
   return (
     <>
       <div className="row socials">
-        {/* <strong>Connect with us!</strong> */}
         <div className="col-md-12 center-justified">
           <ul id="socialMedia">
             <li>
