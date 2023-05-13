@@ -1,4 +1,3 @@
-// import "../styles/globals.css";
 import "../../public/assets/bootstrap/css/bootstrap.min.css"
 import "../../public/assets/font-awesome/css/font-awesome.min.css"
 import "../styles/style.scss"

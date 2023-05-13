@@ -23,7 +23,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
     <>
       <Head>
         <title>{t("title")}</title>
-        <meta name="description" content={t("title") ?? undefined} />
+        <meta name="description" content={t("title")!} />
       </Head>
       <header>
         <div className="container">
@@ -210,7 +210,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder={t("yourName")}
+                    placeholder={t("yourName")!}
                     name="name"
                     id="name"
                   />
@@ -220,7 +220,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                   <input
                     type="email"
                     className="form-control"
-                    placeholder={t("yourEmail")}
+                    placeholder={t("yourEmail")!}
                     name="email"
                     id="email"
                   />
@@ -230,7 +230,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                   <textarea
                     name="message"
                     className="form-control"
-                    placeholder={t("yourMessage")}
+                    placeholder={t("yourMessage")!}
                     rows={5}
                     id="message"
                   ></textarea>
@@ -239,7 +239,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                   <input
                     type="submit"
                     className="btn btn-primary"
-                    value={t("send")}
+                    value={t("send")!}
                   />
                 </div>
               </form>

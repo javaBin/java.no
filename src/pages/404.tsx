@@ -10,7 +10,7 @@ const NotFound = () => {
     <>
       <Head>
         <title>{t("main.title")}</title>
-        <meta name="description" content={t("main.title")} />
+        <meta name="description" content={t("main.title")!} />
       </Head>
       <div className="container">
         <div style={{ padding: "60px" }}></div>

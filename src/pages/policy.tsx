@@ -10,7 +10,7 @@ const Policy = () => {
     <>
       <Head>
         <title>{t("title")}</title>
-        <meta name="description" content={t("title")} />
+        <meta name="description" content={t("title")!} />
       </Head>
       <div className="policy container">
         <div style={{ padding: "60px" }}></div>
