@@ -23,7 +23,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
     <>
       <Head>
         <title>{t("title")}</title>
-        <meta name="description" content={t("title")} />
+        <meta name="description" content={t("title") ?? undefined} />
       </Head>
       <header>
         <div className="container">

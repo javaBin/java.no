@@ -9,8 +9,8 @@ const NotFound = () => {
   return (
     <>
       <Head>
-        <title>{t("title")}</title>
-        <meta name="description" content={t("title")} />
+        <title>{t("main.title")}</title>
+        <meta name="description" content={t("main.title")} />
       </Head>
       <div className="container">
         <div style={{ padding: "60px" }}></div>
