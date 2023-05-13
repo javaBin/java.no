@@ -1,8 +1,5 @@
-import config from './next-i18next.config.mjs'
-
-// @ts-check
-/* run the build with this set to skip validation */
-!process.env.SKIP_ENV_VALIDATION && (await import('./src/env/server.mjs'))
+import config from "./next-i18next.config.mjs"
+import "./src/env.mjs";
 
 /**
  * Don't be scared of the generics here.
@@ -12,7 +9,7 @@ import config from './next-i18next.config.mjs'
  * @param {T} config - A generic parameter that flows through to the return type
  * @constraint {{import('next').NextConfig}}
  */
-function defineNextConfig (config) {
+function defineNextConfig(config) {
   return config
 }
 
@@ -27,13 +24,13 @@ export default defineNextConfig({
   i18n: config.i18n,
   redirects: () => [
     {
-      source: '/policy.html',
-      destination: '/policy',
+      source: "/policy.html",
+      destination: "/policy",
       permanent: true,
     },
     {
-      source: '/principles.html',
-      destination: '/principles',
+      source: "/principles.html",
+      destination: "/principles",
       permanent: true,
     },
   ],

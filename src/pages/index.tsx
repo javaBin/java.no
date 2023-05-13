@@ -13,6 +13,7 @@ import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Trans, useTranslation } from "next-i18next"
 import { InferGetStaticPropsType } from "next/types"
 import { load } from "cheerio"
+import { z } from "zod"
 
 const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   const { t } = useTranslation("common", { keyPrefix: "main" })
@@ -250,7 +251,30 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   )
 }
 
+const toFormattedDateTimeString = (time: string, locale: string) => {
+  const date = new Date(Number(time))
+  const dateTimeFormatted = date.toLocaleString(locale, {
+    weekday: "long",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    hour12: false,
+    timeZone: "CET",
+  })
+  return dateTimeFormatted
+}
+
 export const getStaticProps = async ({ locale }: { locale: string }) => {
+  const eventType = z.object({
+    name: z.string(),
+    eventUrl: z.string().transform((val) => "https://www.meetup.com" + val),
+    time: z.string(),
+    dateTimeFormatted: z
+      .string()
+      .transform((val) => toFormattedDateTimeString(val, locale)),
+  })
+
   const regionsWithUpcomingMeetups = await Promise.all(
     regions.map(async (region) => {
       const meetupEventsPageHtml = await fetch(
@@ -271,24 +295,16 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
           const name = eventLink.text()
           const eventUrl = eventLink.attr("href")
           const time = $("time", eventCard).attr("datetime")
-          if (name && eventUrl && time) {
-            const date = new Date(Number(time))
-            const dateTimeFormatted = date.toLocaleString(locale, {
-              weekday: "long",
-              month: "long",
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              hour12: false,
-              timeZone: "CET",
-            })
-            return {
-              name,
-              eventUrl: "https://www.meetup.com" + eventUrl,
-              time,
-              dateTimeFormatted: dateTimeFormatted,
-            }
+          const event = eventType.safeParse({
+            name,
+            eventUrl,
+            time,
+            dateTimeFormatted: time,
+          })
+          if (event.success) {
+            return event.data
           } else {
+            console.error(`Failed to scrape event for ${region.region}:`, event.error.format())
             return null
           }
         })
