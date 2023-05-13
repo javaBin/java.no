@@ -40,9 +40,9 @@ const members: BoardMemberType[] = [
     img: "patricia_zemer.jpg",
   },
   {
-    name: "Alexander Svendsen",
+    name: "Alexander Amiri",
     title: "Board Member",
-    img: "alexander_svendsen.jpg",
+    img: "alexander_amiri.jpg",
   },
   {
     name: "Sverre Moe",
@@ -53,6 +53,16 @@ const members: BoardMemberType[] = [
     name: "Dorna Misaghian",
     title: "Board Member",
     img: "dorna_misaghian.jpg",
+  },
+  {
+    name: "Chris Searle",
+    title: "Board Member",
+    img: "chris_searle.jpg",
+  },
+  {
+    name: "Janniche Lange",
+    title: "Board Member",
+    img: "janniche_lange.jpg",
   },
 ]
 
