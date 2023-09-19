@@ -252,7 +252,8 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
 }
 
 const toFormattedDateTimeString = (time: string, locale: string) => {
-  const date = new Date(Number(time))
+  // Example input: "Thu, 16 Sep 2021 17:00:00 CEST" Very brittle hack, but it works for now.
+  const date = new Date(Date.parse(time.replace("CEST", "+02:00")))
   const dateTimeFormatted = date.toLocaleString(locale, {
     weekday: "long",
     month: "long",
@@ -289,12 +290,11 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
 
       const $ = load(meetupEventsPageHtml)
 
-      const events = $("ul.eventList-list > li.list-item")
+      const events = $("a[id^='event-card-']")
         .map((index, eventCard) => {
-          const eventLink = $("a.eventCard--link", eventCard)
-          const name = eventLink.text()
-          const eventUrl = eventLink.attr("href")
-          const time = $("time", eventCard).attr("datetime")
+          const name = $("span", eventCard).eq(0).text()
+          const eventUrl = $(eventCard).attr("href")
+          const time = $("time", eventCard).text()
           const event = eventType.safeParse({
             name,
             eventUrl,

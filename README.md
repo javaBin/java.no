@@ -3,12 +3,14 @@
 You need to:
 
 - Install the javascript libraries:
-
-  > yarn
+```bash
+yarn
+```
 
 - Run Next.js dev server:
-
-  > yarn dev
+```bash
+yarn dev
+```
 
 ## Meetup.com API
 Since the meetup.com API was deprecated we've implemented web scraping instead, it might be brittle, if it fails, it will simply not show any events.
