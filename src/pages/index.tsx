@@ -269,7 +269,7 @@ const toFormattedDateTimeString = (time: string, locale: string) => {
 export const getStaticProps = async ({ locale }: { locale: string }) => {
   const eventType = z.object({
     name: z.string(),
-    eventUrl: z.string().transform((val) => "https://www.meetup.com" + val),
+    eventUrl: z.string().url(),
     time: z.string(),
     dateTimeFormatted: z
       .string()
