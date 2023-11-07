@@ -251,16 +251,9 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   )
 }
 
-export const toFormattedDateTimeString = (time: string, locale: string) => {
-  // Example input: "Thu, 16 Sep 2021 17:00:00 CEST", "Thu, Nov 16, 2023, 5:30 PM CET" Very brittle hack, but it works for now.
-  // Example output: english "Thursday, November 23 at 18:00", norwegian "torsdag 23. november kl. 18:00"
-
-  const timeToCET = time.replace("CEST", "+02:00")
-      .replace("CET", "+01:00")
-
-  const date = new Date(Date.parse(timeToCET))
-
-  const dateTimeFormatted = date.toLocaleString(locale, {
+const toFormattedDateTimeString = (time: string, locale: string) => {
+  const date = new Date(time)
+  return date.toLocaleString(locale, {
     weekday: "long",
     month: "long",
     hour: "2-digit",
@@ -269,17 +262,21 @@ export const toFormattedDateTimeString = (time: string, locale: string) => {
     hour12: false,
     timeZone: "CET",
   })
-  return dateTimeFormatted
 }
 
 export const getStaticProps = async ({ locale }: { locale: string }) => {
-  const eventType = z.object({
-    name: z.string(),
+  const nextDataStructure = z.object({
+    props: z.object({
+      pageProps: z.object({
+        __APOLLO_STATE__: z.record(z.string(), z.unknown()),
+      }),
+    }),
+  })
+
+  const eventStructure = z.object({
+    title: z.string(),
     eventUrl: z.string().url(),
-    time: z.string(),
-    dateTimeFormatted: z
-      .string()
-      .transform((val) => toFormattedDateTimeString(val, locale)),
+    dateTime: z.string().datetime({ offset: true }),
   })
 
   const regionsWithUpcomingMeetups = await Promise.all(
@@ -296,25 +293,50 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
 
       const $ = load(meetupEventsPageHtml)
 
-      const events = $("a[id^='event-card-']")
-        .map((index, eventCard) => {
-          const name = $("span", eventCard).eq(0).text()
-          const eventUrl = $(eventCard).attr("href")
-          const time = $("time", eventCard).text()
-          const event = eventType.safeParse({
-            name,
-            eventUrl,
-            time,
-            dateTimeFormatted: time,
-          })
-          if (event.success) {
-            return event.data
-          } else {
-            console.error(`Failed to scrape event for ${region.region}:`, event.error.format())
-            return null
+      // Scraping the HTML was becoming troublesome, but I found out they are now using Next.js
+      // and Next.js drops all static data into a script tag with id __NEXT_DATA__,
+      // so we just grab all the data from there.
+      const nextData = JSON.parse($("#__NEXT_DATA__").text())
+      const nextDataParsed = nextDataStructure.safeParse(nextData)
+
+      if (!nextDataParsed.success) {
+        console.error(
+          `Failed to parse __NEXT_DATA__ for ${region.region}:`,
+          JSON.stringify(nextDataParsed.error.format()),
+          nextData
+        )
+        return { ...region }
+      }
+
+      // The data is in the __APOLLO_STATE__ field, since they are grabbing from GraphQL
+      const data = nextDataParsed.data.props.pageProps.__APOLLO_STATE__
+
+      // The data is a map of keys to objects, where the keys are the GraphQL objects with their IDs.
+      // Since we only want events, we're filtering where the key starts with 'Event:'.
+      const events = Object.entries(data)
+        .filter(([key]) => key.startsWith("Event:"))
+        // Uae flatMap to to noop the error case, by returning an array.
+        .flatMap(([_, eventData]) => {
+          const parsedEvent = eventStructure.safeParse(eventData)
+          if (!parsedEvent.success) {
+            console.error(
+              `Failed to parse event for ${region.region}:`,
+              parsedEvent.error.format(),
+              eventData
+            )
+            return []
+          }
+          const event = parsedEvent.data
+          return {
+            name: event.title,
+            eventUrl: event.eventUrl,
+            time: Date.parse(event.dateTime),
+            dateTimeFormatted: toFormattedDateTimeString(
+              event.dateTime,
+              locale
+            ),
           }
         })
-        .toArray()
 
       return {
         events,
