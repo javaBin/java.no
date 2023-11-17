@@ -251,9 +251,14 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   )
 }
 
-const toFormattedDateTimeString = (time: string, locale: string) => {
-  // Example input: "Thu, 16 Sep 2021 17:00:00 CEST" Very brittle hack, but it works for now.
-  const date = new Date(Date.parse(time.replace("CEST", "+02:00")))
+export const toFormattedDateTimeString = (time: string, locale: string) => {
+  // Example input: "Thu, 16 Sep 2021 17:00:00 CEST", "Thu, Nov 16, 2023, 5:30 PM CET" Very brittle hack, but it works for now.
+  // Example output: english "Thursday, November 23 at 18:00", norwegian "torsdag 23. november kl. 18:00"
+
+  const tz = time.substring(time.length - 4)
+  const dateWithoutTz = time.replace(tz, "")
+  const date = new Date(dateWithoutTz)
+
   const dateTimeFormatted = date.toLocaleString(locale, {
     weekday: "long",
     month: "long",
@@ -302,7 +307,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
             dateTimeFormatted: time,
           })
           if (event.success) {
-            return event.data
+            return event.data.name ? event.data : null
           } else {
             console.error(`Failed to scrape event for ${region.region}:`, event.error.format())
             return null
