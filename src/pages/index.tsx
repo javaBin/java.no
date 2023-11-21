@@ -255,9 +255,10 @@ export const toFormattedDateTimeString = (time: string, locale: string) => {
   // Example input: "Thu, 16 Sep 2021 17:00:00 CEST", "Thu, Nov 16, 2023, 5:30 PM CET" Very brittle hack, but it works for now.
   // Example output: english "Thursday, November 23 at 18:00", norwegian "torsdag 23. november kl. 18:00"
 
-  const tz = time.substring(time.length - 4)
-  const dateWithoutTz = time.replace(tz, "")
-  const date = new Date(dateWithoutTz)
+  const timeToCET = time.replace("CEST", "+02:00")
+      .replace("CET", "+01:00")
+
+  const date = new Date(Date.parse(timeToCET))
 
   const dateTimeFormatted = date.toLocaleString(locale, {
     weekday: "long",
