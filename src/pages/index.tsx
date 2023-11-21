@@ -308,7 +308,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
             dateTimeFormatted: time,
           })
           if (event.success) {
-            return event.data.name ? event.data : null
+            return event.data
           } else {
             console.error(`Failed to scrape event for ${region.region}:`, event.error.format())
             return null
