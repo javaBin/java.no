@@ -277,6 +277,12 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
     title: z.string(),
     eventUrl: z.string().url(),
     dateTime: z.string().datetime({ offset: true }),
+    venue: z.object({
+      __ref: z.string(),
+    }).nullable(),
+    going: z.object({
+      totalCount: z.number(),
+    }),
   })
 
   const regionsWithUpcomingMeetups = await Promise.all(
@@ -305,7 +311,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
           JSON.stringify(nextDataParsed.error.format()),
           nextData
         )
-        return { ...region }
+        return { ...region, events: [] }
       }
 
       // The data is in the __APOLLO_STATE__ field, since they are grabbing from GraphQL
@@ -335,6 +341,12 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
               event.dateTime,
               locale
             ),
+            numberOfAttendees: event.going.totalCount,
+            venue: data[event.venue?.__ref]?.name ?? null,
+            memberImages: Object.entries(data)
+            .filter(([key, value]) => key.startsWith("PhotoInfo:") && value?.highResUrl?.includes("photos/member")).map(([_, value]) => value.highResUrl),
+            eventImage: Object.entries(data)
+            .filter(([key, value]) => key.startsWith("PhotoInfo:") && value?.highResUrl?.includes("photos/event")).map(([_, value]) => value.highResUrl)[1] ?? ""
           }
         })
 

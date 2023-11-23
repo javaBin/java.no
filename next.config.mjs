@@ -22,6 +22,9 @@ export default defineNextConfig({
    * @see https://github.com/juliusmarminge/t3-i18n
    **/
   i18n: config.i18n,
+  images:{
+    domains: ["secure.meetupstatic.com"],
+  },
   redirects: () => [
     {
       source: "/policy.html",
