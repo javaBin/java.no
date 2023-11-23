@@ -3,7 +3,7 @@ import Link from "next/link"
 export const Socials = () => {
   return (
     <>
-      <div className="row socials">
+      <div className="socials">
         <div className="col-md-12 center-justified">
           <ul id="socialMedia">
             <li>
