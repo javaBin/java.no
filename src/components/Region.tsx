@@ -66,9 +66,9 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                         style={{ height: "34px" }}
                       >
                         <ul>
-                          {meeting.memberImages.map((image, index) => (
+                          {meeting.memberImages.map((attendee, index) => (
                             <li
-                              key={image}
+                              key={attendee.photoUrl}
                               className="absolute top-0"
                               style={{
                                 zIndex: 5 - index,
@@ -76,8 +76,10 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                               }}
                             >
                               <Image
-                                alt="Photo of antendee"
-                                src={image}
+                                alt={t("attendeePhoto", {
+                                  name: attendee.name,
+                                })}
+                                src={attendee.photoUrl}
                                 width={34}
                                 height={34}
                                 className="rounded-full border border-solid border-red-400 object-cover"
@@ -98,13 +100,13 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                         </span>
                       </div>
                     </div>
-                    {meeting.eventImage && (
+                    {meeting.eventPhoto && (
                       <Image
                         alt="event photo"
                         className="sm:block aspect-video rounded-lg object-cover shadow-lg tw-hidden"
                         height={101}
                         width={180}
-                        src={meeting.eventImage}
+                        src={meeting.eventPhoto}
                       />
                     )}
                   </div>

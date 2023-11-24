@@ -264,31 +264,146 @@ const toFormattedDateTimeString = (time: string, locale: string) => {
   })
 }
 
-export const getStaticProps = async ({ locale }: { locale: string }) => {
-  const nextDataStructure = z.object({
-    props: z.object({
-      pageProps: z.object({
-        __APOLLO_STATE__: z.record(z.string(), z.unknown()),
-      }),
+const nextDataStructure = z.object({
+  props: z.object({
+    pageProps: z.object({
+      __APOLLO_STATE__: z.record(z.string(), z.unknown()),
     }),
-  })
+  }),
+})
 
-  const eventStructure = z.object({
-    title: z.string(),
-    eventUrl: z.string().url(),
-    dateTime: z.string().datetime({ offset: true }),
-    venue: z.object({
+const eventStructure = z.object({
+  title: z.string(),
+  eventUrl: z.string().url(),
+  dateTime: z.string().datetime({ offset: true }),
+  venue: z
+    .object({
       __ref: z.string(),
-    }).nullable(),
-    going: z.object({
-      totalCount: z.number(),
+    })
+    .nullable(),
+  featuredEventPhoto: z.object({
+    __ref: z.string(),
+  }),
+  going: z.object({
+    totalCount: z.number(),
+  }),
+  'rsvps({"first":5})': z.object({
+    edges: z.array(
+      z.object({
+        node: z.object({
+          __ref: z.string(),
+        }),
+      }),
+    ),
+  }),
+})
+const rsvpsStructure = z.array(
+  z.object({
+    member: z.object({
+      __ref: z.string(),
     }),
-  })
+  }),
+)
+const membersStructure = z.array(
+  z.object({
+    name: z.string(),
+    memberPhoto: z
+      .object({
+        __ref: z.string(),
+      })
+      .nullable(),
+  }),
+)
+const venueStructure = z.object({
+  name: z.string(),
+})
+const photoInfoStructure = z.object({
+  highResUrl: z.string(),
+})
 
+function parseFirstFiveAttendees(
+  event: z.infer<typeof eventStructure>,
+  data: Record<string, unknown>,
+) {
+  const first5rsvps = event['rsvps({"first":5})']
+  const rsvpRefs = first5rsvps.edges.map((edge) => edge.node.__ref)
+  const rsvpUnknowns = rsvpRefs.map((ref) => data[ref])
+  const parsedRsvps = rsvpsStructure.safeParse(rsvpUnknowns)
+  if (!parsedRsvps.success) {
+    console.error(
+      `Failed to parse rsvps for ${event.eventUrl}:`,
+      parsedRsvps.error.format(),
+      rsvpUnknowns,
+    )
+    return []
+  }
+  const membersUnknown = parsedRsvps.data.map((ref) => data[ref.member.__ref])
+  const parsedMembers = membersStructure.safeParse(membersUnknown)
+  if (!parsedMembers.success) {
+    console.error(
+      `Failed to parse members for ${event.eventUrl}:`,
+      parsedMembers.error.format(),
+      membersUnknown,
+    )
+    return []
+  }
+  return parsedMembers.data.flatMap((member) => {
+    const ref = member.memberPhoto?.__ref ?? null
+    const parsedPhotoInfo = photoInfoStructure.safeParse(ref && data[ref])
+    // If a member doesn't have a photo, just filter them out.
+    if (!parsedPhotoInfo.success) {
+      return []
+    }
+    return {
+      name: member.name,
+      photoUrl: parsedPhotoInfo.data.highResUrl,
+    }
+  })
+}
+
+function parseVenue(
+  event: z.infer<typeof eventStructure>,
+  data: Record<string, unknown>,
+) {
+  const venueRef = event.venue
+  if (!venueRef) {
+    return null
+  }
+  const venueUnknown = data[venueRef.__ref]
+  const parsedVenue = venueStructure.safeParse(venueUnknown)
+  if (!parsedVenue.success) {
+    console.error(
+      `Failed to parse venue for ${event.eventUrl}:`,
+      parsedVenue.error.format(),
+      venueUnknown,
+    )
+    return null
+  }
+  return parsedVenue.data.name
+}
+
+function parseEventPhoto(
+  event: z.infer<typeof eventStructure>,
+  data: Record<string, unknown>,
+) {
+  const eventPhotoUnknown = data[event.featuredEventPhoto.__ref]
+  const parsedEventPhoto = photoInfoStructure.safeParse(eventPhotoUnknown)
+  if (!parsedEventPhoto.success) {
+    console.error(
+      `Failed to parse event photo for ${event.eventUrl}:`,
+      parsedEventPhoto.error.format(),
+      eventPhotoUnknown,
+    )
+    return null
+  }
+  return parsedEventPhoto.data.highResUrl
+}
+
+export const getStaticProps = async ({ locale }: { locale: string }) => {
   const regionsWithUpcomingMeetups = await Promise.all(
     regions.map(async (region) => {
       const meetupEventsPageHtml = await fetch(
-        `https://www.meetup.com/${region.meetupName}/events/`
+        `https://www.meetup.com/${region.meetupName}/events/`,
       )
         .then((res) => res.text())
         // If the call fails for some reason, return an empty string, so the whole thing becomes a noop.
@@ -309,7 +424,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
         console.error(
           `Failed to parse __NEXT_DATA__ for ${region.region}:`,
           JSON.stringify(nextDataParsed.error.format()),
-          nextData
+          nextData,
         )
         return { ...region, events: [] }
       }
@@ -328,25 +443,26 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
             console.error(
               `Failed to parse event for ${region.region}:`,
               parsedEvent.error.format(),
-              eventData
+              eventData,
             )
             return []
           }
           const event = parsedEvent.data
+          const venue = parseVenue(event, data)
+          const eventPhoto = parseEventPhoto(event, data)
+          const first5Attendees = parseFirstFiveAttendees(event, data)
           return {
             name: event.title,
             eventUrl: event.eventUrl,
             time: Date.parse(event.dateTime),
             dateTimeFormatted: toFormattedDateTimeString(
               event.dateTime,
-              locale
+              locale,
             ),
             numberOfAttendees: event.going.totalCount,
-            venue: data[event.venue?.__ref]?.name ?? null,
-            memberImages: Object.entries(data)
-            .filter(([key, value]) => key.startsWith("PhotoInfo:") && value?.highResUrl?.includes("photos/member")).map(([_, value]) => value.highResUrl),
-            eventImage: Object.entries(data)
-            .filter(([key, value]) => key.startsWith("PhotoInfo:") && value?.highResUrl?.includes("photos/event")).map(([_, value]) => value.highResUrl)[1] ?? ""
+            venue: venue,
+            memberImages: first5Attendees,
+            eventPhoto: eventPhoto,
           }
         })
 
@@ -354,7 +470,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
         events,
         ...region,
       }
-    })
+    }),
   )
 
   return {
@@ -365,7 +481,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
         locale ?? "no",
         ["common"],
         nextI18nConfig,
-        ["no", "en"]
+        ["no", "en"],
       )),
     },
     // Recreates the page server-side at most once per hour

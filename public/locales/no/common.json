@@ -41,6 +41,7 @@
     "tromsø": {
       "description": "javaBin Tromsø er regionslaget som dekker Tromsø og områdene rundt."
     },
+    "attendeePhoto": "Bilde av {{name}}",
     "attendees_one": "{{count}} deltaker",
     "attendees_other": "{{count}} deltakere"
   },
