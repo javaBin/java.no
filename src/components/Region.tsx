@@ -87,21 +87,21 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                         </ul>
                         <span
                           style={{
-                            margin: `0 ${
+                            marginLeft: `${
                               meeting.memberImages.length * 25 + 15
                             }px`,
                           }}
                         >
-                          +
-                          {meeting.numberOfAttendees -
-                            meeting.memberImages.length}
+                          {t("attendees", {
+                            count: meeting.numberOfAttendees,
+                          })}
                         </span>
                       </div>
                     </div>
                     {meeting.eventImage && (
                       <Image
                         alt="event photo"
-                        className="tw-hidden sm:block aspect-video rounded-lg object-cover shadow-lg"
+                        className="sm:block aspect-video rounded-lg object-cover shadow-lg tw-hidden"
                         height={101}
                         width={180}
                         src={meeting.eventImage}
