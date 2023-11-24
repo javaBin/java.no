@@ -101,7 +101,7 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                     {meeting.eventImage && (
                       <Image
                         alt="event photo"
-                        className="aspect-video rounded-lg object-cover shadow-lg"
+                        className="tw-hidden sm:block aspect-video rounded-lg object-cover shadow-lg"
                         height={101}
                         width={180}
                         src={meeting.eventImage}
