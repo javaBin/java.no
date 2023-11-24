@@ -40,20 +40,17 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
     <ul className="flex flex-col space-y-5">
       {meetings.map((meeting) => {
         return (
-          <li key={meeting.name}>
-            <div id="e-1" className="rounded-md bg-white p-4 shadow-sm sm:p-5 ">
+          <li key={meeting.eventUrl}>
+            <div className="rounded-lg bg-white shadow-sm hover:bg-gray-50">
               <a
-                id="event-card-e-1"
-                data-event-label="event-card-1"
-                data-event-category="GroupHome"
                 href={meeting.eventUrl}
-                className="flex h-full flex-col justify-between space-y-5 outline-offset-8 hover:no-underline"
+                className="flex h-full flex-col justify-between space-y-5 p-8 outline-offset-8 hover:no-underline"
               >
-                <div className="flex flex-col space-y-5 overflow-hidden">
-                  <div className="grid gap-2">
+                <div className="flex flex-col space-y-5">
+                  <div className="flex items-center justify-between ">
                     <div className="flex w-full flex-col space-y-3">
                       <time
-                        className="font-medium uppercase text-black"
+                        className="font-bold text-red-800"
                         dateTime={`${meeting.time}`}
                       >
                         {meeting.dateTimeFormatted}
@@ -61,58 +58,55 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                       <h4 className="block break-words leading-7">
                         {meeting.name}
                       </h4>
-                      <div className="flex items-start space-x-1.5 text-muted">
+                      <div className="text-muted flex items-start">
                         {meeting.venue}
                       </div>
-                      <div className="flex space-x-2" />
+                      <div
+                        className="relative flex items-center"
+                        style={{ height: "34px" }}
+                      >
+                        <ul>
+                          {meeting.memberImages.map((image, index) => (
+                            <li
+                              key={image}
+                              className="absolute top-0"
+                              style={{
+                                zIndex: 5 - index,
+                                margin: `0 ${index * 25}px`,
+                              }}
+                            >
+                              <Image
+                                alt="Photo of antendee"
+                                src={image}
+                                width={34}
+                                height={34}
+                                className="rounded-full border border-solid border-red-400 object-cover"
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                        <span
+                          style={{
+                            margin: `0 ${
+                              meeting.memberImages.length * 25 + 15
+                            }px`,
+                          }}
+                        >
+                          +
+                          {meeting.numberOfAttendees -
+                            meeting.memberImages.length}
+                        </span>
+                      </div>
                     </div>
-                    <div className="relative aspect-video rounded-lg shadow-lg">
+                    {meeting.eventImage && (
                       <Image
                         alt="event photo"
-                        className="aspect-video min-w-[180px] rounded-lg object-cover object-top"
-                        fill={true}
+                        className="aspect-video rounded-lg object-cover shadow-lg"
+                        height={101}
+                        width={180}
                         src={meeting.eventImage}
                       />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-medium text-gray6">
-                    <div className="relative flex  space-x-2">
-                      <ul>
-                        {meeting.memberImages.map((image, index) => (
-                          <li
-                            key={image}
-                            style={{
-                              zIndex: 5 - index,
-                              position: "absolute",
-                              margin: `0 ${index * 25}px`,
-                              bottom: -7
-                            }}
-                            className="l1w37v0b"
-                          >
-                            <Image
-                              alt="Photo of antendee"
-                              src={image}
-                              width={34}
-                              height={34}
-                              className="bg-gray2 rounded-full rounded-full border border-white object-cover"
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                      <span
-                        style={{
-                          margin: `0 ${
-                            meeting.memberImages.length * 25 + 15
-                          }px`,
-                        }}
-                      >
-                        +
-                        {meeting.numberOfAttendees -
-                          meeting.memberImages.length}
-                      </span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </a>
