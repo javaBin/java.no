@@ -1,11 +1,11 @@
 import config from "./next-i18next.config.mjs"
-import "./src/env.mjs";
+import "./src/env.mjs"
 
 /**
  * Don't be scared of the generics here.
  * All they do is to give us autocompletion when using this.
  *
- * @template {import('next').NextConfig} T
+ * @template {import("next").NextConfig} T
  * @param {T} config - A generic parameter that flows through to the return type
  * @constraint {{import('next').NextConfig}}
  */
@@ -22,8 +22,8 @@ export default defineNextConfig({
    * @see https://github.com/juliusmarminge/t3-i18n
    **/
   i18n: config.i18n,
-  images:{
-    domains: ["secure.meetupstatic.com"],
+  images: {
+    remotePatterns: [{ hostname: "secure.meetupstatic.com" }],
   },
   redirects: () => [
     {
