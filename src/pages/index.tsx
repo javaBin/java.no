@@ -283,7 +283,7 @@ const eventStructure = z.object({
     .nullable(),
   featuredEventPhoto: z.object({
     __ref: z.string(),
-  }),
+  }).nullable(),
   going: z.object({
     totalCount: z.number(),
   }),
@@ -386,7 +386,11 @@ function parseEventPhoto(
   event: z.infer<typeof eventStructure>,
   data: Record<string, unknown>,
 ) {
-  const eventPhotoUnknown = data[event.featuredEventPhoto.__ref]
+  const featuredEventPhotoRef = event.featuredEventPhoto
+  if (!featuredEventPhotoRef) {
+    return null
+  }
+  const eventPhotoUnknown = data[featuredEventPhotoRef.__ref]
   const parsedEventPhoto = photoInfoStructure.safeParse(eventPhotoUnknown)
   if (!parsedEventPhoto.success) {
     console.error(
