@@ -281,9 +281,11 @@ const eventStructure = z.object({
       __ref: z.string(),
     })
     .nullable(),
-  featuredEventPhoto: z.object({
-    __ref: z.string(),
-  }).nullable(),
+  featuredEventPhoto: z
+    .object({
+      __ref: z.string(),
+    })
+    .nullable(),
   going: z.object({
     totalCount: z.number(),
   }),
@@ -441,7 +443,7 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
       const events = Object.entries(data)
         .filter(([key]) => key.startsWith("Event:"))
         // Uae flatMap to to noop the error case, by returning an array.
-        .flatMap(([_, eventData]) => {
+        .flatMap(([, eventData]) => {
           const parsedEvent = eventStructure.safeParse(eventData)
           if (!parsedEvent.success) {
             console.error(
