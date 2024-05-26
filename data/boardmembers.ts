@@ -10,14 +10,14 @@ export type BoardMemberType = {
 
 const members: BoardMemberType[] = [
   {
-    name: "Dervis Mansuroglu",
+    name: "Alexander Samsig",
     title: "Chairman",
-    img: "dervis_mansuroglu.jpg",
+    img: "alexander_samsig.jpg",
   },
   {
-    name: "Kristian Berg",
+    name: "Øyvind Løkling",
     title: "Deputy Chairman",
-    img: "kristian_berg.jpg",
+    img: "øyvind_løkling.jpg",
   },
   {
     name: "Rafael Winterhalter",
@@ -25,9 +25,9 @@ const members: BoardMemberType[] = [
     img: "rafael_winterhalter.jpg",
   },
   {
-    name: "Alexander Samsig",
+    name: "Dervis Mansuroglu",
     title: "Board Member",
-    img: "alexander_samsig.jpg",
+    img: "dervis_mansuroglu.jpg",
   },
   {
     name: "Karl Syvert Løland",
@@ -35,9 +35,9 @@ const members: BoardMemberType[] = [
     img: "karl_syvert_loland.jpg",
   },
   {
-    name: "Patricia Zemer",
+    name: "Børge Nese",
     title: "Board Member",
-    img: "patricia_zemer.jpg",
+    img: "børge_nese.jpg",
   },
   {
     name: "Alexander Amiri",
@@ -50,9 +50,9 @@ const members: BoardMemberType[] = [
     img: "sverre_moe.jpg",
   },
   {
-    name: "Dorna Misaghian",
+    name: "Orathai Mai Khanasa",
     title: "Board Member",
-    img: "dorna_misaghian.jpg",
+    img: "orathai_mai_khanasa.jpg",
   },
   {
     name: "Chris Searle",
