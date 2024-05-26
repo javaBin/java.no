@@ -15,6 +15,8 @@
     "Board Member": "Styremedlem"
   },
   "region": {
+    "title": "javaBin {{name}} | $t(main.title)",
+    "pastMeetups": "Tidligere meetups",
     "nextMeetups": "Neste meetups",
     "proposeMeetup": "Ingen fremtidige meetups er planlagt enda. Hva med å foreslå en på <meetupLink>meetup.com</meetupLink>?",
     "oslo": {
