@@ -18,22 +18,26 @@ type Props = {
 
 type MeetingProps = {
   meetings?: Meeting[]
-  meetupUrl: string
+  meetupUrl?: string
 }
 
-const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
+export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
   const { t } = useTranslation("common", { keyPrefix: "region" })
 
   if (!meetings || meetings.length === 0) {
-    return (
-      <p>
-        <Trans
-          i18nKey="proposeMeetup"
-          t={t}
-          components={{ meetupLink: <Link href={meetupUrl} /> }}
-        />
-      </p>
-    )
+    if (meetupUrl) {
+      return (
+        <p>
+          <Trans
+            i18nKey="proposeMeetup"
+            t={t}
+            components={{ meetupLink: <Link href={meetupUrl} /> }}
+          />
+        </p>
+      )
+    } else {
+      return <></>
+    }
   }
 
   return (
@@ -103,7 +107,7 @@ const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                     {meeting.eventPhoto && (
                       <Image
                         alt="event photo"
-                        className="sm:block aspect-video rounded-lg object-cover shadow-lg tw-hidden"
+                        className="tw-hidden aspect-video rounded-lg object-cover shadow-lg sm:block"
                         height={101}
                         width={180}
                         src={meeting.eventPhoto}
