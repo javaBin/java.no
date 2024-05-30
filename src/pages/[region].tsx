@@ -30,7 +30,7 @@ export default function RegionPage({
         {region.image && (
           <Image
             alt="event photo"
-            className="block aspect-video h-auto w-full rounded-lg object-cover shadow-lg"
+            className="block aspect-video h-auto w-full max-w-[600px] rounded-lg object-cover shadow-lg"
             height={404}
             width={720}
             src={region.image}
