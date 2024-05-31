@@ -287,8 +287,9 @@ function mapToEvent(
   }
 }
 
-export async function getUpcomingEvents(page: string, locale: string) {
-  const data = await getPageData(page)
+export async function getUpcomingEvents(region: Region, locale: string) {
+  const regionMeetupUrl = `https://www.meetup.com/${region.meetupName}`
+  const data = await getPageData(regionMeetupUrl)
   // The data is a map of keys to objects, where the keys are the GraphQL objects with their IDs.
   // Since we only want events, we're filtering where the key starts with 'Event:'.
   return (
@@ -299,19 +300,21 @@ export async function getUpcomingEvents(page: string, locale: string) {
         const parsedEvent = eventStructure.safeParse(eventData)
         if (!parsedEvent.success) {
           console.error(
-            `Failed to parse event for ${page}:`,
+            `Failed to parse event for ${regionMeetupUrl}:`,
             parsedEvent.error.format(),
             eventData,
           )
           return []
         }
         return mapToEvent(parsedEvent.data, data, locale)
-      })
+      }).filter(event => event.status === "ACTIVE")
   )
 }
 
 async function getPageData(page: string) {
-  const meetupGroupPage = await fetch(page)
+  const meetupGroupPage = await fetch(page + "?t=" + Math.trunc(Date.now() / 1000000), {
+    next: { revalidate: 10 },
+  })
     .then((res) => res.text())
     // If the call fails for some reason, return an empty string, so the whole thing becomes a noop.
     .catch((err) => {

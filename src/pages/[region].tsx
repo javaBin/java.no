@@ -17,7 +17,7 @@ export default function RegionPage({
   return (
     <>
       <Head>
-        <title>{t("region.title", { name: region.name })} </title>
+        <title>{t("region.title", { name: region.name })}</title>
         <meta
           name="description"
           content={region.description.replace(/<(?:.|\n)*?>/gm, "")}

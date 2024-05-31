@@ -1,6 +1,5 @@
 import Head from "next/head"
 import regions from "../../data/regions"
-import members from "../../data/boardmembers"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { InferGetStaticPropsType } from "next/types"
@@ -31,8 +30,7 @@ const Home = ({ regions }: InferGetStaticPropsType<typeof getStaticProps>) => {
 export const getStaticProps = async ({ locale }: { locale: string }) => {
   const regionsWithUpcomingMeetups = await Promise.all(
     regions.map(async (region) => {
-      const page = `https://www.meetup.com/${region.meetupName}/events/`
-      const events = await getUpcomingEvents(page, locale)
+      const events = await getUpcomingEvents(region, locale)
       return {
         ...region,
         events,
@@ -43,7 +41,6 @@ export const getStaticProps = async ({ locale }: { locale: string }) => {
   return {
     props: {
       regions: regionsWithUpcomingMeetups,
-      boardMembers: members,
       ...(await serverSideTranslations(
         locale ?? "no",
         ["common"],

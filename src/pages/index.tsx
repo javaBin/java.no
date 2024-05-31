@@ -253,8 +253,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
 export const getStaticProps = async ({ locale }: { locale: string }) => {
   const regionsWithUpcomingMeetups = await Promise.all(
     regions.map(async (region) => {
-      const page = `https://www.meetup.com/${region.meetupName}/events/`
-      const events = await getUpcomingEvents(page, locale)
+      const events = await getUpcomingEvents(region, locale)
       return {
         ...region,
         events,

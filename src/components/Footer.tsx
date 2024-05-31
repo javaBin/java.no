@@ -2,7 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useTranslation } from "next-i18next"
 import { Socials } from "./Socials"
-import javabinLogo from "public/img/logos/javaBin-logo-horizontal-WHITE.png"
+import javabinLogo from "../../public/img/logos/javaBin-logo-horizontal-WHITE.png"
 
 export const Footer = () => {
   const { t } = useTranslation("common", { keyPrefix: "footer" })
