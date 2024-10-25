@@ -25,6 +25,11 @@ export default defineNextConfig({
   images: {
     remotePatterns: [{ hostname: "secure.meetupstatic.com" }],
   },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
   redirects: () => [
     {
       source: "/policy.html",
