@@ -12,7 +12,12 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Trans, useTranslation } from "next-i18next"
 import { InferGetStaticPropsType } from "next/types"
-import { getUpcomingEvents } from "../lib/meetup-scraper"
+import { getRegionWithEvents } from "../lib/meetup-scraper"
+import dynamic from "next/dynamic"
+
+const RegionsMap = dynamic(() => import("../components/RegionsMap"), {
+  ssr: false,
+})
 
 const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
   const { t } = useTranslation("common", { keyPrefix: "main" })
@@ -173,12 +178,17 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       <section id="locations">
         <div className="container">
           <div className="row">
-            <div className="col-md-12  text-center">
+            <div className="col-md-12 text-center">
               <h2 className="section-heading">{t("branches")}</h2>
             </div>
           </div>
+          <div className="row mb-4">
+            <div className="col-md-12">
+              <RegionsMap regions={props.regions} />
+            </div>
+          </div>
           {props.regions.map((region) => (
-            <Region key={region.region} region={region} />
+            <Region key={region.name} region={region} />
           ))}
         </div>
       </section>
@@ -251,19 +261,32 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
 }
 
 export const getStaticProps = async ({ locale }: { locale: string }) => {
-  const regionsWithUpcomingMeetups = await Promise.all(
+  const regionsWithData = await Promise.all(
     regions.map(async (region) => {
-      const events = await getUpcomingEvents(region, locale)
+      const regionData = await getRegionWithEvents(region, locale)
+      if (!regionData) {
+        return {
+          ...region,
+          events: [],
+          memberCount: 0,
+          description: "",
+          meetupLink: "",
+          location: { lat: 0, lng: 0 },
+          image: null,
+          organizer: null,
+        }
+      }
+
       return {
-        ...region,
-        events,
+        ...regionData,
+        events: regionData.events.filter((event) => event.status === "ACTIVE"),
       }
     }),
   )
 
   return {
     props: {
-      regions: regionsWithUpcomingMeetups,
+      regions: regionsWithData,
       boardMembers: members,
       ...(await serverSideTranslations(
         locale ?? "no",

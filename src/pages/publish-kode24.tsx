@@ -19,7 +19,7 @@ const Home = ({ regions }: InferGetStaticPropsType<typeof getStaticProps>) => {
       <section id="locations">
         <div className="container">
           {regions.map((region) => (
-            <PublishEvents key={region.region} region={region} />
+            <PublishEvents key={region.name} region={region} />
           ))}
         </div>
       </section>

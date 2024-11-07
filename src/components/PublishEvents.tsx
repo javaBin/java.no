@@ -133,10 +133,10 @@ export const PublishEvents = ({ region }: Props) => {
     <>
       <div className="row">
         <div className="col-md-11 col-md-offset-3 max-w-screen-md">
-          <h3>{region.region}</h3>
+          <h3>{region.name}</h3>
           <div>
             <div>
-              <Events region={region.region} events={region.events} />
+              <Events region={region.name} events={region.events} />
             </div>
           </div>
         </div>

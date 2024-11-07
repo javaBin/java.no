@@ -18,7 +18,12 @@
     "title": "javaBin {{name}} | $t(main.title)",
     "pastMeetups": "Tidligere meetups",
     "nextMeetups": "Neste meetups",
+    "nextMeetup": "Neste meetup",
     "proposeMeetup": "Ingen fremtidige meetups er planlagt enda. Hva med å foreslå en på <meetupLink>meetup.com</meetupLink>?",
+    "noUpcomingEvents": "Ingen kommende arrangementer",
+    "memberCount_one": "{{count}} medlem",
+    "memberCount_other": "{{count}} medlemmer",
+    "organizer": "Arrangør",
     "oslo": {
       "description": "javaBin Oslo arrangerer fagkvelder i Oslo"
     },

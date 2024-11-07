@@ -67,6 +67,9 @@ const groupStructure = z.object({
       all: z.number(),
     }),
   }),
+  organizer: z.object({
+    __ref: z.string(),
+  }),
   keyGroupPhoto: z.object({ __ref: z.string() }),
   lat: z.number(),
   lon: z.number(),
@@ -78,16 +81,15 @@ const rsvpsStructure = z.array(
     }),
   }),
 )
-const membersStructure = z.array(
-  z.object({
-    name: z.string(),
-    memberPhoto: z
-      .object({
-        __ref: z.string(),
-      })
-      .nullable(),
-  }),
-)
+const memberStructure = z.object({
+  name: z.string(),
+  memberPhoto: z
+    .object({
+      __ref: z.string(),
+    })
+    .nullable(),
+})
+const membersStructure = z.array(memberStructure)
 const venueStructure = z.object({
   name: z.string(),
 })
@@ -212,12 +214,31 @@ export async function getRegionWithEvents(region: Region, locale: string) {
   const parsedGroup = groupStructure.safeParse(groupData)
   if (!parsedGroup.success) {
     console.error(
-      `Failed to parse event for ${region.region}:`,
+      `Failed to parse event for ${region.name}:`,
       parsedGroup.error.format(),
       groupData,
     )
     return null
   }
+  const organizerRef = parsedGroup.data.organizer.__ref
+  const organizerData = data[organizerRef]
+  const parsedOrganizer = memberStructure.safeParse(organizerData)
+  const organizer = parsedOrganizer.success
+    ? {
+        id: organizerRef,
+        name: parsedOrganizer.data.name,
+        photoUrl: (() => {
+          const photoRef = parsedOrganizer.data?.memberPhoto?.__ref
+          const parsedPhotoInfo = photoInfoStructure.safeParse(
+            photoRef && data[photoRef],
+          )
+          return parsedPhotoInfo.success
+            ? parsedPhotoInfo.data.highResUrl
+            : "/default-avatar.png"
+        })(),
+        profileUrl: `https://www.meetup.com/members/${organizerRef.split(":")[1]}/`,
+      }
+    : null
 
   // Use remark to convert markdown into HTML string
   const processedContent = (
@@ -235,7 +256,7 @@ export async function getRegionWithEvents(region: Region, locale: string) {
       const parsedEvent = eventStructure.safeParse(eventData)
       if (!parsedEvent.success) {
         console.error(
-          `Failed to parse event for ${region.region}:`,
+          `Failed to parse event for ${region.name}:`,
           parsedEvent.error.format(),
           eventData,
         )
@@ -245,12 +266,18 @@ export async function getRegionWithEvents(region: Region, locale: string) {
     })
 
   return {
-    name: region.region,
+    name: region.name,
+    meetupName: region.meetupName,
     image: photo,
     memberCount: parsedGroup.data.stats.memberCounts.all,
     description: processedContent,
     meetupLink: regionMeetupUrl,
+    location: {
+      lat: parsedGroup.data.lat,
+      lng: parsedGroup.data.lon,
+    },
     events,
+    organizer: organizer,
   }
 }
 
@@ -278,7 +305,7 @@ function mapToEvent(
       hour12: false,
       timeZone: "CET",
     }),
-    date: event.dateTime.split("T")[0],
+    date: event.dateTime.split("T")[0] ?? "",
     dateTimeFormatted: toFormattedDateTimeString(event.dateTime, locale),
     numberOfAttendees: event.going.totalCount,
     venue: venue,
@@ -288,33 +315,22 @@ function mapToEvent(
 }
 
 export async function getUpcomingEvents(region: Region, locale: string) {
-  const regionMeetupUrl = `https://www.meetup.com/${region.meetupName}`
-  const data = await getPageData(regionMeetupUrl)
-  // The data is a map of keys to objects, where the keys are the GraphQL objects with their IDs.
-  // Since we only want events, we're filtering where the key starts with 'Event:'.
-  return (
-    Object.entries(data)
-      .filter(([key]) => key.startsWith("Event:"))
-      // Uae flatMap to to noop the error case, by returning an array.
-      .flatMap(([, eventData]) => {
-        const parsedEvent = eventStructure.safeParse(eventData)
-        if (!parsedEvent.success) {
-          console.error(
-            `Failed to parse event for ${regionMeetupUrl}:`,
-            parsedEvent.error.format(),
-            eventData,
-          )
-          return []
-        }
-        return mapToEvent(parsedEvent.data, data, locale)
-      }).filter(event => event.status === "ACTIVE")
-  )
+  // Instead of fetching data twice, let's use getRegionWithEvents
+  const regionData = await getRegionWithEvents(region, locale)
+  if (!regionData) {
+    return []
+  }
+
+  return regionData.events.filter((event) => event.status === "ACTIVE")
 }
 
 async function getPageData(page: string) {
-  const meetupGroupPage = await fetch(page + "?t=" + Math.trunc(Date.now() / 1000000), {
-    next: { revalidate: 10 },
-  })
+  const meetupGroupPage = await fetch(
+    page + "?t=" + Math.trunc(Date.now() / 1000000),
+    {
+      next: { revalidate: 10 },
+    },
+  )
     .then((res) => res.text())
     // If the call fails for some reason, return an empty string, so the whole thing becomes a noop.
     .catch((err) => {
@@ -342,3 +358,5 @@ async function getPageData(page: string) {
   // The data is in the __APOLLO_STATE__ field, since they are grabbing from GraphQL
   return nextDataParsed.data.props.pageProps.__APOLLO_STATE__
 }
+
+export type RegionWithEvents = NonNullable<Awaited<ReturnType<typeof getRegionWithEvents>>>

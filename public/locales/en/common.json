@@ -18,7 +18,12 @@
     "title": "javaBin {{name}} | $t(main.title)",
     "pastMeetups": "Past meetups",
     "nextMeetups": "Next meetups",
+    "nextMeetup": "Next meetup",
     "proposeMeetup": "What about proposing a meetup at <meetupLink>meetup.com</meetupLink>?",
+    "noUpcomingEvents": "No upcoming events",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "organizer": "Organizer",
     "oslo": {
       "description": "javaBin Oslo organizes meetups in Oslo."
     },

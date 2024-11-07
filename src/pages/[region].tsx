@@ -78,7 +78,7 @@ export const getStaticProps = async ({
     return { notFound: true }
   }
   const currentRegion = regions.find(
-    (regionObj) => regionObj.region.toLowerCase() === params.region,
+    (regionObj) => regionObj.name.toLowerCase() === params.region,
   )
   if (!currentRegion) {
     return { notFound: true }
@@ -108,13 +108,13 @@ export const getStaticPaths = (() => {
     paths: regions.flatMap((region) => [
       {
         params: {
-          region: region.region.toLowerCase(),
+          region: region.name.toLowerCase(),
         },
         locale: "no",
       },
       {
         params: {
-          region: region.region.toLowerCase(),
+          region: region.name.toLowerCase(),
         },
         locale: "en",
       },

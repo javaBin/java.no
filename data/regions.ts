@@ -1,39 +1,39 @@
 export type Region = {
-  region: string
+  name: string
   meetupName: string
 }
 
 const regions: Region[] = [
   {
-    region: "Oslo",
+    name: "Oslo",
     meetupName: "javaBin",
   },
   {
-    region: "Bergen",
+    name: "Bergen",
     meetupName: "javaBin-Bergen",
   },
   {
-    region: "Trondheim",
+    name: "Trondheim",
     meetupName: "javaBin-Trondheim",
   },
   {
-    region: "Sørlandet",
+    name: "Sørlandet",
     meetupName: "javaBin-Sorlandet",
   },
   {
-    region: "Stavanger",
+    name: "Stavanger",
     meetupName: "javaBin-Stavanger",
   },
   {
-    region: "Vestfold",
+    name: "Vestfold",
     meetupName: "javaBin-Vestfold",
   },
   {
-    region: "Sogn",
+    name: "Sogn",
     meetupName: "javaBin-Sogn",
   },
   {
-    region: "Tromsø",
+    name: "Tromsø",
     meetupName: "javaBin-Tromso",
   },
 ]

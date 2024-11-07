@@ -1,13 +1,9 @@
 import Link from "next/link"
 import { Trans, useTranslation } from "next-i18next"
-import { Region as RegionType } from "../../data/regions"
 import { InferGetStaticPropsType } from "next/types"
 import { getStaticProps } from "../pages"
 import Image from "next/image"
-
-export type RegionWithEvents = RegionType & {
-  events: Meeting[]
-}
+import { RegionWithEvents } from "../lib/meetup-scraper"
 
 export type Meeting = InferGetStaticPropsType<
   typeof getStaticProps
@@ -41,16 +37,16 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
   }
 
   return (
-    <ul className="flex flex-col space-y-5">
+    <ul className="flex flex-col space-y-3">
       {meetings.map((meeting) => {
         return (
           <li key={meeting.eventUrl}>
             <div className="rounded-lg bg-white shadow-sm hover:bg-gray-50">
               <a
                 href={meeting.eventUrl}
-                className="flex h-full flex-col justify-between space-y-5 p-8 outline-offset-8 hover:no-underline"
+                className="flex h-full flex-col justify-between p-5 outline-offset-8 hover:no-underline"
               >
-                <div className="flex flex-col space-y-5">
+                <div className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between ">
                     <div className="flex w-full flex-col space-y-3">
                       <time
@@ -59,7 +55,7 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                       >
                         {meeting.dateTimeFormatted}
                       </time>
-                      <h4 className="block break-words leading-7">
+                      <h4 className="block break-words leading-4">
                         {meeting.name}
                       </h4>
                       <div className="text-muted flex items-start">
@@ -132,10 +128,10 @@ export const Region = ({ region }: Props) => {
     <>
       <div className="row">
         <div className="col-md-11 col-md-offset-3 max-w-screen-md">
-          <h3>{region.region}</h3>
+          <h3>{region.name}</h3>
           <div>
             <p>
-              {t(region.region.toLowerCase() + ".description")} –{" "}
+              {t(region.name.toLowerCase() + ".description")} –{" "}
               <Link href={`https://meetup.com/${region.meetupName}`}>
                 meetup.com/{region.meetupName}
               </Link>
