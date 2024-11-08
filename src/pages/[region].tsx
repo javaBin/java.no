@@ -24,8 +24,8 @@ export default function RegionPage({
         />
         {region.image && <meta property="og:image" content={region.image} />}
       </Head>
-      <div className="bg-[#eee] p-32">
-        <h1>{region.name}</h1>
+      <div className="bg-[#eee] p-4 sm:p-8 md:p-16 lg:p-32">
+        <h1 className="mt-16 sm:mt-12 md:mt-2">{region.name}</h1>
         <h5>{region.memberCount} Dukes</h5>
         {region.image && (
           <Image
