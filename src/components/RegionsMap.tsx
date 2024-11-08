@@ -1,6 +1,8 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
-import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css"
+import "leaflet-gesture-handling"
+import { Icon } from "leaflet"
 import { RegionWithEvents } from "../lib/meetup-scraper"
 import { useTranslation } from "react-i18next"
 import Image from "next/image"
@@ -9,10 +11,16 @@ interface RegionsMapProps {
   regions: RegionWithEvents[]
 }
 
+declare module "leaflet" {
+  interface MapOptions {
+    gestureHandling?: boolean
+  }
+}
+
 const RegionsMap = ({ regions }: RegionsMapProps) => {
   const { t } = useTranslation("common", { keyPrefix: "region" })
 
-  const customIcon = new L.Icon({
+  const customIcon = new Icon({
     iconUrl: "/map/icons/javabin-pin.png",
     iconSize: [45, 90],
     iconAnchor: [21, 52],
@@ -37,6 +45,8 @@ const RegionsMap = ({ regions }: RegionsMapProps) => {
         }}
         minZoom={4.5}
         maxZoom={13}
+        gestureHandling={true}
+        scrollWheelZoom={false}
       >
         <TileLayer
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
