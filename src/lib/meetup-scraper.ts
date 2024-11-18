@@ -220,6 +220,10 @@ export async function getRegionWithEvents(region: Region, locale: string) {
     )
     return null
   }
+  
+  // Check if the region is Sogn and set the correct lat/lng
+  const location = region.name === "Sogn" ? { lat: 61.5, lng: 7.5 } : { lat: parsedGroup.data.lat, lng: parsedGroup.data.lon };
+
   const organizerRef = parsedGroup.data.organizer.__ref
   const organizerData = data[organizerRef]
   const parsedOrganizer = memberStructure.safeParse(organizerData)
@@ -272,10 +276,7 @@ export async function getRegionWithEvents(region: Region, locale: string) {
     memberCount: parsedGroup.data.stats.memberCounts.all,
     description: processedContent,
     meetupLink: regionMeetupUrl,
-    location: {
-      lat: parsedGroup.data.lat,
-      lng: parsedGroup.data.lon,
-    },
+    location, // Use the updated location
     events,
     organizer: organizer,
   }
