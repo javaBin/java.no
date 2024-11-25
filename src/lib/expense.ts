@@ -25,7 +25,7 @@ export const formSchema = z.object({
     .string()
     .refine((str) => validateAccountNumber(str), "Invalid account number"),
   email: z.string().email("Please enter a valid email address"),
-  date: z.string().min(1, "Please select a date"),
+  date: z.date().min(new Date("2020-01-01"), "Please select a date"),
   expenses: z
     .array(expenseItemSchema)
     .min(1, "At least one expense is required"),

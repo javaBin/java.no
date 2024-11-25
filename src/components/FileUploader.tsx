@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
+import NextImage from "next/image"
 import { FileText, Upload, X } from "lucide-react"
 import Dropzone, {
   type DropzoneProps,
@@ -20,10 +20,14 @@ import { useControllableState } from "@/hooks/use-controllable-state"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { createWorker } from "tesseract.js"
-import { Wand2 } from "lucide-react"
 import { ZoomIn, ZoomOut } from "lucide-react"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
+import ReactCrop, {
+  type Crop,
+  centerCrop,
+  makeAspectCrop,
+} from "react-image-crop"
+import "react-image-crop/dist/ReactCrop.css"
 
 interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -100,12 +104,204 @@ interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
    * @example disabled
    */
   disabled?: boolean
+}
 
-  /**
-   * Callback when OCR processes an amount
-   * @type (amount: number, index: number) => void
-   */
-  onOCRComplete?: (amount: number) => void
+interface CropDialogProps {
+  file: File | null
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onCropComplete: (croppedFile: File) => void
+}
+
+function CropDialog({
+  file,
+  isOpen,
+  onOpenChange,
+  onCropComplete,
+}: CropDialogProps) {
+  const [crop, setCrop] = React.useState<Crop>()
+  const [imgSrc, setImgSrc] = React.useState("")
+  const imgRef = React.useRef<HTMLImageElement>(null)
+
+  React.useEffect(() => {
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setImgSrc(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [file])
+
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: "%",
+          width: 90,
+        },
+        16 / 9,
+        width,
+        height,
+      ),
+      width,
+      height,
+    )
+    setCrop(crop)
+  }
+
+  async function cropImage() {
+    if (!file) return
+
+    if (!imgRef.current || !crop) return
+    if (crop?.width === 0 || crop?.height === 0) {
+      onCropComplete(file)
+      onOpenChange(false)
+      return
+    }
+
+    const image = imgRef.current
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    // Get the scaling factor between displayed size and natural size
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+
+    // Calculate the actual dimensions of the displayed image
+    const displayedWidth = image.width
+    const displayedHeight =
+      (image.naturalHeight / image.naturalWidth) * displayedWidth
+
+    // Convert percentage values to pixels based on the displayed dimensions
+    const pixelCrop = {
+      x: (crop.x * displayedWidth) / 100,
+      y: (crop.y * displayedHeight) / 100,
+      width: (crop.width * displayedWidth) / 100,
+      height: (crop.height * displayedHeight) / 100,
+    }
+
+    // Set canvas dimensions to the actual crop size in natural image coordinates
+    canvas.width = pixelCrop.width * scaleX
+    canvas.height = pixelCrop.height * scaleY
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x * scaleX,
+      pixelCrop.y * scaleY,
+      pixelCrop.width * scaleX,
+      pixelCrop.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
+
+    // Convert canvas to blob
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob)
+        },
+        "image/jpeg",
+        0.95,
+      )
+    })
+
+    // Create new file from blob
+    const croppedFile = new File([blob], file.name, {
+      type: "image/jpeg",
+    })
+
+    onCropComplete(croppedFile)
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Crop Image</DialogTitle>
+        </DialogHeader>
+        <div className="relative h-[75vh] w-full gap-4">
+          <TransformWrapper
+            initialScale={1}
+            minScale={1}
+            maxScale={4}
+            centerOnInit
+            panning={{ disabled: true }}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                <TransformComponent
+                  wrapperClass="!w-full h-full"
+                  contentClass="!w-full h-full flex items-center justify-center"
+                >
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    className="flex max-h-[70vh] items-center justify-center"
+                  >
+                    <img
+                      ref={imgRef}
+                      src={imgSrc}
+                      alt="Crop me"
+                      onLoad={onImageLoad}
+                      className="max-h-[70vh] w-auto object-contain"
+                    />
+                  </ReactCrop>
+                </TransformComponent>
+                <div className="bg-background/80 absolute bottom-20 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => zoomOut()}
+                  >
+                    <ZoomOut className="size-4" />
+                    <span className="sr-only">Zoom out</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => resetTransform()}
+                  >
+                    <NextImage
+                      src={imgSrc}
+                      alt="Reset zoom"
+                      width={16}
+                      height={16}
+                      className="size-4 object-cover"
+                    />
+                    <span className="sr-only">Reset zoom</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => zoomIn()}
+                  >
+                    <ZoomIn className="size-4" />
+                    <span className="sr-only">Zoom in</span>
+                  </Button>
+                </div>
+              </>
+            )}
+          </TransformWrapper>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={cropImage}>Crop & Continue</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export function FileUploader(props: FileUploaderProps) {
@@ -113,7 +309,6 @@ export function FileUploader(props: FileUploaderProps) {
     value: valueProp,
     onValueChange,
     onUpload,
-    onOCRComplete,
     progresses,
     accept = {
       "image/*": [],
@@ -131,6 +326,8 @@ export function FileUploader(props: FileUploaderProps) {
     onChange: onValueChange,
   })
 
+  const [cropDialogFile, setCropDialogFile] = React.useState<File | null>(null)
+
   const onDrop = React.useCallback(
     async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
       if (!multiple && maxFileCount === 1 && acceptedFiles.length > 1) {
@@ -140,6 +337,12 @@ export function FileUploader(props: FileUploaderProps) {
 
       if ((files?.length ?? 0) + acceptedFiles.length > maxFileCount) {
         toast.error(`Cannot upload more than ${maxFileCount} files`)
+        return
+      }
+
+      // Open crop dialog for the first image
+      if (acceptedFiles[0]?.type.startsWith("image/")) {
+        setCropDialogFile(acceptedFiles[0])
         return
       }
 
@@ -201,6 +404,14 @@ export function FileUploader(props: FileUploaderProps) {
   }, [files])
 
   const isDisabled = disabled || (files?.length ?? 0) >= maxFileCount
+
+  const handleCropComplete = (croppedFile: File) => {
+    const newFiles = [croppedFile]
+    setFiles(files ? [...files, ...newFiles] : newFiles)
+    if (onUpload) {
+      onUpload(newFiles).catch(console.error)
+    }
+  }
 
   return (
     <div className="relative flex flex-col gap-6 overflow-hidden">
@@ -272,13 +483,18 @@ export function FileUploader(props: FileUploaderProps) {
                 key={index}
                 file={file}
                 onRemove={() => onRemove(index)}
-                onOCRComplete={onOCRComplete}
                 progress={progresses?.[file.name]}
               />
             ))}
           </div>
         </ScrollArea>
       ) : null}
+      <CropDialog
+        file={cropDialogFile!}
+        isOpen={!!cropDialogFile}
+        onOpenChange={(open) => !open && setCropDialogFile(null)}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   )
 }
@@ -290,61 +506,180 @@ interface FileCardProps {
   progress?: number
 }
 
-function FileCard({ file, progress, onRemove, onOCRComplete }: FileCardProps) {
-  const [isProcessing, setIsProcessing] = React.useState(false)
+interface ImageSelectionDialogProps {
+  file: File
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onSelectionComplete: (imageData: ImageData | null) => void
+}
 
-  const extractHighestAmount = (text: string): number | null => {
-    const numbers = text.match(/\d+[.,]+\d{1,2}/g)
-    if (!numbers) return null
-    return Math.max(...numbers.map((n) => parseFloat(n.replace(",", "."))))
-  }
+function ImageSelectionDialog({
+  file,
+  isOpen,
+  onOpenChange,
+  onSelectionComplete,
+}: ImageSelectionDialogProps) {
+  const [crop, setCrop] = React.useState<Crop>()
+  const [imgSrc, setImgSrc] = React.useState("")
+  const imgRef = React.useRef<HTMLImageElement>(null)
 
-  const processReceiptOCR = async () => {
-    if (!file.type.startsWith("image/") || !onOCRComplete) return
+  React.useEffect(() => {
+    if (!file) return
+    const objectUrl = URL.createObjectURL(file)
+    setImgSrc(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [file])
 
-    setIsProcessing(true)
-    const toastId = toast.loading("Processing receipt with OCR...")
+  const getCroppedImageData = React.useCallback((): ImageData | null => {
+    if (!imgRef.current) return null
+    const image = imgRef.current
 
-    try {
-      const worker = await createWorker(["eng", "nor"])
-      const imageUrl = URL.createObjectURL(file)
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return null
 
-      const {
-        data: { text },
-      } = await worker.recognize(imageUrl)
-      console.log(text)
-      const amount = extractHighestAmount(text)
-
-      URL.revokeObjectURL(imageUrl)
-      await worker.terminate()
-
-      if (amount) {
-        toast.success(`Found amount: ${amount} NOK`, {
-          id: toastId,
-          action: {
-            label: "Use this amount",
-            onClick: () => onOCRComplete(amount),
-          },
-          cancel: {
-            label: "Cancel",
-            onClick: () => toast.dismiss(toastId),
-          },
-          duration: Infinity,
-        })
-      } else {
-        toast.error("Could not find any amount in the receipt", {
-          id: toastId,
-        })
-      }
-    } catch (error) {
-      console.error("OCR processing failed:", error)
-      toast.error("Failed to process receipt", {
-        id: toastId,
-      })
-    } finally {
-      setIsProcessing(false)
+    if (!(crop && crop.width > 0 && crop.height > 0)) {
+      // If no crop selection, use the entire image
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+      return ctx.getImageData(0, 0, canvas.width, canvas.height)
     }
+
+    // Calculate dimensions based on the original image
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+
+    // Set canvas size to the crop size
+    canvas.width = (crop.width * image.width * scaleX) / 100
+    canvas.height = (crop.height * image.height * scaleY) / 100
+
+    // Draw the cropped image
+    ctx.drawImage(
+      image,
+      (crop.x * image.width * scaleX) / 100,
+      (crop.y * image.height * scaleY) / 100,
+      canvas.width,
+      canvas.height,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
+
+    return ctx.getImageData(0, 0, canvas.width, canvas.height)
+  }, [crop])
+
+  const handleConfirm = () => {
+    const imageData = getCroppedImageData()
+    onSelectionComplete(imageData)
+    onOpenChange(false)
   }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Select Area for OCR</DialogTitle>
+        </DialogHeader>
+        <div className="relative h-[75vh] w-full">
+          <TransformWrapper
+            initialScale={1}
+            minScale={1}
+            maxScale={4}
+            centerOnInit
+            wheel={{ wheelDisabled: false }}
+            doubleClick={{
+              mode: "toggle",
+              step: 2,
+            }}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                <TransformComponent
+                  wrapperClass="!w-full h-full"
+                  contentClass="!w-full h-full flex items-center justify-center"
+                >
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    aspect={undefined}
+                    className="max-h-[70vh] w-auto"
+                  >
+                    <img
+                      ref={imgRef}
+                      src={imgSrc}
+                      alt="Select area"
+                      className="max-h-[70vh] w-auto object-contain"
+                    />
+                  </ReactCrop>
+                </TransformComponent>
+                <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => zoomOut()}
+                  >
+                    <ZoomOut className="size-4" />
+                    <span className="sr-only">Zoom out</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => resetTransform()}
+                  >
+                    <NextImage
+                      src={imgSrc}
+                      alt="Reset zoom"
+                      width={16}
+                      height={16}
+                      className="size-4 object-cover"
+                    />
+                    <span className="sr-only">Reset zoom</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => zoomIn()}
+                  >
+                    <ZoomIn className="size-4" />
+                    <span className="sr-only">Zoom in</span>
+                  </Button>
+                </div>
+              </>
+            )}
+          </TransformWrapper>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setCrop(undefined)
+              onSelectionComplete(null)
+            }}
+          >
+            Clear Selection
+          </Button>
+          <Button onClick={handleConfirm}>
+            Process{" "}
+            {crop && crop.width > 0 && crop.height > 0
+              ? "Selection"
+              : "Entire Image"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function FileCard({ file, progress, onRemove }: FileCardProps) {
+  const [isSelectionOpen, setIsSelectionOpen] = React.useState(false)
 
   return (
     <div className="relative flex items-center gap-2.5">
@@ -361,19 +696,6 @@ function FileCard({ file, progress, onRemove, onOCRComplete }: FileCardProps) {
               <p className="text-muted-foreground text-xs">
                 {formatBytes(file.size)}
               </p>
-              {onOCRComplete && file.type.startsWith("image/") && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  disabled={isProcessing}
-                  onClick={processReceiptOCR}
-                >
-                  <Wand2 className="mr-1 size-3" />
-                  Scan for amount
-                </Button>
-              )}
             </div>
           </div>
           {progress ? <Progress value={progress} /> : null}
@@ -391,6 +713,13 @@ function FileCard({ file, progress, onRemove, onOCRComplete }: FileCardProps) {
           <span className="sr-only">Remove file</span>
         </Button>
       </div>
+
+      <ImageSelectionDialog
+        file={file}
+        isOpen={isSelectionOpen}
+        onOpenChange={setIsSelectionOpen}
+        onSelectionComplete={() => {}}
+      />
     </div>
   )
 }
@@ -421,7 +750,7 @@ function FilePreview({ file }: FilePreviewProps) {
           onClick={() => setIsImageOpen(true)}
           className="relative aspect-square size-12 shrink-0 overflow-hidden rounded-md border"
         >
-          <Image
+          <NextImage
             src={preview}
             alt={file.name}
             width={48}
@@ -454,7 +783,7 @@ function FilePreview({ file }: FilePreviewProps) {
                       wrapperClass="!w-full"
                       contentClass="!w-full flex items-center justify-center"
                     >
-                      <Image
+                      <NextImage
                         src={preview}
                         alt={file.name}
                         width={1200}
@@ -482,7 +811,7 @@ function FilePreview({ file }: FilePreviewProps) {
                         className="size-8"
                         onClick={() => resetTransform()}
                       >
-                        <Image
+                        <NextImage
                           src={preview}
                           alt={file.name}
                           width={16}
