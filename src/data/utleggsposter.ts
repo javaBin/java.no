@@ -1,3 +1,8 @@
+export type CategoryGroup =
+  | "alle"
+  | (typeof EXPENSE_CATEGORIES)[number]["category"]
+export type CategoryItem = "" | (typeof EXPENSE_CATEGORIES)[number]["fullName"]
+
 export const EXPENSE_CATEGORIES = [
   {
     code: "1.1.1.1",

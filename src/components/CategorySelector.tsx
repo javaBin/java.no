@@ -20,18 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { EXPENSE_CATEGORIES } from "@/data/utleggsposter"
+import {
+  CategoryItem,
+  CategoryGroup,
+  EXPENSE_CATEGORIES,
+} from "@/data/utleggsposter"
 import { ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
 type CategorySelectorProps = {
-  selectedCategory: string
-  onCategoryChange: (category: string) => void
-  selectedItem?: string
-  onItemChange?: (category: string, item: string) => void
+  selectedCategory: CategoryGroup
+  onCategoryChange: (category: CategoryGroup) => void
+  selectedItem?: CategoryItem
+  onItemChange?: (category: CategoryGroup, item: CategoryItem) => void
   showOverrideBadge?: boolean
-  globalCategoryItem?: string
+  globalCategoryItem?: CategoryItem
 }
 
 export function CategorySelector({
@@ -105,7 +109,10 @@ export function CategorySelector({
                         acc[item.category]!.push(item)
                         return acc
                       },
-                      {} as Record<string, typeof EXPENSE_CATEGORIES[number][]>,
+                      {} as Record<
+                        string,
+                        (typeof EXPENSE_CATEGORIES)[number][]
+                      >,
                     ),
                   ).map(([groupCategory, items]) => (
                     <CommandGroup key={groupCategory} heading={groupCategory}>
@@ -114,7 +121,10 @@ export function CategorySelector({
                           key={label.fullName}
                           value={label.fullName}
                           onSelect={(value) => {
-                            onItemChange(selectedCategory, value)
+                            onItemChange(
+                              selectedCategory,
+                              value as CategoryItem,
+                            )
                             setIsOpen(false)
                           }}
                         >
@@ -132,7 +142,7 @@ export function CategorySelector({
                         key={label.fullName}
                         value={label.fullName}
                         onSelect={(value) => {
-                          onItemChange(selectedCategory, value)
+                          onItemChange(selectedCategory, value as CategoryItem)
                           setIsOpen(false)
                         }}
                       >
