@@ -169,6 +169,29 @@ export default function ExpensePage() {
     }))
   }, [globalCategoryGroup, globalCategoryItem, setQueryParamForm])
 
+  // Handler to clear form
+  const handleClearForm = () => {
+    form.reset({
+      name: "",
+      streetAddress: "",
+      postalCode: "",
+      city: "",
+      country: "Norway",
+      bankAccount: "",
+      email: "",
+      date: new Date(),
+      expenses: [
+        {
+          description: "",
+          category: "",
+          amount: 0,
+          attachment: undefined as unknown as File,
+        },
+      ],
+    })
+    setQueryParamForm(null)
+  }
+
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true)
     try {
@@ -416,6 +439,15 @@ export default function ExpensePage() {
                   <FormDescription>
                     Datoen brukes til å datere utgiftene.
                   </FormDescription>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearForm}
+                    >
+                      <Eraser className="mr-2 h-4 w-4" />
+                      Tøm skjema
+                    </Button>
                   <FormMessage />
                 </FormItem>
               )}
