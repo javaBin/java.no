@@ -20,7 +20,7 @@ export async function generatePDF({
   const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
   // Title
-  coverPage.drawText("Expense Report", {
+  coverPage.drawText("Utleggsrapport", {
     x: 50,
     y: height - 50,
     size: 24,
@@ -37,11 +37,11 @@ export async function generatePDF({
 
   // Personal information
   const infoLines = [
-    { label: "Name:", value: name },
-    { label: "Address:", value: `${streetAddress}, ${postalCode} ${city}, ${country}` },
-    { label: "Bank Account:", value: bankAccount.replace(/\s/g, "") },
-    { label: "Email:", value: email },
-    { label: "Date:", value: formattedDate },
+    { label: "Navn:", value: name },
+    { label: "Adresse:", value: `${streetAddress}, ${postalCode} ${city}, ${country}` },
+    { label: "Kontonummer:", value: bankAccount.replace(/\s/g, "") },
+    { label: "E-post:", value: email },
+    { label: "Dato:", value: formattedDate },
   ]
 
   infoLines.forEach((line, index) => {
@@ -67,17 +67,28 @@ export async function generatePDF({
   // Add expense items table
   const tableTop = height - 275
   const rowHeight = 30
+  const pageWidth = coverPage.getWidth();
+  const margin = 50; // Left and right page margins
+  const usableWidth = pageWidth - (2 * margin);
+  
+  // Adjust column widths to ensure amounts fit
   const columns = {
-    attachment: { x: 50, width: 50 },
-    description: { x: 100, width: 200 },
-    category: { x: 300, width: 200 },
-    amount: { x: 500, width: 100 },
+    attachment: { x: margin, width: usableWidth * 0.1 },
+    description: { x: margin + (usableWidth * 0.1), width: usableWidth * 0.4 },
+    category: { x: margin + (usableWidth * 0.5), width: usableWidth * 0.3 },
+    amount: { x: margin + (usableWidth * 0.8), width: usableWidth * 0.2 },
   }
 
   // Table headers
   Object.entries(columns).forEach(([key, { x }]) => {
-    const text = key.charAt(0).toUpperCase() + key.slice(1)
-    coverPage.drawText(key === "attachment" ? "Att#" : text, {
+    const headerTexts = {
+      attachment: "#",
+      description: "Beskrivelse",
+      category: "Kategori",
+      amount: "Beløp"
+    };
+    
+    coverPage.drawText(headerTexts[key as keyof typeof headerTexts], {
       x,
       y: tableTop,
       size: 12,
@@ -88,6 +99,13 @@ export async function generatePDF({
 
   // Table rows
   let totalAmount = 0
+  
+  // Create Norwegian number formatter
+  const numberFormatter = new Intl.NumberFormat('nb-NO', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  
   expenses.forEach((expense, index) => {
     const y = tableTop - (index + 1) * rowHeight
 
@@ -109,15 +127,17 @@ export async function generatePDF({
       maxWidth: columns.category.width,
     })
 
-    coverPage.drawText(expense.amount.toFixed(2), {
-      x:
-        columns.amount.x +
-        regularFont.widthOfTextAtSize(expense.amount.toFixed(2), 10),
+    // Format amount using Norwegian locale
+    const formattedAmount = numberFormatter.format(expense.amount)
+    
+    // Right-align the amount within its column
+    coverPage.drawText(formattedAmount, {
+      x: columns.amount.x + columns.amount.width - 
+         regularFont.widthOfTextAtSize(formattedAmount, 10),
       y,
       size: 10,
       font: regularFont,
       color: rgb(0, 0, 0),
-      maxWidth: columns.amount.width,
     })
 
     if (expense.attachment) {
@@ -134,20 +154,24 @@ export async function generatePDF({
     totalAmount += expense.amount
   })
 
-  // Adjust total position to align with new amount column
+  // Format total amount using Norwegian locale
+  const formattedTotalAmount = numberFormatter.format(totalAmount)
+  const totalAmountWidth = font.widthOfTextAtSize(formattedTotalAmount, 12)
+  const totalLabelWidth = font.widthOfTextAtSize("Total:", 12)
+  const totalLabelSpacing = 10 // Space between label and amount
+  
+  // Position the total label to the left of the amount, ensuring no overlap
   coverPage.drawText("Total:", {
-    x: columns.amount.x - 10,
+    x: columns.amount.x + columns.amount.width - totalAmountWidth - totalLabelWidth - totalLabelSpacing,
     y: tableTop - (expenses.length + 1) * rowHeight,
     size: 12,
     font,
     color: rgb(0, 0, 0),
   })
 
-  coverPage.drawText(totalAmount.toFixed(2), {
-    x:
-      columns.amount.x -
-      10 +
-      font.widthOfTextAtSize(totalAmount.toFixed(2), 12),
+  // Position the total amount right-aligned in its column
+  coverPage.drawText(formattedTotalAmount, {
+    x: columns.amount.x + columns.amount.width - totalAmountWidth,
     y: tableTop - (expenses.length + 1) * rowHeight,
     size: 12,
     font,
@@ -176,7 +200,7 @@ export async function generatePDF({
       // Add a header to identify which expense this attachment belongs to
       const attachmentPage = pdfDoc.addPage(page)
       attachmentPage.drawText(
-        `Attachment for expense #${index + 1}: ${expense.description}`,
+        `Vedlegg for utlegg #${index + 1}: ${expense.description}`,
         {
           x: 50,
           y: attachmentPage.getHeight() - (regularFont.heightAtSize(12) + 5),

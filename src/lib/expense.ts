@@ -71,7 +71,7 @@ export const validateNorwegianBBAN = (accountNumber: string): boolean => {
     .slice(0, 10)
     .split("")
     .map((c) => parseInt(c))
-    .reduce((acc, digit, index) => acc + digit * weights[index], 0);
+    .reduce((acc, digit, index) => acc + digit * weights[index]!, 0);
   
   const checkDigit = (11 - (sum % 11)) % 11;
   return checkDigit === parseInt(accountNumber.charAt(10));

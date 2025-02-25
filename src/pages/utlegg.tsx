@@ -621,6 +621,7 @@ export default function ExpensePage() {
                           }
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
