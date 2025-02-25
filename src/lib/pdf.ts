@@ -1,4 +1,4 @@
-import { formSchema } from "@/lib/expense"
+import { createExpenseSchemas } from "@/lib/expense"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 
@@ -12,7 +12,7 @@ export async function generatePDF({
   email,
   date,
   expenses,
-}: z.infer<typeof formSchema>) {
+}: z.infer<ReturnType<typeof createExpenseSchemas>["formSchema"]>) {
   const pdfDoc = await PDFDocument.create()
   const coverPage = pdfDoc.addPage()
   const { height } = coverPage.getSize()

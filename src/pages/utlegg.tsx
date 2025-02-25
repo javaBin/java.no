@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Eraser, Mail } from "lucide-react"
 import { CategorySelector } from "@/components/CategorySelector"
-import { formSchema } from "@/lib/expense"
+import { createExpenseSchemas } from "@/lib/expense"
 import AccountInput from "@/components/AccountInput"
 import { FileUploader } from "@/components/FileUploader"
 import { Toaster } from "sonner"
@@ -42,26 +42,28 @@ import {
   EXPENSE_CATEGORIES,
 } from "@/data/utleggsposter"
 
-type FormValues = z.infer<typeof formSchema>
-
 // BBAN: 8601 11 17947
 // IBAN: NO9386011117947
 
-export const getServerSideProps: GetServerSideProps = async ({
-  locale = "no",
-}) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
-      ...(await serverSideTranslations(locale, ["common"], nextI18nConfig, [
-        "no",
-        "en",
-      ])),
+      ...(await serverSideTranslations(
+        locale ?? "no",
+        ["common"],
+        nextI18nConfig,
+        ["no", "en"],
+      )),
     },
   }
 }
 
 export default function ExpensePage() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation("common")
+
+  // Create schema with localized error messages
+  const { formSchema } = createExpenseSchemas(t, i18n.language)
+  type FormValues = z.infer<typeof formSchema>
 
   const [isLoading, setIsLoading] = useState(false)
 
@@ -283,48 +285,92 @@ export default function ExpensePage() {
 
   return (
     <div className="container mx-auto mt-12 py-10">
+      <h1 className="mb-8 text-3xl font-bold">{t("expense.title")}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Navn</Label>
-                <FormControl>
-                  <Input placeholder="Ola Nordmann" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="streetAddress"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Adresse</Label>
-                <FormControl>
-                  <Input placeholder="Gateveien 1" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
             <FormField
               control={form.control}
-              name="postalCode"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Postnummer</Label>
+                  <Label>{t("expense.name")}</Label>
                   <FormControl>
                     <Input
-                      placeholder="1234"
+                      placeholder={t("expense.namePlaceholder")}
                       {...field}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "")
-                        field.onChange(value)
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="streetAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{t("expense.address")}</Label>
+                  <FormControl>
+                    <Input
+                      placeholder={t("expense.addressPlaceholder")}
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="postalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{t("expense.postalCode")}</Label>
+                    <FormControl>
+                      <Input
+                        placeholder={t("expense.postalCodePlaceholder")}
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "")
+                          field.onChange(value)
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{t("expense.city")}</Label>
+                    <FormControl>
+                      <Input
+                        placeholder={t("expense.cityPlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{t("expense.country")}</Label>
+                  <FormControl>
+                    <LocationInput
+                      {...field}
+                      defaultValue={field.value}
+                      onCountryChange={(country) => {
+                        form.setValue(field.name, country?.name || "")
                       }}
                     />
                   </FormControl>
@@ -334,131 +380,99 @@ export default function ExpensePage() {
 
             <FormField
               control={form.control}
-              name="city"
+              name="bankAccount"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Poststed</Label>
+                  <Label>{t("expense.bankAccount")}</Label>
                   <FormControl>
-                    <Input placeholder="Sted" {...field} />
+                    <AccountInput {...field} />
                   </FormControl>
                 </FormItem>
               )}
             />
-          </div>
 
-          <FormField
-            control={form.control}
-            name="country"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Land</Label>
-                <FormControl>
-                  <LocationInput
-                    {...field}
-                    defaultValue={field.value}
-                    onCountryChange={(country) => {
-                      form.setValue(field.name, country?.name || "")
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="bankAccount"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Kontonummer (IBAN eller BBAN)</Label>
-                <FormControl>
-                  <AccountInput {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <Label>E-post</Label>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="ola.nordmann@example.com"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormControl>
             <FormField
               control={form.control}
-              name="date"
+              name="email"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Dato</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", {
-                              locale: i18n.language === "no" ? nb : undefined,
-                            })
-                          ) : (
-                            <span>Velg en dato</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        locale={i18n.language === "no" ? nb : undefined}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("2020-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Datoen brukes til å datere utgiftene.
-                  </FormDescription>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClearForm}
-                    >
-                      <Eraser className="mr-2 h-4 w-4" />
-                      Tøm skjema
-                    </Button>
-                  </div>
-                  <FormMessage />
+                <FormItem>
+                  <Label>{t("expense.email")}</Label>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder={t("expense.emailPlaceholder")}
+                      {...field}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
-          </FormControl>
+
+            <FormControl>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t("expense.date")}</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP", {
+                                locale: i18n.language === "no" ? nb : undefined,
+                              })
+                            ) : (
+                              <span>{t("expense.selectDate")}</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          locale={i18n.language === "no" ? nb : undefined}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("2020-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      {t("expense.dateDescription")}
+                    </FormDescription>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearForm}
+                      >
+                        <Eraser className="mr-2 h-4 w-4" />
+                        {t("expense.clearForm")}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FormControl>
+          </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Expenses</h2>
+              <h2 className="text-xl font-semibold">{t("expense.expenses")}</h2>
               <Button
                 type="button"
                 variant="outline"
@@ -471,11 +485,11 @@ export default function ExpensePage() {
                   })
                 }
               >
-                Add Expense
+                {t("expense.addExpense")}
               </Button>
             </div>
             <div className="mb-6">
-              <Label>Default Category for All Expenses</Label>
+              <Label>{t("expense.defaultCategory")}</Label>
               <CategorySelector
                 selectedCategory={globalCategoryGroup}
                 onCategoryChange={setGlobalCategoryGroup}
@@ -504,10 +518,11 @@ export default function ExpensePage() {
                   name={`expenses.${index}.description`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Description</Label>
+                      <Label>{t("expense.description")}</Label>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -517,7 +532,7 @@ export default function ExpensePage() {
                   name={`expenses.${index}.category`}
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t("expense.category")}</FormLabel>
                       <div className="space-y-2">
                         <CategorySelector
                           selectedCategory={getCategoryForExpense(index)}
@@ -581,7 +596,7 @@ export default function ExpensePage() {
                               field.onChange(globalCategoryItem)
                             }}
                           >
-                            Reset to Global Category
+                            {t("expense.resetToGlobalCategory")}
                           </Button>
                         )}
                       </div>
@@ -595,7 +610,7 @@ export default function ExpensePage() {
                   name={`expenses.${index}.amount`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Amount (NOK)</Label>
+                      <Label>{t("expense.amount")}</Label>
                       <FormControl>
                         <Input
                           type="number"
@@ -615,7 +630,7 @@ export default function ExpensePage() {
                   name={`expenses.${index}.attachment`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Attachment</Label>
+                      <Label>{t("expense.attachment")}</Label>
                       <FormControl>
                         <FileUploader
                           onUpload={async (files) => {
@@ -663,7 +678,9 @@ export default function ExpensePage() {
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Processing..." : "Generate Report"}
+              {isLoading
+                ? t("expense.processing")
+                : t("expense.generateReport")}
             </Button>
             <Button
               type="button"
@@ -684,7 +701,7 @@ Med vennlig hilsen,
 ${form.getValues("name")}`)}`}
               >
                 <Mail className="h-4 w-4" />
-                Send e-post
+                {t("expense.sendEmail")}
               </a>
             </Button>
           </div>
