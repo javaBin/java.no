@@ -6,7 +6,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
-import { CalendarIcon, Trash2 } from "lucide-react"
+import { CalendarIcon, Trash2, Eraser, Mail } from "lucide-react"
 import { CategorySelector } from "@/components/CategorySelector"
 import { formSchema } from "@/lib/expense"
 import AccountInput from "@/components/AccountInput"
@@ -439,6 +439,7 @@ export default function ExpensePage() {
                   <FormDescription>
                     Datoen brukes til å datere utgiftene.
                   </FormDescription>
+                  <div className="flex items-center space-x-2 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -448,6 +449,7 @@ export default function ExpensePage() {
                       <Eraser className="mr-2 h-4 w-4" />
                       Tøm skjema
                     </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -659,9 +661,33 @@ export default function ExpensePage() {
             ))}
           </div>
 
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Processing..." : "Generate Report"}
-          </Button>
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Processing..." : "Generate Report"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              asChild
+              className="flex items-center gap-2"
+            >
+              <a
+                target="_blank"
+                href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("date").toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
+                  .getValues("expenses")
+                  .map((expense) => expense.description)
+                  .join(", ")}.
+
+Vedlagt er en PDF-fil med utleggene.
+
+Med vennlig hilsen,
+${form.getValues("name")}`)}`}
+              >
+                <Mail className="h-4 w-4" />
+                Send e-post
+              </a>
+            </Button>
+          </div>
         </form>
       </Form>
       <Toaster />
