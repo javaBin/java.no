@@ -4,8 +4,8 @@ import mariusDuke from "../../public/img/marius_duke.svg"
 import javaZoneLogo from "../../public/img/logos/javazone-logo.jpg"
 import octocat from "../../public/img/logos/github-logo.png"
 import { Region } from "../components/Region"
-import regions from "../../data/regions"
-import members from "../../data/boardmembers"
+import regions from "../data/regions"
+import members from "../data/boardmembers"
 import BoardMembers from "../components/BoardMembers"
 import Link from "next/link"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
@@ -42,7 +42,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         </div>
       </header>
 
-      <section id="about">
+      <section className="section" id="about">
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
@@ -68,7 +68,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         </div>
       </section>
 
-      <section id="contribute">
+      <section className="section" id="contribute">
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
@@ -175,7 +175,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         </div>
       </section>
 
-      <section id="locations">
+      <section className="section" id="locations">
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">
@@ -193,13 +193,13 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         </div>
       </section>
 
-      <section id="board">
+      <section className="section" id="board">
         <BoardMembers boardMembers={props.boardMembers} />
       </section>
 
       {/*<Membership />*/}
 
-      <section id="contact">
+      <section className="section" id="contact">
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center">

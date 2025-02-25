@@ -4,9 +4,10 @@ import "../styles/style.scss"
 import { appWithTranslation } from "next-i18next"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { AppType } from "next/app"
-import { Menu } from "../components/Menu"
+import { Menu } from "@/components/Menu"
 import Head from "next/head"
-import { Footer } from "../components/Footer"
+import { Footer } from "@/components/Footer"
+import { NuqsAdapter } from "nuqs/adapters/next/pages"
 
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
@@ -18,7 +19,9 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         <link rel="icon" type="image/icon" href="/img/favicon.ico" />
       </Head>
       <Menu />
-      <Component {...pageProps} />
+      <NuqsAdapter>
+        <Component {...pageProps} />
+      </NuqsAdapter>
       <Footer />
     </>
   )
