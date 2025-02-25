@@ -4,7 +4,8 @@ import React from "react"
 import { banks } from "@/data/NorwegianBanks"
 import { PiggyBank } from "lucide-react"
 import { Controller } from "react-hook-form"
-import { validateAccountNumber } from "@/lib/expense"
+import { validateBankAccount } from "@/lib/expense"
+import { useTranslation } from "next-i18next"
 
 type AccountInputBaseProps = Omit<
   React.ComponentProps<typeof Input>,
@@ -22,22 +23,28 @@ const AccountInputBase = React.forwardRef<
     onBlur: () => void
   }
 >(({ value, onChange, onBlur, ...props }, ref) => {
-  // Find bank based on clearing code
+  // Determine if the input is an IBAN (starts with 2 letters)
+  const isIBAN = React.useMemo(() => {
+    return /^[A-Za-z]{2}/.test(value);
+  }, [value]);
+
+  // Find bank based on clearing code (only for Norwegian accounts)
   const bank = React.useMemo(() => {
+    if (isIBAN) return null;
+    
     const cleanValue = value?.replace(/\D/g, "")
     return (
       banks.find((bank) =>
         bank.clearingCodes.includes(cleanValue?.slice(0, 4)),
       ) || null
     )
-  }, [value])
+  }, [value, isIBAN])
 
   return (
     <Input
       {...props}
       ref={ref}
       type="text"
-      inputMode="numeric"
       startIcon={
         bank ? (
           <Image
@@ -54,25 +61,51 @@ const AccountInputBase = React.forwardRef<
           />
         )
       }
-      description={bank?.name}
+      description={bank?.name || (isIBAN ? "IBAN" : undefined)}
       value={value}
       onChange={(e) => {
-        const value = e.target.value.replace(/\p{Letter}/gu, "")
-        if (value.replace(/\D/g, "").length > 11) return
-        onChange(value)
+        let newValue = e.target.value;
+        
+        // Allow both letters and numbers for all inputs
+        // This way users can type either IBAN or BBAN format
+        newValue = newValue.replace(/[^a-zA-Z0-9\s]/g, "");
+        
+        // If it starts with letters, it's likely an IBAN - convert to uppercase
+        if (/^[A-Za-z]/.test(newValue)) {
+          newValue = newValue.toUpperCase();
+          // Max IBAN length is 34 characters
+          if (newValue.replace(/\s/g, "").length > 34) return;
+        } else {
+          // If it starts with numbers, treat as Norwegian account number
+          // and only allow digits
+          newValue = newValue.replace(/[^0-9\s]/g, "");
+          if (newValue.replace(/\s/g, "").length > 11) return;
+        }
+        
+        onChange(newValue);
       }}
       onBlur={() => {
         onBlur()
-        const cleanValue = value.replace(/\D/g, "")
+        const cleanValue = value.replace(/\s/g, "")
         if (!cleanValue) return
-        onChange(
-          `${cleanValue.slice(0, 4)} ${cleanValue.slice(4, 6)} ${cleanValue.slice(6)}`,
-        )
+        
+        if (isIBAN) {
+          // Format IBAN with a space every 4 characters
+          const formattedIBAN = cleanValue.replace(/(.{4})/g, "$1 ").trim();
+          onChange(formattedIBAN);
+        } else {
+          // Format Norwegian account number as XXXX XX XXXXX
+          const cleanDigits = cleanValue.replace(/\D/g, "");
+          onChange(
+            `${cleanDigits.slice(0, 4)} ${cleanDigits.slice(4, 6)} ${cleanDigits.slice(6)}`,
+          )
+        }
       }}
       onFocus={(e) => {
         const value = e.currentTarget.value
         onChange(value.replace(/\s/g, ""))
       }}
+      placeholder="e.g. 8601 11 17947 or NO93 8601 1117 947"
     />
   )
 })
@@ -83,14 +116,16 @@ export function AccountInput({
   name,
   ...props
 }: AccountInputBaseProps & { name: string }) {
+  const { t } = useTranslation("common");
+  
   return (
     <Controller
       name={name}
       rules={{
         validate: (value) => {
           if (!value) return true
-          const cleanValue = value.replace(/\D/g, "")
-          return validateAccountNumber(cleanValue) || "Ugyldig kontonummer"
+          const cleanValue = value.replace(/\s/g, "")
+          return validateBankAccount(cleanValue) || t("expense.errors.invalidAccount")
         },
       }}
       render={({ field, fieldState }) => (
