@@ -4,6 +4,26 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+/**
+ * Formats a number as currency with proper locale support
+ * 
+ * @param amount The amount to format
+ * @param locale The locale to use for formatting (defaults to Norwegian)
+ * @param options Additional Intl.NumberFormat options
+ * @returns Formatted currency string
+ */
+export function formatCurrency(
+  amount: number,
+  locale: string = "nb-NO",
+  options: Intl.NumberFormatOptions = {}
+): string {
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    ...options,
+  }).format(amount)
+}
+
 
 export function formatBytes(
   bytes: number,

@@ -1,15 +1,9 @@
-import { EXPENSE_CATEGORIES } from "@/data/utleggsposter"
 import { z } from "zod"
 
 // Create schemas with localized error messages
 export const createExpenseSchemas = (t: (key: string) => string, language: string = "no") => {
   const expenseItemSchema = z.object({
     description: z.string().min(2, t("expense.errors.descriptionRequired")),
-    category: z
-      .string()
-      .refine((val) => EXPENSE_CATEGORIES.some((cat) => cat.fullName === val), {
-        message: t("expense.errors.categoryRequired"),
-      }),
     amount: z.number().min(0.01, t("expense.errors.amountPositive")),
     attachment: z
       .custom<File>((file) => file instanceof File, t("expense.errors.fileRequired"))

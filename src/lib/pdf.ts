@@ -1,6 +1,7 @@
 import { createExpenseSchemas } from "@/lib/expense"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
+import { formatCurrency } from "./utils"
 
 export async function generatePDF({
   name,
@@ -38,7 +39,10 @@ export async function generatePDF({
   // Personal information
   const infoLines = [
     { label: "Navn:", value: name },
-    { label: "Adresse:", value: `${streetAddress}, ${postalCode} ${city}, ${country}` },
+    {
+      label: "Adresse:",
+      value: `${streetAddress}, ${postalCode} ${city}, ${country}`,
+    },
     { label: "Kontonummer:", value: bankAccount.replace(/\s/g, "") },
     { label: "E-post:", value: email },
     { label: "Dato:", value: formattedDate },
@@ -67,16 +71,15 @@ export async function generatePDF({
   // Add expense items table
   const tableTop = height - 275
   const rowHeight = 30
-  const pageWidth = coverPage.getWidth();
-  const margin = 50; // Left and right page margins
-  const usableWidth = pageWidth - (2 * margin);
-  
+  const pageWidth = coverPage.getWidth()
+  const margin = 50 // Left and right page margins
+  const usableWidth = pageWidth - 2 * margin
+
   // Adjust column widths to ensure amounts fit
   const columns = {
     attachment: { x: margin, width: usableWidth * 0.1 },
-    description: { x: margin + (usableWidth * 0.1), width: usableWidth * 0.4 },
-    category: { x: margin + (usableWidth * 0.5), width: usableWidth * 0.3 },
-    amount: { x: margin + (usableWidth * 0.8), width: usableWidth * 0.2 },
+    description: { x: margin + usableWidth * 0.1, width: usableWidth * 0.4 },
+    amount: { x: margin + usableWidth * 0.8, width: usableWidth * 0.2 },
   }
 
   // Table headers
@@ -84,10 +87,9 @@ export async function generatePDF({
     const headerTexts = {
       attachment: "#",
       description: "Beskrivelse",
-      category: "Kategori",
-      amount: "Beløp"
-    };
-    
+      amount: "Beløp",
+    }
+
     coverPage.drawText(headerTexts[key as keyof typeof headerTexts], {
       x,
       y: tableTop,
@@ -99,13 +101,7 @@ export async function generatePDF({
 
   // Table rows
   let totalAmount = 0
-  
-  // Create Norwegian number formatter
-  const numberFormatter = new Intl.NumberFormat('nb-NO', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  
+
   expenses.forEach((expense, index) => {
     const y = tableTop - (index + 1) * rowHeight
 
@@ -118,22 +114,15 @@ export async function generatePDF({
       maxWidth: columns.description.width,
     })
 
-    coverPage.drawText(expense.category, {
-      x: columns.category.x,
-      y,
-      size: 10,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-      maxWidth: columns.category.width,
-    })
+    // Format amount using our utility function
+    const formattedAmount = formatCurrency(expense.amount)
 
-    // Format amount using Norwegian locale
-    const formattedAmount = numberFormatter.format(expense.amount)
-    
     // Right-align the amount within its column
     coverPage.drawText(formattedAmount, {
-      x: columns.amount.x + columns.amount.width - 
-         regularFont.widthOfTextAtSize(formattedAmount, 10),
+      x:
+        columns.amount.x +
+        columns.amount.width -
+        regularFont.widthOfTextAtSize(formattedAmount, 10),
       y,
       size: 10,
       font: regularFont,
@@ -154,15 +143,20 @@ export async function generatePDF({
     totalAmount += expense.amount
   })
 
-  // Format total amount using Norwegian locale
-  const formattedTotalAmount = numberFormatter.format(totalAmount)
+  // Format total amount using our utility function
+  const formattedTotalAmount = formatCurrency(totalAmount)
   const totalAmountWidth = font.widthOfTextAtSize(formattedTotalAmount, 12)
   const totalLabelWidth = font.widthOfTextAtSize("Total:", 12)
   const totalLabelSpacing = 10 // Space between label and amount
-  
+
   // Position the total label to the left of the amount, ensuring no overlap
   coverPage.drawText("Total:", {
-    x: columns.amount.x + columns.amount.width - totalAmountWidth - totalLabelWidth - totalLabelSpacing,
+    x:
+      columns.amount.x +
+      columns.amount.width -
+      totalAmountWidth -
+      totalLabelWidth -
+      totalLabelSpacing,
     y: tableTop - (expenses.length + 1) * rowHeight,
     size: 12,
     font,

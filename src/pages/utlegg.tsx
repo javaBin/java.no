@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Eraser, Mail } from "lucide-react"
-import { CategorySelector } from "@/components/CategorySelector"
 import { createExpenseSchemas } from "@/lib/expense"
 import AccountInput from "@/components/AccountInput"
 import { FileUploader } from "@/components/FileUploader"
@@ -34,29 +33,11 @@ import {
 import { cn } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
-import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs"
-import type { GetServerSideProps } from "next"
-import {
-  CategoryItem,
-  CategoryGroup,
-  EXPENSE_CATEGORIES,
-} from "@/data/utleggsposter"
+import { parseAsString, useQueryStates } from "nuqs"
+import type { GetStaticProps } from "next"
 
 // BBAN: 8601 11 17947
 // IBAN: NO9386011117947
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  return {
-    props: {
-      ...(await serverSideTranslations(
-        locale ?? "no",
-        ["common"],
-        nextI18nConfig,
-        ["no", "en"],
-      )),
-    },
-  }
-}
 
 export default function ExpensePage() {
   const { t, i18n } = useTranslation("common")
@@ -75,31 +56,8 @@ export default function ExpensePage() {
     city: parseAsString.withDefault(""),
     country: parseAsString.withDefault("Norway"),
     bankAccount: parseAsString.withDefault(""),
-    categoryGroup: parseAsStringLiteral([
-      "alle",
-      ...EXPENSE_CATEGORIES.map((c) => c.category),
-    ]).withDefault("alle"),
-    categoryItem: parseAsStringLiteral([
-      "",
-      ...EXPENSE_CATEGORIES.map((c) => c.fullName),
-    ]).withDefault(""),
   })
 
-  // Local state management
-  const [globalCategoryGroup, setGlobalCategoryGroup] = useState(
-    queryParamForm.categoryGroup,
-  )
-  const [globalCategoryItem, setGlobalCategoryItem] = useState(
-    queryParamForm.categoryItem,
-  )
-  const [overriddenCategories, setOverriddenCategories] = useState<
-    Record<number, CategoryGroup>
-  >({})
-  const [overriddenCategoryItems, setOverriddenCategoryItems] = useState<
-    Record<number, CategoryItem>
-  >({})
-
-  // Initialize react-hook-form with zod resolver
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -114,7 +72,6 @@ export default function ExpensePage() {
       expenses: [
         {
           description: "",
-          category: queryParamForm.categoryItem,
           amount: 0,
           attachment: undefined as unknown as File,
         },
@@ -126,50 +83,6 @@ export default function ExpensePage() {
     control: form.control,
     name: "expenses",
   })
-
-  useEffect(() => {
-    const expenses = form.getValues("expenses")
-    expenses.forEach((_, index) => {
-      if (!overriddenCategoryItems[index]) {
-        form.setValue(`expenses.${index}.category`, globalCategoryItem)
-      }
-    })
-  }, [form, globalCategoryItem, overriddenCategoryItems])
-
-  // Add useEffect to sync specific form values with URL params
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      // Only update for specific fields we want to sync
-      const syncableFields = [
-        "name",
-        "email",
-        "streetAddress",
-        "postalCode",
-        "city",
-        "country",
-        "bankAccount",
-      ]
-
-      if (!name || !syncableFields.includes(name)) return
-
-      // Update only the changed field in URL params
-      setQueryParamForm((prev) => ({
-        ...prev,
-        [name]: value[name as keyof typeof value] || "",
-      }))
-    })
-
-    return () => subscription.unsubscribe()
-  }, [form, setQueryParamForm])
-
-  // Add separate effect for category changes
-  useEffect(() => {
-    setQueryParamForm((prev) => ({
-      ...prev,
-      categoryGroup: globalCategoryGroup,
-      categoryItem: globalCategoryItem,
-    }))
-  }, [globalCategoryGroup, globalCategoryItem, setQueryParamForm])
 
   // Handler to clear form
   const handleClearForm = () => {
@@ -185,7 +98,6 @@ export default function ExpensePage() {
       expenses: [
         {
           description: "",
-          category: "",
           amount: 0,
           attachment: undefined as unknown as File,
         },
@@ -228,16 +140,6 @@ export default function ExpensePage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  // Helper to get category for a specific expense index
-  const getCategoryForExpense = (index: number): CategoryGroup => {
-    return overriddenCategories[index] || globalCategoryGroup
-  }
-
-  // Helper to get category item for a specific expense index
-  const getCategoryItemForExpense = (index: number) => {
-    return overriddenCategoryItems[index] || globalCategoryItem
   }
 
   // Add this helper function for image resizing
@@ -479,7 +381,6 @@ export default function ExpensePage() {
                 onClick={() =>
                   append({
                     description: "",
-                    category: globalCategoryItem,
                     amount: 0,
                     attachment: new File([], ""),
                   })
@@ -487,17 +388,6 @@ export default function ExpensePage() {
               >
                 {t("expense.addExpense")}
               </Button>
-            </div>
-            <div className="mb-6">
-              <Label>{t("expense.defaultCategory")}</Label>
-              <CategorySelector
-                selectedCategory={globalCategoryGroup}
-                onCategoryChange={setGlobalCategoryGroup}
-                selectedItem={globalCategoryItem}
-                onItemChange={(category, value) => {
-                  setGlobalCategoryItem(value)
-                }}
-              />
             </div>
 
             {fields.map((field, index) => (
@@ -522,84 +412,6 @@ export default function ExpensePage() {
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`expenses.${index}.category`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>{t("expense.category")}</FormLabel>
-                      <div className="space-y-2">
-                        <CategorySelector
-                          selectedCategory={getCategoryForExpense(index)}
-                          onCategoryChange={(category) => {
-                            if (category === globalCategoryGroup) {
-                              setOverriddenCategories((prev) => {
-                                const next = { ...prev }
-                                delete next[index]
-                                return next
-                              })
-                            } else {
-                              setOverriddenCategories((prev) => ({
-                                ...prev,
-                                [index]: category,
-                              }))
-                            }
-                          }}
-                          selectedItem={getCategoryItemForExpense(index)}
-                          onItemChange={(category, value) => {
-                            field.onChange(value)
-                            if (value === globalCategoryItem) {
-                              setOverriddenCategoryItems((prev) => {
-                                const next = { ...prev }
-                                delete next[index]
-                                return next
-                              })
-                            } else {
-                              setOverriddenCategories((prev) => ({
-                                ...prev,
-                                [index]: category,
-                              }))
-                              setOverriddenCategoryItems((prev) => ({
-                                ...prev,
-                                [index]: value,
-                              }))
-                            }
-                          }}
-                          showOverrideBadge={
-                            overriddenCategories[index] !== undefined ||
-                            overriddenCategoryItems[index] !== undefined
-                          }
-                          globalCategoryItem={globalCategoryItem}
-                        />
-                        {(overriddenCategories[index] !== undefined ||
-                          overriddenCategoryItems[index] !== undefined) && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setOverriddenCategories((prev) => {
-                                const next = { ...prev }
-                                delete next[index]
-                                return next
-                              })
-                              setOverriddenCategoryItems((prev) => {
-                                const next = { ...prev }
-                                delete next[index]
-                                return next
-                              })
-                              field.onChange(globalCategoryItem)
-                            }}
-                          >
-                            {t("expense.resetToGlobalCategory")}
-                          </Button>
-                        )}
-                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -711,4 +523,21 @@ ${form.getValues("name")}`)}`}
       <Toaster />
     </div>
   )
+}
+
+export const getStaticProps: GetStaticProps = async ({
+  locale,
+}: {
+  locale?: string
+}) => {
+  return {
+    props: {
+      ...(await serverSideTranslations(
+        locale ?? "no",
+        ["common"],
+        nextI18nConfig,
+        ["no", "en"],
+      )),
+    },
+  }
 }
