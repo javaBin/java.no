@@ -30,9 +30,9 @@ const members: BoardMemberType[] = [
     img: "dervis_mansuroglu.jpg",
   },
   {
-    name: "Karl Syvert Løland",
+    name: "Sandra Lekve",
     title: "Board Member",
-    img: "karl_syvert_loland.jpg",
+    img: "sandra_lekve.jpg",
   },
   {
     name: "Børge Nese",
@@ -63,6 +63,11 @@ const members: BoardMemberType[] = [
     name: "Janniche Lange",
     title: "Board Member",
     img: "janniche_lange.jpg",
+  },
+  {
+    name: "Vytautas Zaleckas",
+    title: "Board Member",
+    img: "vytautas_zaleckas.jpg",
   },
 ]
 
