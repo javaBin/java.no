@@ -50,11 +50,6 @@ const members: BoardMemberType[] = [
     img: "sverre_moe.jpg",
   },
   {
-    name: "Orathai Mai Khanasa",
-    title: "Board Member",
-    img: "orathai_mai_khanasa.jpg",
-  },
-  {
     name: "Chris Searle",
     title: "Board Member",
     img: "chris_searle.jpg",
