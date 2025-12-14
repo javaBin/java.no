@@ -105,7 +105,7 @@
     "email": "E-post",
     "emailPlaceholder": "ola.nordmann@example.com",
     "date": "Dato",
-    "dateDescription": "Datoen brukes til å datere utgiftene.",
+    "dateDescription": "Datoen brukes til å datere utgiften.",
     "clearForm": "Tøm skjema",
     "expenses": "Utgifter",
     "addExpense": "Legg til utgift",
@@ -113,7 +113,9 @@
     "description": "Beskrivelse",
     "category": "Kategori",
     "resetToGlobalCategory": "Tilbakestill til global kategori",
-    "amount": "Beløp (NOK)",
+    "amount": "Beløp",
+    "currency": "Valuta",
+    "selectCurrency": "Velg valuta",
     "attachment": "Vedlegg",
     "processing": "Behandler...",
     "generateReport": "Generer rapport",
@@ -132,6 +134,7 @@
       "invalidAccount": "Ugyldig kontonummer",
       "invalidEmail": "Vennligst oppgi en gyldig e-postadresse",
       "dateRequired": "Vennligst velg en dato",
+      "currencyRequired": "Valuta er påkrevd",
       "expenseRequired": "Minst én utgift er påkrevd"
     }
   }

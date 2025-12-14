@@ -17,6 +17,13 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Form,
   FormControl,
   FormDescription,
@@ -35,6 +42,7 @@ import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
 import { parseAsString, useQueryStates } from "nuqs"
 import type { GetStaticProps } from "next"
+import { currencies } from "@/data/currencies"
 
 // BBAN: 8601 11 17947
 // IBAN: NO9386011117947
@@ -68,11 +76,12 @@ export default function ExpensePage() {
       country: queryParamForm.country,
       bankAccount: queryParamForm.bankAccount,
       email: queryParamForm.email,
-      date: new Date(),
       expenses: [
         {
           description: "",
           amount: 0,
+          currency: "NOK",
+          date: new Date(),
           attachment: undefined as unknown as File,
         },
       ],
@@ -94,11 +103,12 @@ export default function ExpensePage() {
       country: "Norway",
       bankAccount: "",
       email: "",
-      date: new Date(),
       expenses: [
         {
           description: "",
           amount: 0,
+          currency: "NOK",
+          date: new Date(),
           attachment: undefined as unknown as File,
         },
       ],
@@ -117,17 +127,29 @@ export default function ExpensePage() {
         country: data.country,
         bankAccount: data.bankAccount,
         email: data.email,
-        date: data.date,
         expenses: data.expenses,
       })
 
-      const blob = new Blob([expenseReport], { type: "application/pdf" })
+      const blob = new Blob([expenseReport as BlobPart], {
+        type: "application/pdf",
+      })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
+
+      // Use today's date for filename
+      const today = new Date()
+      const todayStr = today.toISOString().split("T")[0]
+
+      // Sanitize name for filename (remove special characters, replace spaces with hyphens)
+      const sanitizedName = data.name
+        .replace(/[^a-zA-Z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .toLowerCase()
+
       link.setAttribute(
         "download",
-        `${data.date.toISOString().split("T")[0]}-expense-report.pdf`,
+        `${todayStr}-${sanitizedName}-expense-report.pdf`,
       )
       // Create temporary link element to trigger download
       document.body.appendChild(link)
@@ -310,66 +332,17 @@ export default function ExpensePage() {
               )}
             />
 
-            <FormControl>
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>{t("expense.date")}</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", {
-                                locale: i18n.language === "no" ? nb : undefined,
-                              })
-                            ) : (
-                              <span>{t("expense.selectDate")}</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          locale={i18n.language === "no" ? nb : undefined}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("2020-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      {t("expense.dateDescription")}
-                    </FormDescription>
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClearForm}
-                      >
-                        <Eraser className="mr-2 h-4 w-4" />
-                        {t("expense.clearForm")}
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormControl>
+            <div className="flex items-center space-x-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleClearForm}
+              >
+                <Eraser className="mr-2 h-4 w-4" />
+                {t("expense.clearForm")}
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -382,6 +355,8 @@ export default function ExpensePage() {
                   append({
                     description: "",
                     amount: 0,
+                    currency: "NOK",
+                    date: new Date(),
                     attachment: new File([], ""),
                   })
                 }
@@ -417,22 +392,104 @@ export default function ExpensePage() {
                   )}
                 />
 
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`expenses.${index}.amount`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{t("expense.amount")}</Label>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`expenses.${index}.currency`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{t("expense.currency")}</Label>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={t("expense.selectCurrency")}
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {currencies.map((currency) => (
+                              <SelectItem key={currency.code} value={currency.code}>
+                                {currency.code} - {currency.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name={`expenses.${index}.amount`}
+                  name={`expenses.${index}.date`}
                   render={({ field }) => (
-                    <FormItem>
-                      <Label>{t("expense.amount")}</Label>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
-                        />
-                      </FormControl>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>{t("expense.date")}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[240px] pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", {
+                                  locale:
+                                    i18n.language === "no" ? nb : undefined,
+                                })
+                              ) : (
+                                <span>{t("expense.selectDate")}</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            locale={i18n.language === "no" ? nb : undefined}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("2020-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        {t("expense.dateDescription")}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -503,7 +560,7 @@ export default function ExpensePage() {
             >
               <a
                 target="_blank"
-                href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("date").toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
+                href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
                   .getValues("expenses")
                   .map((expense) => expense.description)
                   .join(", ")}.

@@ -2,6 +2,7 @@ import { createExpenseSchemas } from "@/lib/expense"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 import { formatCurrency } from "./utils"
+import { convertToNOK, getExchangeRate } from "./expense"
 
 export async function generatePDF({
   name,
@@ -11,7 +12,6 @@ export async function generatePDF({
   country,
   bankAccount,
   email,
-  date,
   expenses,
 }: z.infer<ReturnType<typeof createExpenseSchemas>["formSchema"]>) {
   const pdfDoc = await PDFDocument.create()
@@ -29,13 +29,6 @@ export async function generatePDF({
     color: rgb(0, 0, 0),
   })
 
-  // Format date
-  const formattedDate = new Date(date).toLocaleDateString("no-NO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-
   // Personal information
   const infoLines = [
     { label: "Navn:", value: name },
@@ -45,7 +38,6 @@ export async function generatePDF({
     },
     { label: "Kontonummer:", value: bankAccount.replace(/\s/g, "") },
     { label: "E-post:", value: email },
-    { label: "Dato:", value: formattedDate },
   ]
 
   infoLines.forEach((line, index) => {
@@ -77,9 +69,10 @@ export async function generatePDF({
 
   // Adjust column widths to ensure amounts fit
   const columns = {
-    attachment: { x: margin, width: usableWidth * 0.1 },
-    description: { x: margin + usableWidth * 0.1, width: usableWidth * 0.4 },
-    amount: { x: margin + usableWidth * 0.8, width: usableWidth * 0.2 },
+    attachment: { x: margin, width: usableWidth * 0.05 },
+    description: { x: margin + usableWidth * 0.05, width: usableWidth * 0.3 },
+    date: { x: margin + usableWidth * 0.35, width: usableWidth * 0.15 },
+    amount: { x: margin + usableWidth * 0.7, width: usableWidth * 0.3 },
   }
 
   // Table headers
@@ -87,7 +80,8 @@ export async function generatePDF({
     const headerTexts = {
       attachment: "#",
       description: "Beskrivelse",
-      amount: "Beløp",
+      date: "Dato",
+      amount: "Beløp (NOK)",
     }
 
     coverPage.drawText(headerTexts[key as keyof typeof headerTexts], {
@@ -102,9 +96,10 @@ export async function generatePDF({
   // Table rows
   let totalAmount = 0
 
-  expenses.forEach((expense, index) => {
+  for (const [index, expense] of expenses.entries()) {
     const y = tableTop - (index + 1) * rowHeight
 
+    // Draw description
     coverPage.drawText(expense.description, {
       x: columns.description.x,
       y,
@@ -114,15 +109,48 @@ export async function generatePDF({
       maxWidth: columns.description.width,
     })
 
+    // Draw date
+    const expenseDate = new Date(expense.date)
+    const formattedDate = expenseDate.toLocaleDateString("no-NO", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+    coverPage.drawText(formattedDate, {
+      x: columns.date.x,
+      y,
+      size: 10,
+      font: regularFont,
+      color: rgb(0, 0, 0),
+      maxWidth: columns.date.width,
+    })
+
+    // Convert amount to NOK if needed
+    const amountInNOK = await convertToNOK(
+      expense.amount,
+      expense.currency,
+      expenseDate
+    )
+
     // Format amount using our utility function
-    const formattedAmount = formatCurrency(expense.amount)
+    let amountText = formatCurrency(amountInNOK)
+    
+    // Add original currency info and exchange rate if not NOK
+    if (expense.currency !== "NOK") {
+      const exchangeRate = await getExchangeRate(expense.currency, expenseDate)
+      if (exchangeRate !== null) {
+        amountText += ` (${formatCurrency(expense.amount)} ${expense.currency} @ ${exchangeRate.toFixed(4)})`
+      } else {
+        amountText += ` (${formatCurrency(expense.amount)} ${expense.currency})`
+      }
+    }
 
     // Right-align the amount within its column
-    coverPage.drawText(formattedAmount, {
+    coverPage.drawText(amountText, {
       x:
         columns.amount.x +
         columns.amount.width -
-        regularFont.widthOfTextAtSize(formattedAmount, 10),
+        regularFont.widthOfTextAtSize(amountText, 10),
       y,
       size: 10,
       font: regularFont,
@@ -140,8 +168,8 @@ export async function generatePDF({
       })
     }
 
-    totalAmount += expense.amount
-  })
+    totalAmount += amountInNOK
+  }
 
   // Format total amount using our utility function
   const formattedTotalAmount = formatCurrency(totalAmount)
@@ -193,8 +221,14 @@ export async function generatePDF({
     for (const page of receiptPages) {
       // Add a header to identify which expense this attachment belongs to
       const attachmentPage = pdfDoc.addPage(page)
+      const expenseDate = new Date(expense.date)
+      const formattedDate = expenseDate.toLocaleDateString("no-NO", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
       attachmentPage.drawText(
-        `Vedlegg for utlegg #${index + 1}: ${expense.description}`,
+        `Vedlegg for utlegg #${index + 1}: ${expense.description} (${formattedDate})`,
         {
           x: 50,
           y: attachmentPage.getHeight() - (regularFont.heightAtSize(12) + 5),

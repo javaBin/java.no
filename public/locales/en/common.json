@@ -105,7 +105,7 @@
     "email": "Email",
     "emailPlaceholder": "john.doe@example.com",
     "date": "Date",
-    "dateDescription": "The date is used to date the expenses.",
+    "dateDescription": "The date is used to date the expense.",
     "clearForm": "Clear Form",
     "expenses": "Expenses",
     "addExpense": "Add Expense",
@@ -113,7 +113,9 @@
     "description": "Description",
     "category": "Category",
     "resetToGlobalCategory": "Reset to Global Category",
-    "amount": "Amount (NOK)",
+    "amount": "Amount",
+    "currency": "Currency",
+    "selectCurrency": "Select currency",
     "attachment": "Attachment",
     "processing": "Processing...",
     "generateReport": "Generate Report",
@@ -132,6 +134,7 @@
       "invalidAccount": "Invalid account number",
       "invalidEmail": "Please enter a valid email address",
       "dateRequired": "Please select a date",
+      "currencyRequired": "Currency is required",
       "expenseRequired": "At least one expense is required"
     }
   }
