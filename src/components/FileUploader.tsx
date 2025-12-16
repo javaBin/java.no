@@ -476,18 +476,16 @@ export function FileUploader(props: FileUploaderProps) {
         </Dropzone>
       )}
       {files?.length ? (
-        <ScrollArea className="h-fit w-full px-3">
-          <div className="flex max-h-48 flex-col gap-4">
-            {files?.map((file, index) => (
-              <FileCard
-                key={index}
-                file={file}
-                onRemove={() => onRemove(index)}
-                progress={progresses?.[file.name]}
-              />
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="flex flex-col gap-2.5">
+          {files?.map((file, index) => (
+            <FileCard
+              key={index}
+              file={file}
+              onRemove={() => onRemove(index)}
+              progress={progresses?.[file.name]}
+            />
+          ))}
+        </div>
       ) : null}
       <CropDialog
         file={cropDialogFile!}
@@ -682,36 +680,39 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
   const [isSelectionOpen, setIsSelectionOpen] = React.useState(false)
 
   return (
-    <div className="relative flex items-center gap-2.5">
-      <div className="flex flex-1 gap-2.5">
+    <div className="group relative flex items-center gap-3 rounded-lg border bg-card p-2.5 transition-colors hover:bg-accent/50">
+      <div className="relative shrink-0">
         {file.type.startsWith("image/") || file.type === "application/pdf" ? (
           <FilePreview file={file} />
-        ) : null}
-        <div className="flex w-full flex-col gap-2">
-          <div className="flex flex-col gap-px">
-            <p className="text-foreground/80 line-clamp-1 text-sm font-medium">
-              {file.name}
-            </p>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground text-xs">
-                {formatBytes(file.size)}
-              </p>
-            </div>
+        ) : (
+          <div className="bg-muted relative aspect-square size-16 shrink-0 overflow-hidden rounded-md border flex items-center justify-center">
+            <FileText className="text-muted-foreground size-6" aria-hidden="true" />
           </div>
-          {progress ? <Progress value={progress} /> : null}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
+        )}
         <Button
           type="button"
-          variant="outline"
+          variant="destructive"
           size="icon"
-          className="size-7"
-          onClick={onRemove}
+          className="absolute -right-1 -top-1 size-6 rounded-full shadow-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
         >
-          <X className="size-4" aria-hidden="true" />
+          <X className="size-3" aria-hidden="true" />
           <span className="sr-only">Remove file</span>
         </Button>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-col gap-0.5">
+          <p className="text-foreground line-clamp-1 text-sm font-medium">
+            {file.name}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {formatBytes(file.size)}
+          </p>
+        </div>
+        {progress !== undefined && <Progress value={progress} className="h-1.5" />}
       </div>
 
       <ImageSelectionDialog
@@ -748,13 +749,13 @@ function FilePreview({ file }: FilePreviewProps) {
         <button
           type="button"
           onClick={() => setIsImageOpen(true)}
-          className="relative aspect-square size-12 shrink-0 overflow-hidden rounded-md border"
+          className="relative aspect-square size-16 shrink-0 overflow-hidden rounded-md border transition-opacity hover:opacity-90"
         >
           <NextImage
             src={preview}
             alt={file.name}
-            width={48}
-            height={48}
+            width={64}
+            height={64}
             loading="lazy"
             className="h-full w-full object-cover"
           />
@@ -847,7 +848,7 @@ function FilePreview({ file }: FilePreviewProps) {
         <button
           type="button"
           onClick={() => setIsPdfOpen(true)}
-          className="bg-muted relative aspect-square size-12 shrink-0 overflow-hidden rounded-md border"
+          className="bg-muted relative aspect-square size-16 shrink-0 overflow-hidden rounded-md border transition-opacity hover:opacity-90"
         >
           <FileText
             className="text-muted-foreground absolute left-1/2 top-1/2 size-6 -translate-x-1/2 -translate-y-1/2"
