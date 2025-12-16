@@ -117,6 +117,7 @@
     "currency": "Valuta",
     "selectCurrency": "Velg valuta",
     "attachment": "Vedlegg",
+    "remove": "Fjern",
     "processing": "Behandler...",
     "generateReport": "Generer rapport",
     "sendEmail": "Send e-post",

@@ -6,7 +6,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
-import { CalendarIcon, Trash2, Eraser, Mail } from "lucide-react"
+import { CalendarIcon, Trash2, Eraser, Mail, Plus } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
 import AccountInput from "@/components/AccountInput"
 import { FileUploader } from "@/components/FileUploader"
@@ -385,45 +385,34 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2.5 rounded-lg border-2 border-border bg-muted/30 p-5 shadow-md">
+            <div className="border-b border-border pb-2.5">
               <h2 className="text-xl font-semibold">{t("expense.expenses")}</h2>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  append({
-                    description: "",
-                    amount: 0,
-                    currency: "NOK",
-                    date: new Date(),
-                    attachment: new File([], ""),
-                  })
-                }
-              >
-                {t("expense.addExpense")}
-              </Button>
             </div>
 
             {fields.map((field, index) => (
-              <div key={field.id} className="space-y-4 rounded-lg border p-4">
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div key={field.id} className="relative space-y-2.5 rounded-lg border-2 border-border bg-card p-3.5 shadow-sm">
+                {fields.length > 1 && (
+                  <div className="absolute right-3 top-3 z-10">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => remove(index)}
+                      className="gap-1.5 shadow-sm"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="text-xs font-medium">{t("expense.remove") || "Remove"}</span>
+                    </Button>
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
                   name={`expenses.${index}.description`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>{t("expense.description")}</Label>
+                      <Label className="text-sm">{t("expense.description")}</Label>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -432,7 +421,56 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name={`expenses.${index}.date`}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className="text-sm">{t("expense.date")}</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal md:w-full",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", {
+                                    locale:
+                                      i18n.language === "no" ? nb : undefined,
+                                  })
+                                ) : (
+                                  <span>{t("expense.selectDate")}</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              locale={i18n.language === "no" ? nb : undefined}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("2020-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription className="hidden md:block">
+                          {t("expense.dateDescription")}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name={`expenses.${index}.amount`}
@@ -464,7 +502,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
 
                       return (
                         <FormItem>
-                          <Label>{t("expense.amount")}</Label>
+                          <Label className="text-sm">{t("expense.amount")}</Label>
                           <FormControl>
                             <Input
                               type="number"
@@ -529,7 +567,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                     name={`expenses.${index}.currency`}
                     render={({ field }) => (
                       <FormItem>
-                        <Label>{t("expense.currency")}</Label>
+                        <Label className="text-sm">{t("expense.currency")}</Label>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -558,59 +596,10 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
 
                 <FormField
                   control={form.control}
-                  name={`expenses.${index}.date`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>{t("expense.date")}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-[240px] pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", {
-                                  locale:
-                                    i18n.language === "no" ? nb : undefined,
-                                })
-                              ) : (
-                                <span>{t("expense.selectDate")}</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            locale={i18n.language === "no" ? nb : undefined}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("2020-01-01")
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        {t("expense.dateDescription")}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name={`expenses.${index}.attachment`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>{t("expense.attachment")}</Label>
+                      <Label className="text-sm">{t("expense.attachment")}</Label>
                       <FormControl>
                         <FileUploader
                           onUpload={async (files) => {
@@ -654,6 +643,28 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                 />
               </div>
             ))}
+            
+            {fields.length > 0 && (
+              <div className="flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    append({
+                      description: "",
+                      amount: 0,
+                      currency: "NOK",
+                      date: new Date(),
+                      attachment: new File([], ""),
+                    })
+                  }
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("expense.addExpense")}
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
