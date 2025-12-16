@@ -219,11 +219,11 @@ function CropDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Crop Image</DialogTitle>
         </DialogHeader>
-        <div className="relative h-[75vh] w-full gap-4">
+        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
           <TransformWrapper
             initialScale={1}
             minScale={1}
@@ -234,24 +234,24 @@ function CropDialog({
             {({ zoomIn, zoomOut, resetTransform }) => (
               <>
                 <TransformComponent
-                  wrapperClass="!w-full h-full"
-                  contentClass="!w-full h-full flex items-center justify-center"
+                  wrapperClass="!w-full !h-full"
+                  contentClass="!w-full !h-full flex items-center justify-center"
                 >
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
-                    className="flex max-h-[70vh] items-center justify-center"
+                    className="flex max-h-full max-w-full items-center justify-center"
                   >
                     <img
                       ref={imgRef}
                       src={imgSrc}
                       alt="Crop me"
                       onLoad={onImageLoad}
-                      className="max-h-[70vh] w-auto object-contain"
+                      className="max-h-full max-w-full w-auto h-auto object-contain"
                     />
                   </ReactCrop>
                 </TransformComponent>
-                <div className="bg-background/80 absolute bottom-20 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur">
+                <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur z-10">
                   <Button
                     type="button"
                     variant="outline"
@@ -292,12 +292,12 @@ function CropDialog({
               </>
             )}
           </TransformWrapper>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={cropImage}>Crop & Continue</Button>
-          </div>
+        </div>
+        <div className="flex justify-end gap-2 flex-shrink-0 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={cropImage}>Crop & Continue</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -568,11 +568,11 @@ function ImageSelectionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Select Area for OCR</DialogTitle>
         </DialogHeader>
-        <div className="relative h-[75vh] w-full">
+        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
           <TransformWrapper
             initialScale={1}
             minScale={1}
@@ -587,24 +587,24 @@ function ImageSelectionDialog({
             {({ zoomIn, zoomOut, resetTransform }) => (
               <>
                 <TransformComponent
-                  wrapperClass="!w-full h-full"
-                  contentClass="!w-full h-full flex items-center justify-center"
+                  wrapperClass="!w-full !h-full"
+                  contentClass="!w-full !h-full flex items-center justify-center"
                 >
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
                     aspect={undefined}
-                    className="max-h-[70vh] w-auto"
+                    className="flex max-h-full max-w-full items-center justify-center"
                   >
                     <img
                       ref={imgRef}
                       src={imgSrc}
                       alt="Select area"
-                      className="max-h-[70vh] w-auto object-contain"
+                      className="max-h-full max-w-full w-auto h-auto object-contain"
                     />
                   </ReactCrop>
                 </TransformComponent>
-                <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur">
+                <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur z-10">
                   <Button
                     type="button"
                     variant="outline"
@@ -646,7 +646,7 @@ function ImageSelectionDialog({
             )}
           </TransformWrapper>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 flex-shrink-0 pt-4 border-t">
           <Button
             variant="outline"
             onClick={() => {
@@ -754,11 +754,11 @@ function FilePreview({ file }: FilePreviewProps) {
         </button>
 
         <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
             </DialogHeader>
-            <div className="relative flex h-[75vh] w-full items-center justify-center">
+            <div className="relative flex-1 min-h-0 w-full overflow-hidden flex items-center justify-center">
               <TransformWrapper
                 initialScale={1}
                 minScale={1}
@@ -773,20 +773,20 @@ function FilePreview({ file }: FilePreviewProps) {
                 {({ zoomIn, zoomOut, resetTransform }) => (
                   <>
                     <TransformComponent
-                      wrapperClass="!w-full"
-                      contentClass="!w-full flex items-center justify-center"
+                      wrapperClass="!w-full !h-full"
+                      contentClass="!w-full !h-full flex items-center justify-center"
                     >
                       <NextImage
                         src={preview}
                         alt={file.name}
                         width={1200}
                         height={800}
-                        className="max-h-[70vh] w-auto object-contain"
+                        className="max-h-full max-w-full w-auto h-auto object-contain"
                         loading="lazy"
                         unoptimized
                       />
                     </TransformComponent>
-                    <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur">
+                    <div className="bg-background/80 absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg px-4 py-2 backdrop-blur z-10">
                       <Button
                         type="button"
                         variant="outline"
@@ -849,11 +849,11 @@ function FilePreview({ file }: FilePreviewProps) {
         </button>
 
         <Dialog open={isPdfOpen} onOpenChange={setIsPdfOpen}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
             </DialogHeader>
-            <div className="h-[75vh] w-full">
+            <div className="flex-1 min-h-0 w-full overflow-hidden">
               <iframe
                 src={preview}
                 title={file.name}
