@@ -41,13 +41,45 @@ import { cn } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
 import { parseAsString, useQueryStates } from "nuqs"
-import type { GetStaticProps } from "next"
+import type { GetServerSideProps } from "next"
 import { currencies } from "@/data/currencies"
 
 // BBAN: 8601 11 17947
 // IBAN: NO9386011117947
 
-export default function ExpensePage() {
+// Helper function to parse query parameters server-side
+function parseFormQueryParams(query: Record<string, string | string[] | undefined>) {
+  const getString = (key: string, defaultValue: string = ""): string => {
+    const value = query[key]
+    if (value === undefined || value === null) return defaultValue
+    if (Array.isArray(value)) return value[0] || defaultValue
+    return value || defaultValue
+  }
+
+  return {
+    name: getString("name", ""),
+    email: getString("email", ""),
+    streetAddress: getString("streetAddress", ""),
+    postalCode: getString("postalCode", ""),
+    city: getString("city", ""),
+    country: getString("country", "Norway"),
+    bankAccount: getString("bankAccount", ""),
+  }
+}
+
+type ExpensePageProps = {
+  initialFormValues: {
+    name: string
+    email: string
+    streetAddress: string
+    postalCode: string
+    city: string
+    country: string
+    bankAccount: string
+  }
+}
+
+export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
   const { t, i18n } = useTranslation("common")
 
   // Create schema with localized error messages
@@ -56,6 +88,7 @@ export default function ExpensePage() {
 
   const [isLoading, setIsLoading] = useState(false)
 
+  // Keep useQueryStates for syncing form changes back to URL
   const [queryParamForm, setQueryParamForm] = useQueryStates({
     name: parseAsString.withDefault(""),
     email: parseAsString.withDefault(""),
@@ -69,13 +102,13 @@ export default function ExpensePage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: queryParamForm.name,
-      streetAddress: queryParamForm.streetAddress,
-      postalCode: queryParamForm.postalCode,
-      city: queryParamForm.city,
-      country: queryParamForm.country,
-      bankAccount: queryParamForm.bankAccount,
-      email: queryParamForm.email,
+      name: initialFormValues.name,
+      streetAddress: initialFormValues.streetAddress,
+      postalCode: initialFormValues.postalCode,
+      city: initialFormValues.city,
+      country: initialFormValues.country,
+      bankAccount: initialFormValues.bankAccount,
+      email: initialFormValues.email,
       expenses: [
         {
           description: "",
@@ -582,13 +615,15 @@ ${form.getValues("name")}`)}`}
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({
-  locale,
-}: {
-  locale?: string
-}) => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { query, locale } = context
+
+  // Parse search parameters server-side
+  const formValues = parseFormQueryParams(query)
+
   return {
     props: {
+      initialFormValues: formValues,
       ...(await serverSideTranslations(
         locale ?? "no",
         ["common"],
