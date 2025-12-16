@@ -113,7 +113,7 @@
     "description": "Beskrivelse",
     "category": "Kategori",
     "resetToGlobalCategory": "Tilbakestill til global kategori",
-    "amount": "Beløp",
+    "amount": "Beløp (inkl. mva)",
     "currency": "Valuta",
     "selectCurrency": "Velg valuta",
     "attachment": "Vedlegg",

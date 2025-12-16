@@ -113,7 +113,7 @@
     "description": "Description",
     "category": "Category",
     "resetToGlobalCategory": "Reset to Global Category",
-    "amount": "Amount",
+    "amount": "Amount (incl. VAT)",
     "currency": "Currency",
     "selectCurrency": "Select currency",
     "attachment": "Attachment",
