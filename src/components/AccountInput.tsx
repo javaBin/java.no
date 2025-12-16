@@ -3,9 +3,6 @@ import Image from "next/image"
 import React from "react"
 import { banks } from "@/data/NorwegianBanks"
 import { PiggyBank } from "lucide-react"
-import { Controller } from "react-hook-form"
-import { validateBankAccount } from "@/lib/expense"
-import { useTranslation } from "next-i18next"
 
 type AccountInputBaseProps = Omit<
   React.ComponentProps<typeof Input>,
@@ -112,29 +109,23 @@ const AccountInputBase = React.forwardRef<
 AccountInputBase.displayName = "AccountInputBase"
 
 // Export the controlled version for use with React Hook Form
+// Used inside FormField - validation is handled by the Zod schema
 export function AccountInput({
-  name,
+  value,
+  onChange,
+  onBlur,
   ...props
-}: AccountInputBaseProps & { name: string }) {
-  const { t } = useTranslation("common");
-  
+}: AccountInputBaseProps & { 
+  value: string
+  onChange: (value: string) => void
+  onBlur: () => void
+}) {
   return (
-    <Controller
-      name={name}
-      rules={{
-        validate: (value) => {
-          if (!value) return true
-          const cleanValue = value.replace(/\s/g, "")
-          return validateBankAccount(cleanValue) || t("expense.errors.invalidAccount")
-        },
-      }}
-      render={({ field, fieldState }) => (
-        <AccountInputBase
-          {...props}
-          {...field}
-          error={fieldState.error?.message}
-        />
-      )}
+    <AccountInputBase
+      {...props}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
     />
   )
 }
