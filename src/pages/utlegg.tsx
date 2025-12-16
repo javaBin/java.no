@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Label } from "@/components/ui/label"
@@ -436,22 +436,92 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   <FormField
                     control={form.control}
                     name={`expenses.${index}.amount`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <Label>{t("expense.amount")}</Label>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value) || 0)
+                    render={({ field }) => {
+                      // Use local state to track the display value for better UX
+                      const [displayValue, setDisplayValue] = useState<string>(
+                        field.value && field.value !== 0 ? field.value.toString() : ""
+                      )
+                      const [isFocused, setIsFocused] = useState(false)
+
+                      // Sync with form value when it changes externally (e.g., form reset)
+                      // But only when not focused to avoid interfering with user input
+                      useEffect(() => {
+                        if (!isFocused) {
+                          const currentDisplayNum = displayValue === "" || isNaN(parseFloat(displayValue)) 
+                            ? 0 
+                            : parseFloat(displayValue)
+                          // Only sync if the field value differs from what we're displaying
+                          if (Math.abs(field.value - currentDisplayNum) > 0.001) {
+                            if (field.value && field.value !== 0) {
+                              setDisplayValue(field.value.toString())
+                            } else {
+                              setDisplayValue("")
                             }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                          }
+                        }
+                        // eslint-disable-next-line react-hooks/exhaustive-deps
+                      }, [field.value, isFocused])
+
+                      return (
+                        <FormItem>
+                          <Label>{t("expense.amount")}</Label>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={displayValue}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                setDisplayValue(value)
+                                
+                                // Allow empty string while typing
+                                if (value === "" || value === "-") {
+                                  field.onChange(0)
+                                  return
+                                }
+                                
+                                // Check if it's a valid number (including partial decimals like "1.")
+                                const numValue = parseFloat(value)
+                                if (!isNaN(numValue) && isFinite(numValue)) {
+                                  // Update field.value with the parsed number
+                                  // Even if display shows "1.", the form value should be 1
+                                  // This keeps the form in a valid state while allowing partial input
+                                  field.onChange(numValue)
+                                }
+                              }}
+                              onBlur={(e) => {
+                                setIsFocused(false)
+                                // On blur, ensure we have a valid number
+                                const value = e.target.value
+                                if (value === "" || value === "-" || isNaN(parseFloat(value))) {
+                                  field.onChange(0)
+                                  setDisplayValue("")
+                                } else {
+                                  // Ensure display value matches the parsed value
+                                  const numValue = parseFloat(value)
+                                  if (!isNaN(numValue) && isFinite(numValue)) {
+                                    setDisplayValue(numValue.toString())
+                                    field.onChange(numValue)
+                                  }
+                                }
+                                field.onBlur()
+                              }}
+                              onFocus={(e) => {
+                                setIsFocused(true)
+                                // When focusing, show the actual value if it's 0 (empty display)
+                                if (field.value === 0 && displayValue === "") {
+                                  setDisplayValue("")
+                                }
+                              }}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )
+                    }}
                   />
 
                   <FormField
