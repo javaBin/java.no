@@ -258,6 +258,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -274,6 +275,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -295,6 +297,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                         }}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -311,6 +314,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -331,6 +335,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       }}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -344,6 +349,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   <FormControl>
                     <AccountInput {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -361,6 +367,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

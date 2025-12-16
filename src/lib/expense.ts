@@ -6,14 +6,30 @@ export const createExpenseSchemas = (
   language: string = "no",
 ) => {
   const expenseItemSchema = z.object({
-    description: z.string().min(2, t("expense.errors.descriptionRequired")),
-    amount: z.number().min(0.01, t("expense.errors.amountPositive")),
+    description: z
+      .string({
+        required_error: t("expense.errors.descriptionRequired"),
+        invalid_type_error: t("expense.errors.descriptionRequired"),
+      })
+      .min(2, t("expense.errors.descriptionRequired")),
+    amount: z
+      .number({
+        required_error: t("expense.errors.amountPositive"),
+        invalid_type_error: t("expense.errors.amountPositive"),
+      })
+      .min(0.01, t("expense.errors.amountPositive")),
     currency: z
-      .string()
+      .string({
+        required_error: t("expense.errors.currencyRequired"),
+        invalid_type_error: t("expense.errors.currencyRequired"),
+      })
       .min(1, t("expense.errors.currencyRequired"))
       .default("NOK"),
     date: z
-      .date()
+      .date({
+        required_error: t("expense.errors.dateRequired"),
+        invalid_type_error: t("expense.errors.dateRequired"),
+      })
       .min(new Date("2020-01-01"), t("expense.errors.dateRequired")),
     attachment: z
       .custom<File>(
@@ -25,23 +41,58 @@ export const createExpenseSchemas = (
   })
 
   const formSchema = z.object({
-    name: z.string().min(1, t("expense.errors.nameRequired")),
-    streetAddress: z.string().min(1, t("expense.errors.streetRequired")),
-    postalCode: z.string().min(1, t("expense.errors.postalRequired")),
-    city: z.string().min(1, t("expense.errors.cityRequired")),
+    name: z
+      .string({
+        required_error: t("expense.errors.nameRequired"),
+        invalid_type_error: t("expense.errors.nameRequired"),
+      })
+      .min(1, t("expense.errors.nameRequired")),
+    streetAddress: z
+      .string({
+        required_error: t("expense.errors.streetRequired"),
+        invalid_type_error: t("expense.errors.streetRequired"),
+      })
+      .min(1, t("expense.errors.streetRequired")),
+    postalCode: z
+      .string({
+        required_error: t("expense.errors.postalRequired"),
+        invalid_type_error: t("expense.errors.postalRequired"),
+      })
+      .min(1, t("expense.errors.postalRequired")),
+    city: z
+      .string({
+        required_error: t("expense.errors.cityRequired"),
+        invalid_type_error: t("expense.errors.cityRequired"),
+      })
+      .min(1, t("expense.errors.cityRequired")),
     country: z
-      .string()
+      .string({
+        required_error: t("expense.errors.countryRequired"),
+        invalid_type_error: t("expense.errors.countryRequired"),
+      })
       .min(1, t("expense.errors.countryRequired"))
       .default(language === "en" ? "United Kingdom" : "Norway"),
     bankAccount: z
-      .string()
+      .string({
+        required_error: t("expense.errors.invalidAccount"),
+        invalid_type_error: t("expense.errors.invalidAccount"),
+      })
+      .min(1, t("expense.errors.invalidAccount"))
       .refine(
         (str) => validateBankAccount(str),
         t("expense.errors.invalidAccount"),
       ),
-    email: z.string().email(t("expense.errors.invalidEmail")),
+    email: z
+      .string({
+        required_error: t("expense.errors.invalidEmail"),
+        invalid_type_error: t("expense.errors.invalidEmail"),
+      })
+      .email(t("expense.errors.invalidEmail")),
     expenses: z
-      .array(expenseItemSchema)
+      .array(expenseItemSchema, {
+        required_error: t("expense.errors.expenseRequired"),
+        invalid_type_error: t("expense.errors.expenseRequired"),
+      })
       .min(1, t("expense.errors.expenseRequired")),
   })
 
