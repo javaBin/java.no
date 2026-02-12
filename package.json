@@ -27,6 +27,7 @@
     "cmdk": "1.0.0",
     "date-fns": "^4.1.0",
     "i18next": "^23.7.6",
+    "isomorphic-dompurify": "^2.9.0",
     "leaflet": "^1.9.4",
     "leaflet-gesture-handling": "^1.2.2",
     "lucide-react": "^0.452.0",

@@ -3,11 +3,14 @@ import { z } from "zod"
 
 export const env = createEnv({
   server: {
-    // OPEN_AI_API_KEY: z.string().min(1),
+    CONFLUENCE_CLOUD_ID: z.string().min(1).optional(),
+    CONFLUENCE_EMAIL: z.string().email().optional(),
+    CONFLUENCE_API_TOKEN: z.string().min(1).optional(),
   },
-  client: {
-  },
+  client: {},
   runtimeEnv: {
-    // OPEN_AI_API_KEY: process.env.OPEN_AI_API_KEY,
+    CONFLUENCE_CLOUD_ID: process.env.CONFLUENCE_CLOUD_ID,
+    CONFLUENCE_EMAIL: process.env.CONFLUENCE_EMAIL,
+    CONFLUENCE_API_TOKEN: process.env.CONFLUENCE_API_TOKEN,
   },
 })

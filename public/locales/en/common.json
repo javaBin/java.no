@@ -88,7 +88,14 @@
     "meetups": "Meetups",
     "github": "GitHub repos",
     "codeOfConduct": "Code of Conduct",
-    "contact": "Contact"
+    "contact": "Contact",
+    "girTilbake": "javaBin gives back"
+  },
+  "girTilbake": {
+    "description": "javaBin shares its surplus to support initiatives that promote knowledge sharing and professional communities.",
+    "unavailable": "The content is temporarily unavailable.",
+    "viewInConfluence": "View on Confluence",
+    "lastUpdated": "Last updated"
   },
   "expense": {
     "title": "Expense Report",

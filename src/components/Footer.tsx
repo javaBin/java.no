@@ -41,6 +41,9 @@ export const Footer = () => {
               </Link>
             </li>
             <li>
+              <Link href="/gir-tilbake">{t("girTilbake")}</Link>
+            </li>
+            <li>
               <Link href="/#contact">{t("contact")}</Link>
             </li>
           </ul>

@@ -83,12 +83,18 @@
     "aboutShortText": "javaBin er et av de største teknologimiljøene i Norge, drevet av frivillige ildsjeler over hele landet.",
     "links": "Lenker",
     "external": "Eksternt",
-
     "home": "Hjem",
     "meetups": "Meetups",
     "github": "GitHub repos",
     "codeOfConduct": "Code of Conduct",
-    "contact": "Kontakt oss"
+    "contact": "Kontakt oss",
+    "girTilbake": "javaBin gir tilbake"
+  },
+  "girTilbake": {
+    "description": "javaBin deler av sitt overskudd for å støtte tiltak som fremmer kunnskapsdeling og faglige møteplasser.",
+    "unavailable": "Innholdet er midlertidig utilgjengelig.",
+    "viewInConfluence": "Les på Confluence",
+    "lastUpdated": "Sist oppdatert"
   },
   "expense": {
     "title": "Utleggsrapport",
