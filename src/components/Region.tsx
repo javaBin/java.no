@@ -27,7 +27,11 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
           <Trans
             i18nKey="proposeMeetup"
             t={t}
-            components={{ meetupLink: <Link href={meetupUrl} /> }}
+            components={{
+            meetupLink: (
+              <a href={meetupUrl} rel="noreferrer" target="_blank" />
+            ),
+          }}
           />
         </p>
       )
@@ -45,6 +49,8 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
               <a
                 href={meeting.eventUrl}
                 className="flex h-full flex-col justify-between p-5 outline-offset-8 hover:no-underline"
+                rel="noreferrer"
+                target="_blank"
               >
                 <div className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between ">

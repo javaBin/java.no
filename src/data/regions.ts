@@ -3,6 +3,16 @@ export type Region = {
   meetupName: string
 }
 
+/** Derives duke image path from region name (e.g. "Tromsø" → /img/duke/tromso.png). */
+export function getRegionDukePath(regionName: string): string {
+  const filename = regionName
+    .toLowerCase()
+    .replace(/ø/g, "o")
+    .replace(/å/g, "a")
+    .replace(/æ/g, "ae")
+  return `/img/duke/${filename}.png`
+}
+
 const regions: Region[] = [
   {
     name: "Oslo",

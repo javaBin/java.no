@@ -6,9 +6,12 @@ import { Region } from "../data/regions"
 
 const toFormattedDateTimeString = (time: string, locale: string) => {
   const date = new Date(time)
+  const includeYear = date.getFullYear() !== new Date().getFullYear()
+
   return date.toLocaleString(locale, {
     weekday: "long",
     month: "long",
+    ...(includeYear && { year: "numeric" }),
     hour: "2-digit",
     minute: "2-digit",
     day: "2-digit",

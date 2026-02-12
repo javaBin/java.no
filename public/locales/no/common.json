@@ -19,11 +19,18 @@
     "pastMeetups": "Tidligere meetups",
     "nextMeetups": "Neste meetups",
     "nextMeetup": "Neste meetup",
+    "latestEvent": "Siste event",
+    "members": "Medlemmer",
+    "upcoming": "Kommende",
+    "noPastEvents": "Ingen tidligere meetups",
+    "partOfJavabin": "Del av javaBin",
+    "visitMeetup": "Se på Meetup",
+    "proposeMeetupButton": "Foreslå meetup",
     "proposeMeetup": "Ingen fremtidige meetups er planlagt enda. Hva med å foreslå en på <meetupLink>meetup.com</meetupLink>?",
     "noUpcomingEvents": "Ingen kommende arrangementer",
     "memberCount_one": "{{count}} medlem",
     "memberCount_other": "{{count}} medlemmer",
-    "organizer": "Arrangør",
+    "organizer": "Leder",
     "oslo": {
       "description": "javaBin Oslo arrangerer fagkvelder i Oslo"
     },
@@ -50,7 +57,9 @@
     },
     "attendeePhoto": "Bilde av {{name}}",
     "attendees_one": "{{count}} deltaker",
-    "attendees_other": "{{count}} deltakere"
+    "attendees_other": "{{count}} deltakere",
+    "aboutRegion": "Om javaBin {{name}}",
+    "moreUpcomingMeetups": "Flere kommende meetups"
   },
   "main": {
     "title": "javaBin - Hjemmesiden til Javabrukerforeningen i Norge",
