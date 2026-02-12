@@ -385,13 +385,19 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
             </div>
           </div>
 
-          <div className="space-y-2.5 rounded-lg border-2 border-border bg-muted/30 p-5 shadow-md">
+          <div className="space-y-4 rounded-lg border-2 border-border bg-muted/30 p-5 shadow-md">
             <div className="border-b border-border pb-2.5">
               <h2 className="text-xl font-semibold">{t("expense.expenses")}</h2>
             </div>
 
             {fields.map((field, index) => (
-              <div key={field.id} className="relative space-y-2.5 rounded-lg border-2 border-border bg-card p-3.5 shadow-sm">
+              <div 
+                key={field.id} 
+                className={cn(
+                  "relative space-y-2.5 rounded-lg border-2 border-border bg-card p-3.5 shadow-sm",
+                  index > 0 && "mt-8 border-t-[3px] border-t-gray-400 dark:border-t-gray-600"
+                )}
+              >
                 {fields.length > 1 && (
                   <div className="absolute right-3 top-3 z-10">
                     <Button
