@@ -3,7 +3,7 @@ import Image from "next/image"
 import mariusDuke from "../../public/img/marius_duke.svg"
 import javaZoneLogo from "../../public/img/logos/javazone-logo.jpg"
 import octocat from "../../public/img/logos/github-logo.png"
-import { Region } from "../components/Region"
+import { RegionCard } from "../components/Region"
 import regions from "../data/regions"
 import members from "../data/boardmembers"
 import BoardMembers from "../components/BoardMembers"
@@ -182,14 +182,18 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
               <h2 className="section-heading">{t("branches")}</h2>
             </div>
           </div>
-          <div className="row mb-4">
-            <div className="col-md-12">
+          <div className="mx-auto mt-8 flex max-w-5xl flex-col gap-6 lg:h-[600px] lg:flex-row-reverse">
+            <div className="lg:w-1/2">
               <RegionsMap regions={props.regions} />
             </div>
+            <div className="lg:w-1/2">
+              <div className="grid h-full grid-cols-2 gap-3">
+                {props.regions.map((region) => (
+                  <RegionCard key={region.name} region={region} />
+                ))}
+              </div>
+            </div>
           </div>
-          {props.regions.map((region) => (
-            <Region key={region.name} region={region} />
-          ))}
         </div>
       </section>
 

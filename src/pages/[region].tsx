@@ -46,16 +46,16 @@ export default function RegionPage({
         />
       </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-        <div className="mx-auto max-w-5xl px-4 pt-16 pb-8 sm:px-6 sm:pt-20 md:pb-12 lg:px-10 lg:pt-24">
+        <div className="mx-auto max-w-5xl px-4 pb-8 pt-16 sm:px-6 sm:pt-20 md:pb-12 lg:px-10 lg:pt-24">
           <main className="space-y-6">
-            <section className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-black/5">
+            <section className="overflow-hidden rounded-2xl bg-white/95 shadow-lg">
               <div className="flex flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-start lg:gap-8 lg:p-8">
                 <div className="w-full shrink-0 lg:w-[340px]">
                   {!dukeError ? (
                     <Image
                       alt=""
                       aria-hidden
-                      className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-[#f5d9d0] to-[#e8c4b8] object-contain p-6 ring-1 ring-[#d4a99a]"
+                      className="aspect-[4/3] w-full rounded-xl bg-[#a11c38] object-contain p-6"
                       height={255}
                       width={340}
                       src={dukePath}
@@ -87,7 +87,9 @@ export default function RegionPage({
                           className="inline-flex items-center gap-1.5 rounded-lg border border-[#a11c38]/30 bg-[#a11c38]/5 px-3 py-2 text-sm font-medium text-[#a11c38] transition hover:border-[#a11c38]/50 hover:bg-[#a11c38]/10 focus:outline-none focus:ring-2 focus:ring-[#a11c38]/40 focus:ring-offset-2"
                         >
                           {t("region.aboutRegion", { name: region.name })}
-                          <span className="text-[#a11c38]/70" aria-hidden>→</span>
+                          <span className="text-[#a11c38]/70" aria-hidden>
+                            →
+                          </span>
                         </button>
                       </DialogTrigger>
                       <DialogContent className="max-h-[85vh] overflow-y-auto sm:rounded-xl">
@@ -97,7 +99,10 @@ export default function RegionPage({
                         <div
                           className="mt-2 leading-relaxed text-gray-700 [&_a]:text-[#a11c38] [&_a]:underline hover:[&_a]:text-[#a11c38]/90"
                           dangerouslySetInnerHTML={{
-                            __html: region.description.replaceAll("\n", "<br/>"),
+                            __html: region.description.replaceAll(
+                              "\n",
+                              "<br/>",
+                            ),
                           }}
                         />
                       </DialogContent>
@@ -109,7 +114,7 @@ export default function RegionPage({
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         alt={region.organizer.name}
-                        className="size-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                        className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white"
                         src={region.organizer.photoUrl}
                       />
                       <div className="min-w-0">
@@ -138,7 +143,7 @@ export default function RegionPage({
                       {t("region.visitMeetup")}
                     </a>
                     <a
-                      className="inline-flex items-center justify-center rounded-xl border-2 border-[#a11c38] bg-white px-5 py-3 text-sm font-semibold text-[#a11c38] no-underline transition hover:bg-[#a11c38]/8 focus:outline-none focus:ring-2 focus:ring-[#a11c38] focus:ring-offset-2"
+                      className="hover:bg-[#a11c38]/8 inline-flex items-center justify-center rounded-xl border-2 border-[#a11c38] bg-white px-5 py-3 text-sm font-semibold text-[#a11c38] no-underline transition focus:outline-none focus:ring-2 focus:ring-[#a11c38] focus:ring-offset-2"
                       href={`mailto:${regionEmail}`}
                     >
                       {t("region.proposeMeetupButton")}
@@ -149,7 +154,7 @@ export default function RegionPage({
             </section>
 
             {nextEvent && (
-              <section className="overflow-hidden rounded-2xl bg-white p-5 shadow-md ring-1 ring-black/5 sm:p-6">
+              <section className="overflow-hidden rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900">
                   {t("region.nextMeetup")}
                 </h2>
@@ -161,7 +166,7 @@ export default function RegionPage({
             )}
 
             {restUpcomingEvents.length > 0 && (
-              <section className="overflow-hidden rounded-2xl bg-white p-5 shadow-md ring-1 ring-black/5 sm:p-6">
+              <section className="overflow-hidden rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900">
                   {t("region.moreUpcomingMeetups")}
                 </h2>
@@ -172,7 +177,7 @@ export default function RegionPage({
               </section>
             )}
 
-            <section className="overflow-hidden rounded-2xl bg-white p-5 shadow-md ring-1 ring-black/5 sm:p-6">
+            <section className="overflow-hidden rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
                 {t("region.pastMeetups")}
               </h2>

@@ -73,7 +73,7 @@ const groupStructure = z.object({
   organizer: z.object({
     __ref: z.string(),
   }),
-  keyGroupPhoto: z.object({ __ref: z.string() }),
+  keyGroupPhoto: z.object({ __ref: z.string() }).nullable(),
   lat: z.number(),
   lon: z.number(),
 })

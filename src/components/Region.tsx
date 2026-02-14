@@ -4,6 +4,7 @@ import { InferGetStaticPropsType } from "next/types"
 import { getStaticProps } from "../pages"
 import Image from "next/image"
 import { RegionWithEvents } from "../lib/meetup-scraper"
+import { getRegionDukePath } from "../data/regions"
 
 export type Meeting = InferGetStaticPropsType<
   typeof getStaticProps
@@ -28,10 +29,10 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
             i18nKey="proposeMeetup"
             t={t}
             components={{
-            meetupLink: (
-              <a href={meetupUrl} rel="noreferrer" target="_blank" />
-            ),
-          }}
+              meetupLink: (
+                <a href={meetupUrl} rel="noreferrer" target="_blank" />
+              ),
+            }}
           />
         </p>
       )
@@ -152,5 +153,28 @@ export const Region = ({ region }: Props) => {
       </div>
       <br />
     </>
+  )
+}
+
+export const RegionCard = ({ region }: Props) => {
+  const { t } = useTranslation("common", { keyPrefix: "region" })
+  const dukePath = getRegionDukePath(region.name)
+
+  return (
+    <Link
+      href={`/${region.name.toLowerCase()}`}
+      className="group flex flex-col items-center justify-center rounded-xl bg-[#a11c38] p-2 shadow-md transition-all hover:-translate-y-0.5 hover:bg-[#7f162c] hover:shadow-lg"
+    >
+      <div className="mb-1 flex h-16 w-16 items-center justify-center overflow-hidden">
+        <Image
+          src={dukePath}
+          alt={`${region.name} Duke`}
+          width={64}
+          height={64}
+          className="h-full w-full object-contain transition-transform group-hover:scale-105"
+        />
+      </div>
+      <h3 className="text-sm font-bold text-white">{region.name}</h3>
+    </Link>
   )
 }
