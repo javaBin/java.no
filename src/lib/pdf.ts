@@ -13,7 +13,10 @@ export async function generatePDF({
   bankAccount,
   email,
   expenses,
-}: z.infer<ReturnType<typeof createExpenseSchemas>["formSchema"]>) {
+  validationSkipped = false,
+}: z.infer<ReturnType<typeof createExpenseSchemas>["formSchema"]> & {
+  validationSkipped?: boolean
+}) {
   const pdfDoc = await PDFDocument.create()
   const coverPage = pdfDoc.addPage()
   const { height } = coverPage.getSize()
@@ -40,11 +43,32 @@ export async function generatePDF({
     { label: "E-post:", value: email },
   ]
 
+  // Add validation warning if skipped
+  let infoStartY = height - 120
+  if (validationSkipped) {
+    coverPage.drawText("ADVARSEL: Kontonummer validering ble hoppet over!", {
+      x: 50,
+      y: infoStartY,
+      size: 12,
+      font,
+      color: rgb(0.8, 0, 0), // Red color
+    })
+    infoStartY -= 20
+    coverPage.drawText("Vennligst sjekk at kontonummeret er korrekt.", {
+      x: 50,
+      y: infoStartY,
+      size: 10,
+      font: regularFont,
+      color: rgb(0.6, 0, 0), // Darker red
+    })
+    infoStartY -= 20
+  }
+
   infoLines.forEach((line, index) => {
     // Draw label
     coverPage.drawText(line.label, {
       x: 50,
-      y: height - 120 - index * 30,
+      y: infoStartY - index * 30,
       size: 12,
       font,
       color: rgb(0, 0, 0),
@@ -53,7 +77,7 @@ export async function generatePDF({
     // Draw value
     coverPage.drawText(line.value, {
       x: 150,
-      y: height - 120 - index * 30,
+      y: infoStartY - index * 30,
       size: 12,
       font: regularFont,
       color: rgb(0, 0, 0),
@@ -129,12 +153,12 @@ export async function generatePDF({
     const amountInNOK = await convertToNOK(
       expense.amount,
       expense.currency,
-      expenseDate
+      expenseDate,
     )
 
     // Format amount using our utility function
     let amountText = formatCurrency(amountInNOK)
-    
+
     // Add original currency info and exchange rate if not NOK
     if (expense.currency !== "NOK") {
       const exchangeRate = await getExchangeRate(expense.currency, expenseDate)

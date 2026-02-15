@@ -2,11 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
+import React from "react"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
-import { CalendarIcon, Trash2, Eraser, Mail, Plus } from "lucide-react"
+import { CalendarIcon, Trash2, Mail, Plus } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
 import AccountInput from "@/components/AccountInput"
 import { FileUploader } from "@/components/FileUploader"
@@ -48,7 +49,9 @@ import { currencies } from "@/data/currencies"
 // IBAN: NO9386011117947
 
 // Helper function to parse query parameters server-side
-function parseFormQueryParams(query: Record<string, string | string[] | undefined>) {
+function parseFormQueryParams(
+  query: Record<string, string | string[] | undefined>,
+) {
   const getString = (key: string, defaultValue: string = ""): string => {
     const value = query[key]
     if (value === undefined || value === null) return defaultValue
@@ -87,6 +90,14 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
   type FormValues = z.infer<typeof formSchema>
 
   const [isLoading, setIsLoading] = useState(false)
+  const [skipAccountValidation, setSkipAccountValidation] = useState(false)
+  const [accountValidationFailed, setAccountValidationFailed] = useState(false)
+  const [accountValidationResult, setAccountValidationResult] = useState<{
+    errorType?: "country" | "length" | "format" | "unknown"
+    expectedLength?: number
+    actualLength?: number
+    countryName?: string
+  } | null>(null)
 
   // Keep useQueryStates for syncing form changes back to URL
   const [queryParamForm, setQueryParamForm] = useQueryStates({
@@ -126,30 +137,26 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
     name: "expenses",
   })
 
-  // Handler to clear form
-  const handleClearForm = () => {
-    form.reset({
-      name: "",
-      streetAddress: "",
-      postalCode: "",
-      city: "",
-      country: "Norway",
-      bankAccount: "",
-      email: "",
-      expenses: [
-        {
-          description: "",
-          amount: 0,
-          currency: "NOK",
-          date: new Date(),
-          attachment: undefined as unknown as File,
-        },
-      ],
-    })
-    setQueryParamForm(null)
-  }
+  // Watch bankAccount to reset validation state when user types
+  const watchedBankAccount = form.watch("bankAccount")
+
+  // Reset validation state when user starts typing (value changes from formatted to unformatted)
+  React.useEffect(() => {
+    if (accountValidationFailed && watchedBankAccount) {
+      const hasSpaces = watchedBankAccount.includes(" ")
+      // If user is typing (no spaces = unformatted input), reset validation
+      if (!hasSpaces) {
+        setAccountValidationFailed(false)
+      }
+    }
+  }, [watchedBankAccount, accountValidationFailed])
 
   const onSubmit = async (data: FormValues) => {
+    // If skipping validation, clear any bank account errors
+    if (skipAccountValidation) {
+      form.clearErrors("bankAccount")
+    }
+
     setIsLoading(true)
     try {
       const expenseReport = await generatePDF({
@@ -161,6 +168,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
         bankAccount: data.bankAccount,
         email: data.email,
         expenses: data.expenses,
+        validationSkipped: skipAccountValidation,
       })
 
       const blob = new Blob([expenseReport as BlobPart], {
@@ -241,59 +249,208 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
   }
 
   return (
-    <div className="container mx-auto mt-12 py-10">
+    <div className="container mx-auto mt-12 max-w-3xl py-10">
       <h1 className="mb-8 text-3xl font-bold">{t("expense.title")}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="space-y-6">
+          {/* Bank Account - first since it's required for reimbursement */}
+          <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              {t("expense.bankAccount")}
+            </h2>
+            <p className="mb-4 text-sm text-gray-600">
+              {i18n.language === "no"
+                ? "Du trenger kontonummer for å få refundert utleggene."
+                : "You need a bank account number to get reimbursed."}
+            </p>
+
             <FormField
               control={form.control}
-              name="name"
+              name="bankAccount"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{t("expense.name")}</Label>
                   <FormControl>
-                    <Input
-                      placeholder={t("expense.namePlaceholder")}
+                    <AccountInput
                       {...field}
+                      onValidationChange={(result) => {
+                        setAccountValidationFailed(!result.isValid)
+                        setAccountValidationResult(
+                          result.isValid
+                            ? null
+                            : {
+                                errorType: result.errorType,
+                                expectedLength: result.expectedLength,
+                                actualLength: result.actualLength,
+                                countryName: result.countryName,
+                              },
+                        )
+                        // Clear error if validation passes
+                        if (result.isValid) {
+                          form.clearErrors("bankAccount")
+                        }
+                      }}
                     />
                   </FormControl>
+                  {accountValidationFailed && !skipAccountValidation && (
+                    <p className="text-sm text-red-500">
+                      {accountValidationResult?.errorType === "format" &&
+                        (i18n.language === "no"
+                          ? `Ugyldig format. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.countryName} IBAN format.` : "Forventet IBAN format (XXkk BBBB...)."}`
+                          : `Invalid format. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.countryName} IBAN format.` : "Expected IBAN format (XXkk BBBB...)."}`)}
+                      {accountValidationResult?.errorType === "length" &&
+                        (i18n.language === "no"
+                          ? `Feil lengde. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.expectedLength} tegn for ${accountValidationResult.countryName} IBAN, fikk ${accountValidationResult.actualLength}.` : `Forventet ${accountValidationResult.expectedLength} tegn, fikk ${accountValidationResult.actualLength}.`}`
+                          : `Wrong length. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.expectedLength} characters for ${accountValidationResult.countryName} IBAN, got ${accountValidationResult.actualLength}.` : `Expected ${accountValidationResult.expectedLength} characters, got ${accountValidationResult.actualLength}.`}`)}
+                      {(!accountValidationResult?.errorType ||
+                        accountValidationResult.errorType === "unknown") &&
+                        (i18n.language === "no"
+                          ? "Vi kunne ikke validere kontonummeret. Det er svært sannsynlig at kontonummeret er feil."
+                          : "We couldn't validate the account number. It's highly likely that the account number is incorrect.")}{" "}
+                      {i18n.language === "no"
+                        ? "Hvis du insisterer på at det er riktig, kan du deaktivere valideringen."
+                        : "If you insist it is correct, you can disable the validation."}
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="streetAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{t("expense.address")}</Label>
-                  <FormControl>
-                    <Input
-                      placeholder={t("expense.addressPlaceholder")}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            <div className="mt-3">
+              {accountValidationFailed && (
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500">
+                  <input
+                    type="checkbox"
+                    checked={skipAccountValidation}
+                    onChange={(e) => {
+                      setSkipAccountValidation(e.target.checked)
+                      if (e.target.checked) {
+                        form.clearErrors("bankAccount")
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  {i18n.language === "no"
+                    ? "Jeg godtar at valideringen feilet, og at utbetaling kan bli forsinket hvis nummeret er feil"
+                    : "I accept that validation failed, and that reimbursement might be delayed if the account number is incorrect"}
+                </label>
               )}
-            />
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          {/* Personal Information Section */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              {i18n.language === "no"
+                ? "Personlige opplysninger"
+                : "Personal Information"}
+            </h2>
+
+            <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="postalCode"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>{t("expense.postalCode")}</Label>
+                    <Label>{t("expense.name")}</Label>
                     <FormControl>
                       <Input
-                        placeholder={t("expense.postalCodePlaceholder")}
+                        placeholder={t("expense.namePlaceholder")}
                         {...field}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "")
-                          field.onChange(value)
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{t("expense.email")}</Label>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder={t("expense.emailPlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="streetAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{t("expense.address")}</Label>
+                    <FormControl>
+                      <Input
+                        placeholder={t("expense.addressPlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>{t("expense.postalCode")}</Label>
+                      <FormControl>
+                        <Input
+                          placeholder={t("expense.postalCodePlaceholder")}
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "")
+                            field.onChange(value)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>{t("expense.city")}</Label>
+                      <FormControl>
+                        <Input
+                          placeholder={t("expense.cityPlaceholder")}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{t("expense.country")}</Label>
+                    <FormControl>
+                      <LocationInput
+                        {...field}
+                        defaultValue={field.value}
+                        onCountryChange={(country) => {
+                          form.setValue(field.name, country?.name || "")
                         }}
                       />
                     </FormControl>
@@ -301,114 +458,33 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>{t("expense.city")}</Label>
-                    <FormControl>
-                      <Input
-                        placeholder={t("expense.cityPlaceholder")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{t("expense.country")}</Label>
-                  <FormControl>
-                    <LocationInput
-                      {...field}
-                      defaultValue={field.value}
-                      onCountryChange={(country) => {
-                        form.setValue(field.name, country?.name || "")
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bankAccount"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{t("expense.bankAccount")}</Label>
-                  <FormControl>
-                    <AccountInput {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{t("expense.email")}</Label>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder={t("expense.emailPlaceholder")}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex items-center space-x-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleClearForm}
-              >
-                <Eraser className="mr-2 h-4 w-4" />
-                {t("expense.clearForm")}
-              </Button>
             </div>
           </div>
 
-          <div className="space-y-4 rounded-lg border-2 border-border bg-muted/30 p-5 shadow-md">
-            <div className="border-b border-border pb-2.5">
-              <h2 className="text-xl font-semibold">{t("expense.expenses")}</h2>
-            </div>
+          {/* Expenses Section */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              {t("expense.expenses")}
+            </h2>
 
             {fields.map((field, index) => (
-              <div 
-                key={field.id} 
+              <div
+                key={field.id}
                 className={cn(
-                  "relative space-y-2.5 rounded-lg border-2 border-border bg-card p-3.5 shadow-sm",
-                  index > 0 && "mt-8 border-t-[3px] border-t-gray-400 dark:border-t-gray-600"
+                  "relative space-y-3 rounded-lg bg-gray-50 p-4",
+                  index > 0 && "mt-6 border-t border-gray-200 pt-6",
                 )}
               >
                 {fields.length > 1 && (
                   <div className="absolute right-3 top-3 z-10">
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
                       onClick={() => remove(index)}
-                      className="gap-1.5 shadow-sm"
+                      className="gap-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
-                      <span className="text-xs font-medium">{t("expense.remove") || "Remove"}</span>
                     </Button>
                   </div>
                 )}
@@ -418,9 +494,14 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   name={`expenses.${index}.description`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label className="text-sm">{t("expense.description")}</Label>
+                      <Label className="text-sm">
+                        {t("expense.description")}
+                      </Label>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="Hva ble kjøpt, hvor og til hvilken anledning? (f.eks: Middag for 3, Bergen, Konferanse 2026)"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -433,7 +514,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                     name={`expenses.${index}.date`}
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel className="text-sm">{t("expense.date")}</FormLabel>
+                        <FormLabel className="text-sm">
+                          {t("expense.date")}
+                        </FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -463,7 +546,8 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                               onSelect={field.onChange}
                               locale={i18n.language === "no" ? nb : undefined}
                               disabled={(date) =>
-                                date > new Date() || date < new Date("2020-01-01")
+                                date > new Date() ||
+                                date < new Date("2020-01-01")
                               }
                               initialFocus
                             />
@@ -483,7 +567,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                     render={({ field }) => {
                       // Use local state to track the display value for better UX
                       const [displayValue, setDisplayValue] = useState<string>(
-                        field.value && field.value !== 0 ? field.value.toString() : ""
+                        field.value && field.value !== 0
+                          ? field.value.toString()
+                          : "",
                       )
                       const [isFocused, setIsFocused] = useState(false)
 
@@ -491,11 +577,15 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       // But only when not focused to avoid interfering with user input
                       useEffect(() => {
                         if (!isFocused) {
-                          const currentDisplayNum = displayValue === "" || isNaN(parseFloat(displayValue)) 
-                            ? 0 
-                            : parseFloat(displayValue)
+                          const currentDisplayNum =
+                            displayValue === "" ||
+                            isNaN(parseFloat(displayValue))
+                              ? 0
+                              : parseFloat(displayValue)
                           // Only sync if the field value differs from what we're displaying
-                          if (Math.abs(field.value - currentDisplayNum) > 0.001) {
+                          if (
+                            Math.abs(field.value - currentDisplayNum) > 0.001
+                          ) {
                             if (field.value && field.value !== 0) {
                               setDisplayValue(field.value.toString())
                             } else {
@@ -508,7 +598,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
 
                       return (
                         <FormItem>
-                          <Label className="text-sm">{t("expense.amount")}</Label>
+                          <Label className="text-sm">
+                            {t("expense.amount")}
+                          </Label>
                           <FormControl>
                             <Input
                               type="number"
@@ -518,13 +610,13 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                               onChange={(e) => {
                                 const value = e.target.value
                                 setDisplayValue(value)
-                                
+
                                 // Allow empty string while typing
                                 if (value === "" || value === "-") {
                                   field.onChange(0)
                                   return
                                 }
-                                
+
                                 // Check if it's a valid number (including partial decimals like "1.")
                                 const numValue = parseFloat(value)
                                 if (!isNaN(numValue) && isFinite(numValue)) {
@@ -538,7 +630,11 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                                 setIsFocused(false)
                                 // On blur, ensure we have a valid number
                                 const value = e.target.value
-                                if (value === "" || value === "-" || isNaN(parseFloat(value))) {
+                                if (
+                                  value === "" ||
+                                  value === "-" ||
+                                  isNaN(parseFloat(value))
+                                ) {
                                   field.onChange(0)
                                   setDisplayValue("")
                                 } else {
@@ -573,7 +669,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                     name={`expenses.${index}.currency`}
                     render={({ field }) => (
                       <FormItem>
-                        <Label className="text-sm">{t("expense.currency")}</Label>
+                        <Label className="text-sm">
+                          {t("expense.currency")}
+                        </Label>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -588,8 +686,14 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                           </FormControl>
                           <SelectContent>
                             {currencies.map((currency) => (
-                              <SelectItem key={currency.code} value={currency.code}>
-                                {currency.code} - {currency.name}
+                              <SelectItem
+                                key={currency.code}
+                                value={currency.code}
+                              >
+                                {currency.code} -{" "}
+                                {new Intl.DisplayNames([i18n.language], {
+                                  type: "currency",
+                                }).of(currency.code)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -605,7 +709,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                   name={`expenses.${index}.attachment`}
                   render={({ field }) => (
                     <FormItem>
-                      <Label className="text-sm">{t("expense.attachment")}</Label>
+                      <Label className="text-sm">
+                        {t("expense.attachment")}
+                      </Label>
                       <FormControl>
                         <FileUploader
                           onUpload={async (files) => {
@@ -649,9 +755,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                 />
               </div>
             ))}
-            
+
             {fields.length > 0 && (
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -664,7 +770,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       attachment: new File([], ""),
                     })
                   }
-                  className="gap-2"
+                  className="gap-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
                 >
                   <Plus className="h-4 w-4" />
                   {t("expense.addExpense")}
@@ -673,8 +779,12 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Button type="submit" disabled={isLoading}>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-600 px-6 text-white hover:bg-blue-700"
+            >
               {isLoading
                 ? t("expense.processing")
                 : t("expense.generateReport")}
@@ -683,7 +793,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
               type="button"
               variant="outline"
               asChild
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <a
                 target="_blank"
