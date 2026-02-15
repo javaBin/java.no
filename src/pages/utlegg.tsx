@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Mail, Plus } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
-import AccountInput from "@/components/AccountInput"
+import { BankDetailsForm } from "@/components/BankDetailsForm"
+import { getBankCountryType } from "@/lib/expense"
 import { FileUploader } from "@/components/FileUploader"
 import { Toaster } from "sonner"
 import LocationInput from "@/components/ui/location-input"
@@ -66,7 +67,16 @@ function parseFormQueryParams(
     postalCode: getString("postalCode", ""),
     city: getString("city", ""),
     country: getString("country", "Norway"),
-    bankAccount: getString("bankAccount", ""),
+    bankCountry: getString("bankCountry", "Norway"),
+    bankCountryIso2: getString("bankCountryIso2", "NO"),
+    bankIban: getString("bankIban", getString("bankAccount", "")),
+    bankRoutingNumber: getString("bankRoutingNumber", ""),
+    bankAccountNumber: getString("bankAccountNumber", ""),
+    bankAccountType: getString("bankAccountType", "checking"),
+    bankSwiftBic: getString("bankSwiftBic", ""),
+    bankName: getString("bankName", ""),
+    bankAddress: getString("bankAddress", ""),
+    bankAccountHolderName: getString("bankAccountHolderName", ""),
   }
 }
 
@@ -78,7 +88,16 @@ type ExpensePageProps = {
     postalCode: string
     city: string
     country: string
-    bankAccount: string
+    bankCountry: string
+    bankCountryIso2: string
+    bankIban: string
+    bankRoutingNumber: string
+    bankAccountNumber: string
+    bankAccountType: string
+    bankSwiftBic: string
+    bankName: string
+    bankAddress: string
+    bankAccountHolderName: string
   }
 }
 
@@ -107,7 +126,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
     postalCode: parseAsString.withDefault(""),
     city: parseAsString.withDefault(""),
     country: parseAsString.withDefault("Norway"),
-    bankAccount: parseAsString.withDefault(""),
+    bankCountry: parseAsString.withDefault(""),
+    bankCountryIso2: parseAsString.withDefault(""),
+    bankIban: parseAsString.withDefault(""),
   })
 
   const form = useForm<FormValues>({
@@ -118,7 +139,16 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
       postalCode: initialFormValues.postalCode,
       city: initialFormValues.city,
       country: initialFormValues.country,
-      bankAccount: initialFormValues.bankAccount,
+      bankCountry: initialFormValues.bankCountry,
+      bankCountryIso2: initialFormValues.bankCountryIso2,
+      bankIban: initialFormValues.bankIban,
+      bankRoutingNumber: initialFormValues.bankRoutingNumber,
+      bankAccountNumber: initialFormValues.bankAccountNumber,
+      bankAccountType: initialFormValues.bankAccountType as "checking" | "savings",
+      bankSwiftBic: initialFormValues.bankSwiftBic,
+      bankName: initialFormValues.bankName,
+      bankAddress: initialFormValues.bankAddress,
+      bankAccountHolderName: initialFormValues.bankAccountHolderName,
       email: initialFormValues.email,
       expenses: [
         {
@@ -137,24 +167,41 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
     name: "expenses",
   })
 
-  // Watch bankAccount to reset validation state when user types
-  const watchedBankAccount = form.watch("bankAccount")
+  // Watch bankIban to reset validation state when user types (SEPA flow)
+  const watchedBankIban = form.watch("bankIban")
 
-  // Reset validation state when user starts typing (value changes from formatted to unformatted)
   React.useEffect(() => {
-    if (accountValidationFailed && watchedBankAccount) {
-      const hasSpaces = watchedBankAccount.includes(" ")
-      // If user is typing (no spaces = unformatted input), reset validation
+    if (accountValidationFailed && watchedBankIban) {
+      const hasSpaces = watchedBankIban.includes(" ")
       if (!hasSpaces) {
         setAccountValidationFailed(false)
+        setSkipAccountValidation(false)
       }
     }
-  }, [watchedBankAccount, accountValidationFailed])
+  }, [watchedBankIban, accountValidationFailed])
+
+  // Reset skip-validation checkbox whenever the user edits the IBAN
+  const prevBankIbanRef = React.useRef(watchedBankIban)
+  React.useEffect(() => {
+    if (prevBankIbanRef.current !== watchedBankIban) {
+      prevBankIbanRef.current = watchedBankIban
+      setSkipAccountValidation(false)
+    }
+  }, [watchedBankIban])
+
+  // Warn when closing/refreshing the page with unsaved form changes
+  const isDirty = form.formState.isDirty
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) e.preventDefault()
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isDirty])
 
   const onSubmit = async (data: FormValues) => {
-    // If skipping validation, clear any bank account errors
     if (skipAccountValidation) {
-      form.clearErrors("bankAccount")
+      form.clearErrors("bankIban")
     }
 
     setIsLoading(true)
@@ -165,7 +212,16 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
         postalCode: data.postalCode,
         city: data.city,
         country: data.country,
-        bankAccount: data.bankAccount,
+        bankCountry: data.bankCountry,
+        bankCountryIso2: data.bankCountryIso2,
+        bankIban: data.bankIban,
+        bankRoutingNumber: data.bankRoutingNumber,
+        bankAccountNumber: data.bankAccountNumber,
+        bankAccountType: data.bankAccountType,
+        bankSwiftBic: data.bankSwiftBic,
+        bankName: data.bankName,
+        bankAddress: data.bankAddress,
+        bankAccountHolderName: data.bankAccountHolderName,
         email: data.email,
         expenses: data.expenses,
         validationSkipped: skipAccountValidation,
@@ -253,89 +309,74 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
       <h1 className="mb-8 text-3xl font-bold">{t("expense.title")}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Bank Account - first since it's required for reimbursement */}
+          {/* Bank details - first since required for reimbursement */}
           <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
               {t("expense.bankAccount")}
             </h2>
             <p className="mb-4 text-sm text-gray-600">
               {i18n.language === "no"
-                ? "Du trenger kontonummer for å få refundert utleggene."
-                : "You need a bank account number to get reimbursed."}
+                ? "Du trenger bankopplysninger for å få refundert utleggene."
+                : "You need bank details to get reimbursed."}
             </p>
 
-            <FormField
-              control={form.control}
-              name="bankAccount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <AccountInput
-                      {...field}
-                      onValidationChange={(result) => {
-                        setAccountValidationFailed(!result.isValid)
-                        setAccountValidationResult(
-                          result.isValid
-                            ? null
-                            : {
-                                errorType: result.errorType,
-                                expectedLength: result.expectedLength,
-                                actualLength: result.actualLength,
-                                countryName: result.countryName,
-                              },
-                        )
-                        // Clear error if validation passes
-                        if (result.isValid) {
-                          form.clearErrors("bankAccount")
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  {accountValidationFailed && !skipAccountValidation && (
-                    <p className="text-sm text-red-500">
-                      {accountValidationResult?.errorType === "format" &&
-                        (i18n.language === "no"
-                          ? `Ugyldig format. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.countryName} IBAN format.` : "Forventet IBAN format (XXkk BBBB...)."}`
-                          : `Invalid format. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.countryName} IBAN format.` : "Expected IBAN format (XXkk BBBB...)."}`)}
-                      {accountValidationResult?.errorType === "length" &&
-                        (i18n.language === "no"
-                          ? `Feil lengde. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.expectedLength} tegn for ${accountValidationResult.countryName} IBAN, fikk ${accountValidationResult.actualLength}.` : `Forventet ${accountValidationResult.expectedLength} tegn, fikk ${accountValidationResult.actualLength}.`}`
-                          : `Wrong length. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.expectedLength} characters for ${accountValidationResult.countryName} IBAN, got ${accountValidationResult.actualLength}.` : `Expected ${accountValidationResult.expectedLength} characters, got ${accountValidationResult.actualLength}.`}`)}
-                      {(!accountValidationResult?.errorType ||
-                        accountValidationResult.errorType === "unknown") &&
-                        (i18n.language === "no"
-                          ? "Vi kunne ikke validere kontonummeret. Det er svært sannsynlig at kontonummeret er feil."
-                          : "We couldn't validate the account number. It's highly likely that the account number is incorrect.")}{" "}
-                      {i18n.language === "no"
-                        ? "Hvis du insisterer på at det er riktig, kan du deaktivere valideringen."
-                        : "If you insist it is correct, you can disable the validation."}
-                    </p>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
+            <BankDetailsForm
+              form={form}
+              t={t}
+              language={i18n.language}
+              skipAccountValidation={skipAccountValidation}
+              onValidationChange={(result) => {
+                setAccountValidationFailed(!result.isValid)
+                setAccountValidationResult(
+                  result.isValid
+                    ? null
+                    : {
+                        errorType: result.errorType,
+                        expectedLength: result.expectedLength,
+                        actualLength: result.actualLength,
+                        countryName: result.countryName,
+                      },
+                )
+              }}
             />
 
-            <div className="mt-3">
-              {accountValidationFailed && (
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500">
-                  <input
-                    type="checkbox"
-                    checked={skipAccountValidation}
-                    onChange={(e) => {
-                      setSkipAccountValidation(e.target.checked)
-                      if (e.target.checked) {
-                        form.clearErrors("bankAccount")
-                      }
-                    }}
-                    className="rounded border-gray-300"
-                  />
-                  {i18n.language === "no"
-                    ? "Jeg godtar at valideringen feilet, og at utbetaling kan bli forsinket hvis nummeret er feil"
-                    : "I accept that validation failed, and that reimbursement might be delayed if the account number is incorrect"}
-                </label>
-              )}
-            </div>
+            {getBankCountryType(form.watch("bankCountryIso2") || "") === "sepa" && accountValidationFailed && !skipAccountValidation && (
+              <p className="mt-2 text-sm text-red-500">
+                {accountValidationResult?.errorType === "format" &&
+                  (i18n.language === "no"
+                    ? `Ugyldig format. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.countryName} IBAN format.` : "Forventet IBAN format (XXkk BBBB...)."}`
+                    : `Invalid format. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.countryName} IBAN format.` : "Expected IBAN format (XXkk BBBB...)."}`)}
+                {accountValidationResult?.errorType === "length" &&
+                  (i18n.language === "no"
+                    ? `Feil lengde. ${accountValidationResult.countryName ? `Forventet ${accountValidationResult.expectedLength} tegn for ${accountValidationResult.countryName} IBAN, fikk ${accountValidationResult.actualLength}.` : `Forventet ${accountValidationResult.expectedLength} tegn, fikk ${accountValidationResult.actualLength}.`}`
+                    : `Wrong length. ${accountValidationResult.countryName ? `Expected ${accountValidationResult.expectedLength} characters for ${accountValidationResult.countryName} IBAN, got ${accountValidationResult.actualLength}.` : `Expected ${accountValidationResult.expectedLength} characters, got ${accountValidationResult.actualLength}.`}`)}
+                {(!accountValidationResult?.errorType ||
+                  accountValidationResult.errorType === "unknown") &&
+                  (i18n.language === "no"
+                    ? "Vi kunne ikke validere kontonummeret. Det er svært sannsynlig at kontonummeret er feil."
+                    : "We couldn't validate the account number. It's highly likely that the account number is incorrect.")}{" "}
+                {i18n.language === "no"
+                  ? "Hvis du insisterer på at det er riktig, kan du deaktivere valideringen."
+                  : "If you insist it is correct, you can disable the validation."}
+              </p>
+            )}
+
+            {getBankCountryType(form.watch("bankCountryIso2") || "") === "sepa" && accountValidationFailed && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={skipAccountValidation}
+                  onChange={(e) => {
+                    setSkipAccountValidation(e.target.checked)
+                    if (e.target.checked) form.clearErrors("bankIban")
+                  }}
+                  className="rounded border-gray-300"
+                />
+                {i18n.language === "no"
+                  ? "Jeg godtar at valideringen feilet, og at utbetaling kan bli forsinket hvis nummeret er feil"
+                  : "I accept that validation failed, and that reimbursement might be delayed if the account number is incorrect"}
+              </label>
+            )}
           </div>
 
           {/* Personal Information Section */}

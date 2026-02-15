@@ -1,5 +1,27 @@
 import { z } from "zod"
 
+/** ISO2 codes of countries that use IBAN (SEPA / international IBAN zone) */
+export const IBAN_COUNTRY_ISO2 = new Set([
+  "AD", "AT", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FO", "FI", "FR",
+  "DE", "GI", "GR", "GL", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MK",
+  "MT", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "SM", "RS", "SK", "SI", "ES",
+  "SE", "CH", "GB", "VA", "AL", "AZ", "BH", "BR", "CR", "DO", "EG", "GE", "GT",
+  "IL", "JO", "KZ", "KW", "LB", "MR", "MU", "MD", "PK", "PS", "QA", "LC", "SA",
+  "SC", "TL", "TN", "TR", "UA", "AE", "VG", "IQ", "BY", "SV", "LY", "SD", "BI",
+  "DJ", "RU", "SO", "NI", "MN", "FK", "OM", "HN", "AO", "BF", "BJ", "CF", "CG",
+  "CI", "CM", "CV", "DZ", "GA", "GQ", "GW", "IR", "MA", "MG", "ML", "MZ", "NE",
+  "SN", "TD", "TG", "KM",
+])
+
+/**
+ * Classify bank country for form flow: SEPA (IBAN), US (ABA + SWIFT etc.), or Other.
+ */
+export function getBankCountryType(iso2: string): "sepa" | "us" | "other" {
+  if (iso2 === "US") return "us"
+  if (IBAN_COUNTRY_ISO2.has(iso2)) return "sepa"
+  return "other"
+}
+
 // Create schemas with localized error messages
 export const createExpenseSchemas = (
   t: (key: string) => string,
@@ -72,16 +94,20 @@ export const createExpenseSchemas = (
       })
       .min(1, t("expense.errors.countryRequired"))
       .default(language === "en" ? "United Kingdom" : "Norway"),
-    bankAccount: z
-      .string({
-        required_error: t("expense.errors.invalidAccount"),
-        invalid_type_error: t("expense.errors.invalidAccount"),
-      })
-      .min(1, t("expense.errors.invalidAccount"))
-      .refine(
-        (str) => validateBankAccount(str),
-        t("expense.errors.invalidAccount"),
-      ),
+    // Bank details: country drives which fields are required
+    bankCountry: z
+      .string()
+      .min(1, t("expense.errors.bankCountryRequired"))
+      .default(""),
+    bankCountryIso2: z.string().default(""),
+    bankIban: z.string().optional().default(""),
+    bankRoutingNumber: z.string().optional().default(""),
+    bankAccountNumber: z.string().optional().default(""),
+    bankAccountType: z.enum(["checking", "savings"]).optional().default("checking"),
+    bankSwiftBic: z.string().optional().default(""),
+    bankName: z.string().optional().default(""),
+    bankAddress: z.string().optional().default(""),
+    bankAccountHolderName: z.string().optional().default(""),
     email: z
       .string({
         required_error: t("expense.errors.invalidEmail"),
@@ -94,6 +120,35 @@ export const createExpenseSchemas = (
         invalid_type_error: t("expense.errors.expenseRequired"),
       })
       .min(1, t("expense.errors.expenseRequired")),
+  }).superRefine((data, ctx) => {
+    const type = getBankCountryType(data.bankCountryIso2 || "")
+    if (type === "sepa") {
+      const iban = (data.bankIban || "").replace(/\s/g, "")
+      if (!iban) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankIbanRequired"), path: ["bankIban"] })
+        return
+      }
+      if (!validateIBAN(iban.toUpperCase())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.invalidAccount"), path: ["bankIban"] })
+      }
+      return
+    }
+    if (type === "us") {
+      if (!(data.bankRoutingNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankRoutingRequired"), path: ["bankRoutingNumber"] })
+      if (!(data.bankAccountNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAccountNumberRequired"), path: ["bankAccountNumber"] })
+      if (!(data.bankSwiftBic || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankSwiftRequired"), path: ["bankSwiftBic"] })
+      if (!(data.bankName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankNameRequired"), path: ["bankName"] })
+      if (!(data.bankAddress || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAddressRequired"), path: ["bankAddress"] })
+      if (!(data.bankAccountHolderName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankHolderRequired"), path: ["bankAccountHolderName"] })
+      return
+    }
+    if (type === "other") {
+      if (!(data.bankAccountNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAccountNumberRequired"), path: ["bankAccountNumber"] })
+      if (!(data.bankSwiftBic || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankSwiftRequired"), path: ["bankSwiftBic"] })
+      if (!(data.bankName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankNameRequired"), path: ["bankName"] })
+      if (!(data.bankAddress || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAddressRequired"), path: ["bankAddress"] })
+      if (!(data.bankAccountHolderName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankHolderRequired"), path: ["bankAccountHolderName"] })
+    }
   })
 
   return { expenseItemSchema, formSchema }

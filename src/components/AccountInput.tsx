@@ -202,15 +202,18 @@ const AccountInputBase = React.forwardRef<
         }
 
         onChange(newValue)
+
+        // Run validation on change so "only letters" etc. show invalid immediately
+        const validationResult = validateAccount(newValue)
+        onValidationChange?.(validationResult)
       }}
       onBlur={() => {
         onBlur()
         const cleanValue = value.replace(/\s/g, "")
         if (!cleanValue) return
 
-        // Validate and notify parent
-        const isValid = validateAccount(value)
-        onValidationChange?.(isValid)
+        const validationResult = validateAccount(value)
+        onValidationChange?.(validationResult)
 
         if (isIBAN) {
           // Format IBAN with a space every 4 characters

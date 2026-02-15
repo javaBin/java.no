@@ -117,6 +117,18 @@
     "cityPlaceholder": "e.g. London",
     "country": "Country",
     "bankAccount": "Bank Account",
+    "bankCountry": "Country of bank account",
+    "bankIban": "IBAN",
+    "bankIbanPlaceholder": "e.g. NO93 8601 1117 947",
+    "bankRoutingNumber": "Routing number (ABA)",
+    "bankAccountNumber": "Account number",
+    "bankAccountType": "Account type",
+    "bankAccountTypeChecking": "Checking",
+    "bankAccountTypeSavings": "Savings",
+    "bankSwiftBic": "SWIFT/BIC",
+    "bankName": "Bank name",
+    "bankAddress": "Bank address",
+    "bankAccountHolderName": "Account holder name",
     "email": "Email",
     "emailPlaceholder": "john@smith.com",
     "date": "Date",
@@ -150,7 +162,15 @@
       "invalidEmail": "Please enter a valid email address",
       "dateRequired": "Please select a date",
       "currencyRequired": "Currency is required",
-      "expenseRequired": "At least one expense is required"
+      "expenseRequired": "At least one expense is required",
+      "bankCountryRequired": "Select country of bank account",
+      "bankIbanRequired": "IBAN is required for SEPA accounts",
+      "bankRoutingRequired": "Routing number (ABA) is required",
+      "bankAccountNumberRequired": "Account number is required",
+      "bankSwiftRequired": "SWIFT/BIC is required",
+      "bankNameRequired": "Bank name is required",
+      "bankAddressRequired": "Bank address is required",
+      "bankHolderRequired": "Account holder name is required"
     }
   }
 }

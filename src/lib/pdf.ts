@@ -1,8 +1,44 @@
-import { createExpenseSchemas } from "@/lib/expense"
+import { createExpenseSchemas, getBankCountryType } from "@/lib/expense"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 import { formatCurrency } from "./utils"
 import { convertToNOK, getExchangeRate } from "./expense"
+
+function bankDetailsLines(
+  bankCountryIso2: string,
+  bankIban: string,
+  bankRoutingNumber: string,
+  bankAccountNumber: string,
+  bankAccountType: string,
+  bankSwiftBic: string,
+  bankName: string,
+  bankAddress: string,
+  bankAccountHolderName: string,
+): { label: string; value: string }[] {
+  const type = getBankCountryType(bankCountryIso2 || "")
+  if (type === "sepa") {
+    return [{ label: "Kontonummer (IBAN):", value: (bankIban || "").replace(/\s/g, "") }]
+  }
+  if (type === "us") {
+    return [
+      { label: "Routing (ABA):", value: bankRoutingNumber || "" },
+      { label: "Kontonummer:", value: bankAccountNumber || "" },
+      { label: "Kontotype:", value: bankAccountType === "savings" ? "Savings" : "Checking" },
+      { label: "SWIFT/BIC:", value: bankSwiftBic || "" },
+      { label: "Bank:", value: bankName || "" },
+      { label: "Bankadresse:", value: bankAddress || "" },
+      { label: "Kontoinnehaver:", value: bankAccountHolderName || "" },
+    ]
+  }
+  return [
+    { label: "Kontonummer:", value: bankAccountNumber || "" },
+    ...(bankIban ? [{ label: "IBAN:", value: bankIban.replace(/\s/g, "") }] : []),
+    { label: "SWIFT/BIC:", value: bankSwiftBic || "" },
+    { label: "Bank:", value: bankName || "" },
+    { label: "Bankadresse:", value: bankAddress || "" },
+    { label: "Kontoinnehaver:", value: bankAccountHolderName || "" },
+  ]
+}
 
 export async function generatePDF({
   name,
@@ -10,7 +46,15 @@ export async function generatePDF({
   postalCode,
   city,
   country,
-  bankAccount,
+  bankCountryIso2,
+  bankIban,
+  bankRoutingNumber,
+  bankAccountNumber,
+  bankAccountType,
+  bankSwiftBic,
+  bankName,
+  bankAddress,
+  bankAccountHolderName,
   email,
   expenses,
   validationSkipped = false,
@@ -32,6 +76,18 @@ export async function generatePDF({
     color: rgb(0, 0, 0),
   })
 
+  const bankLines = bankDetailsLines(
+    bankCountryIso2 ?? "",
+    bankIban ?? "",
+    bankRoutingNumber ?? "",
+    bankAccountNumber ?? "",
+    bankAccountType ?? "checking",
+    bankSwiftBic ?? "",
+    bankName ?? "",
+    bankAddress ?? "",
+    bankAccountHolderName ?? "",
+  )
+
   // Personal information
   const infoLines = [
     { label: "Navn:", value: name },
@@ -39,7 +95,7 @@ export async function generatePDF({
       label: "Adresse:",
       value: `${streetAddress}, ${postalCode} ${city}, ${country}`,
     },
-    { label: "Kontonummer:", value: bankAccount.replace(/\s/g, "") },
+    ...bankLines,
     { label: "E-post:", value: email },
   ]
 
@@ -64,28 +120,47 @@ export async function generatePDF({
     infoStartY -= 20
   }
 
-  infoLines.forEach((line, index) => {
-    // Draw label
-    coverPage.drawText(line.label, {
-      x: 50,
-      y: infoStartY - index * 30,
-      size: 12,
-      font,
-      color: rgb(0, 0, 0),
-    })
+  // Expand long values (e.g. IBAN) into multiple rows so they don't overlap the next line
+  const maxValueCharsPerLine = 28
+  const expandedInfoLines: { label: string; value: string }[] = []
+  for (const line of infoLines) {
+    const value = line.value
+    if (value.length <= maxValueCharsPerLine) {
+      expandedInfoLines.push({ label: line.label, value })
+    } else {
+      for (let i = 0; i < value.length; i += maxValueCharsPerLine) {
+        const chunk = value.slice(i, i + maxValueCharsPerLine)
+        expandedInfoLines.push({
+          label: i === 0 ? line.label : "",
+          value: chunk,
+        })
+      }
+    }
+  }
 
-    // Draw value
+  const lineHeight = 22
+  expandedInfoLines.forEach((line, index) => {
+    const y = infoStartY - index * lineHeight
+    if (line.label) {
+      coverPage.drawText(line.label, {
+        x: 50,
+        y,
+        size: 12,
+        font,
+        color: rgb(0, 0, 0),
+      })
+    }
     coverPage.drawText(line.value, {
       x: 150,
-      y: infoStartY - index * 30,
+      y,
       size: 12,
       font: regularFont,
       color: rgb(0, 0, 0),
     })
   })
 
-  // Add expense items table
-  const tableTop = height - 275
+  // Add expense items table (position below variable-length bank details)
+  const tableTop = infoStartY - expandedInfoLines.length * lineHeight - 25
   const rowHeight = 30
   const pageWidth = coverPage.getWidth()
   const margin = 50 // Left and right page margins

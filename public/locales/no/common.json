@@ -117,6 +117,18 @@
     "cityPlaceholder": "F.eks. Oslo",
     "country": "Land",
     "bankAccount": "Kontonummer",
+    "bankCountry": "Land for bankkonto",
+    "bankIban": "IBAN",
+    "bankIbanPlaceholder": "F.eks. NO93 8601 1117 947",
+    "bankRoutingNumber": "Routing number (ABA)",
+    "bankAccountNumber": "Kontonummer",
+    "bankAccountType": "Kontotype",
+    "bankAccountTypeChecking": "Checking",
+    "bankAccountTypeSavings": "Savings",
+    "bankSwiftBic": "SWIFT/BIC",
+    "bankName": "Banknavn",
+    "bankAddress": "Bankadresse",
+    "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
     "emailPlaceholder": "ola@nordmann.no",
     "date": "Dato",
@@ -151,7 +163,15 @@
       "invalidEmail": "Vennligst oppgi en gyldig e-postadresse",
       "dateRequired": "Vennligst velg en dato",
       "currencyRequired": "Valuta er påkrevd",
-      "expenseRequired": "Minst én utgift er påkrevd"
+      "expenseRequired": "Minst én utgift er påkrevd",
+      "bankCountryRequired": "Velg land for bankkonto",
+      "bankIbanRequired": "IBAN er påkrevd for SEPA-kontoer",
+      "bankRoutingRequired": "Routing number (ABA) er påkrevd",
+      "bankAccountNumberRequired": "Kontonummer er påkrevd",
+      "bankSwiftRequired": "SWIFT/BIC er påkrevd",
+      "bankNameRequired": "Banknavn er påkrevd",
+      "bankAddressRequired": "Bankadresse er påkrevd",
+      "bankHolderRequired": "Kontoinnehaverens navn er påkrevd"
     }
   }
 }
