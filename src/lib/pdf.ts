@@ -5,6 +5,7 @@ import { formatCurrency } from "./utils"
 import { convertToNOK, getExchangeRate } from "./expense"
 
 function bankDetailsLines(
+  residesInNorway: boolean,
   bankCountryIso2: string,
   bankIban: string,
   bankRoutingNumber: string,
@@ -15,15 +16,32 @@ function bankDetailsLines(
   bankAddress: string,
   bankAccountHolderName: string,
 ): { label: string; value: string }[] {
+  if (residesInNorway) {
+    return [
+      {
+        label: "Kontonummer:",
+        value: (bankAccountNumber || "").replace(/\s/g, ""),
+      },
+    ]
+  }
+
   const type = getBankCountryType(bankCountryIso2 || "")
   if (type === "sepa") {
-    return [{ label: "Kontonummer (IBAN):", value: (bankIban || "").replace(/\s/g, "") }]
+    return [
+      {
+        label: "Kontonummer (IBAN):",
+        value: (bankIban || "").replace(/\s/g, ""),
+      },
+    ]
   }
   if (type === "us") {
     return [
       { label: "Routing (ABA):", value: bankRoutingNumber || "" },
       { label: "Kontonummer:", value: bankAccountNumber || "" },
-      { label: "Kontotype:", value: bankAccountType === "savings" ? "Savings" : "Checking" },
+      {
+        label: "Kontotype:",
+        value: bankAccountType === "savings" ? "Savings" : "Checking",
+      },
       { label: "SWIFT/BIC:", value: bankSwiftBic || "" },
       { label: "Bank:", value: bankName || "" },
       { label: "Bankadresse:", value: bankAddress || "" },
@@ -32,7 +50,9 @@ function bankDetailsLines(
   }
   return [
     { label: "Kontonummer:", value: bankAccountNumber || "" },
-    ...(bankIban ? [{ label: "IBAN:", value: bankIban.replace(/\s/g, "") }] : []),
+    ...(bankIban
+      ? [{ label: "IBAN:", value: bankIban.replace(/\s/g, "") }]
+      : []),
     { label: "SWIFT/BIC:", value: bankSwiftBic || "" },
     { label: "Bank:", value: bankName || "" },
     { label: "Bankadresse:", value: bankAddress || "" },
@@ -46,6 +66,7 @@ export async function generatePDF({
   postalCode,
   city,
   country,
+  residesInNorway,
   bankCountryIso2,
   bankIban,
   bankRoutingNumber,
@@ -77,6 +98,7 @@ export async function generatePDF({
   })
 
   const bankLines = bankDetailsLines(
+    residesInNorway ?? true,
     bankCountryIso2 ?? "",
     bankIban ?? "",
     bankRoutingNumber ?? "",

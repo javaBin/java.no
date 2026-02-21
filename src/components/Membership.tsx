@@ -2,14 +2,11 @@ import Link from "next/link"
 
 export const Membership = () => (
   <section id="membership">
-    <div className="container">
-      <div className="row">
-        <div className="col-md-12 text-center">
-          <h1 className="section-heading">Medlemskap</h1>
-        </div>
+    <div className="mx-auto max-w-[1200px] px-4">
+      <div className="text-center">
+        <h1 className="section-heading">Medlemskap</h1>
       </div>
-      <div className="row">
-        <div className="col-md-8 col-md-offset-2 center-justified">
+      <div className="mx-auto max-w-3xl">
           <p>
             javaBin er åpent for alle som vil være medlem. Ved å være et betalt
             medlem av javaBin så støtter du Java-miljøet i Norge og gjør det
@@ -43,7 +40,6 @@ export const Membership = () => (
             </Link>{" "}
             for å kjøpe JavaZone billett eller enkeltstående medlemskap.
           </p>
-        </div>
       </div>
     </div>
   </section>

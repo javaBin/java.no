@@ -30,12 +30,15 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
         <meta name="description" content={t("title")!} />
       </Head>
       <header>
-        <div className="container">
-          <div className="intro-text">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="intro-text flex flex-col items-center text-center">
             <Image priority src={mariusDuke} height={250} alt="Marius Duke" />
             <div className="intro-lead-in">{t("intro")}</div>
             <div className="intro-heading">javaBin</div>
-            <Link href="/#about" className="page-scroll btn btn-xl">
+            <Link
+              href="/#about"
+              className="inline-block rounded border border-[#fed136] bg-[#fed136] px-10 py-5 font-['Montserrat'] text-lg font-bold uppercase text-white hover:border-[#fec503] hover:bg-[#fec503]"
+            >
               {t("aboutUs")}
             </Link>
           </div>
@@ -43,15 +46,12 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       </header>
 
       <section className="section" id="about">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-12 text-center">
-              <h2 className="section-heading">{t("about")}</h2>
-            </div>
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="text-center">
+            <h2 className="section-heading">{t("about")}</h2>
           </div>
           <br />
-          <div className="row">
-            <div className="col-xs-12 col-sm-12 col-md-8 col-md-offset-2">
+          <div className="mx-auto max-w-3xl">
               <p>{t("aboutJavaBin")}</p>
               <p>
                 <Trans
@@ -63,21 +63,17 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                 />
               </p>
               <p>{t("aboutMeetups")}</p>
-            </div>
           </div>
         </div>
       </section>
 
       <section className="section" id="contribute">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-12 text-center">
-              <h2 className="section-heading">{t("contribute")}</h2>
-            </div>
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="text-center">
+            <h2 className="section-heading">{t("contribute")}</h2>
           </div>
           <br />
-          <div className="row">
-            <div className="col-md-12">
+          <div>
               <ul className="timeline">
                 <li className="timeline-default">
                   <div className="timeline-image">
@@ -170,20 +166,17 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
                   </div>
                 </li>
               </ul>
-            </div>
           </div>
         </div>
       </section>
 
       <section className="section" id="locations">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-12 text-center">
-              <h2 className="section-heading">{t("branches")}</h2>
-            </div>
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="text-center">
+            <h2 className="section-heading">{t("branches")}</h2>
           </div>
           <div className="mx-auto mt-8 flex max-w-5xl flex-col gap-6 lg:h-[600px] lg:flex-row-reverse">
-            <div className="lg:w-1/2">
+            <div className="min-h-0 overflow-hidden lg:w-1/2">
               <RegionsMap regions={props.regions} />
             </div>
             <div className="lg:w-1/2">
@@ -204,59 +197,64 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
       {/*<Membership />*/}
 
       <section className="section" id="contact">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-12 text-center">
-              <h2 className="section-heading">{t("contact")}</h2>
-            </div>
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="text-center">
+            <h2 className="section-heading">{t("contact")}</h2>
           </div>
-          <div className="row">
-            <div className="col-md-12 center-justified">
-              <div className="">{t("contactHelpText")}</div>
-              <form
-                action="https://formspree.io/styret@java.no"
-                method="POST"
-                className="col-xs-offset-1 col-xs-10 col-sm-offset-2 col-sm-8 col-lg-offset-3 col-lg-6"
-              >
-                <div className="form-group">
-                  <label htmlFor="name">{t("name")}</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={t("yourName")!}
-                    name="name"
-                    id="name"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="email">{t("email")}</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder={t("yourEmail")!}
-                    name="email"
-                    id="email"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="message">{t("message")}</label>
-                  <textarea
-                    name="message"
-                    className="form-control"
-                    placeholder={t("yourMessage")!}
-                    rows={5}
-                    id="message"
-                  ></textarea>
-                </div>
-                <div className="form-group">
-                  <input
-                    type="submit"
-                    className="btn btn-primary"
-                    value={t("send")!}
-                  />
-                </div>
-              </form>
-            </div>
+          <div className="mx-auto max-w-xl text-center">
+            <div>{t("contactHelpText")}</div>
+            <form
+              action="https://formspree.io/styret@java.no"
+              method="POST"
+              className="mt-4 flex w-full flex-col gap-4"
+            >
+              <div className="w-full">
+                <label htmlFor="name" className="mb-1 block text-sm font-medium">
+                  {t("name")}
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  placeholder={t("yourName")!}
+                  name="name"
+                  id="name"
+                />
+              </div>
+              <div className="w-full">
+                <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                  {t("email")}
+                </label>
+                <input
+                  type="email"
+                  className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  placeholder={t("yourEmail")!}
+                  name="email"
+                  id="email"
+                />
+              </div>
+              <div className="w-full">
+                <label
+                  htmlFor="message"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  {t("message")}
+                </label>
+                <textarea
+                  name="message"
+                  className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  placeholder={t("yourMessage")!}
+                  rows={5}
+                  id="message"
+                />
+              </div>
+              <div className="text-center">
+                <input
+                  type="submit"
+                  className="cursor-pointer rounded border border-[#fed136] bg-[#fed136] px-4 py-2 font-['Montserrat'] text-sm font-bold uppercase text-white hover:bg-[#fec503]"
+                  value={t("send")!}
+                />
+              </div>
+            </form>
           </div>
         </div>
       </section>

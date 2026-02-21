@@ -131,8 +131,8 @@ const Events = ({ region, events }: EventProps) => {
 export const PublishEvents = ({ region }: Props) => {
   return (
     <>
-      <div className="row">
-        <div className="col-md-11 col-md-offset-3 max-w-screen-md">
+      <div className="flex justify-center">
+        <div className="max-w-screen-md">
           <h3>{region.name}</h3>
           <div>
             <div>

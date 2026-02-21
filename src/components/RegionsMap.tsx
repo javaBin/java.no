@@ -29,6 +29,7 @@ const RegionsMap = ({ regions }: RegionsMapProps) => {
 
   return (
     <div
+      className="relative overflow-hidden rounded-lg"
       style={{
         width: "100%",
         height: "600px",
@@ -72,13 +73,15 @@ const RegionsMap = ({ regions }: RegionsMapProps) => {
                         key={region.organizer.id}
                         className="flex items-center gap-2"
                       >
-                        <Image
-                          src={region.organizer.photoUrl}
-                          alt={region.organizer.name}
-                          width={34}
-                          height={34}
-                          className="rounded-full border border-solid border-red-400 object-cover"
-                        />
+                        <div className="relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full border border-solid border-red-400">
+                          <Image
+                            src={region.organizer.photoUrl}
+                            alt={region.organizer.name}
+                            fill
+                            className="object-cover"
+                            sizes="34px"
+                          />
+                        </div>
                         <a
                           href={region.organizer.profileUrl}
                           target="_blank"

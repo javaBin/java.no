@@ -1,6 +1,7 @@
 .section {
     padding: 50px 0;
 
+    & h1.section-heading,
     & h2.section-heading {
         font-size: 40px;
         margin-top: 0;

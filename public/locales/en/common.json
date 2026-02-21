@@ -107,6 +107,8 @@
   },
   "expense": {
     "title": "Expense Report",
+    "subtitle": "Fill out the form to generate a PDF report you can send to faktura@java.no.",
+    "personalInfo": "Personal Information",
     "name": "Name",
     "namePlaceholder": "John Smith",
     "address": "Address",
@@ -116,12 +118,18 @@
     "city": "City",
     "cityPlaceholder": "e.g. London",
     "country": "Country",
+    "residesInNorway": "I reside in Norway",
+    "residesAbroad": "I reside abroad",
     "bankAccount": "Bank Account",
+    "bankDescription": "Enter the bank account you want to be reimbursed to.",
+    "bankDescriptionNorwegian": "You only need your Norwegian account number (11 digits).",
+    "bankDescriptionInternational": "Select the country of your bank account below.",
     "bankCountry": "Country of bank account",
     "bankIban": "IBAN",
     "bankIbanPlaceholder": "e.g. NO93 8601 1117 947",
     "bankRoutingNumber": "Routing number (ABA)",
     "bankAccountNumber": "Account number",
+    "bankAccountNumberPlaceholder": "e.g. 8601 11 17947",
     "bankAccountType": "Account type",
     "bankAccountTypeChecking": "Checking",
     "bankAccountTypeSavings": "Savings",
@@ -131,6 +139,7 @@
     "bankAccountHolderName": "Account holder name",
     "email": "Email",
     "emailPlaceholder": "john@smith.com",
+    "descriptionPlaceholder": "What was purchased, where, and for what occasion?",
     "date": "Date",
     "dateDescription": "The date is used to date the expense.",
     "clearForm": "Clear Form",
@@ -148,6 +157,14 @@
     "generateReport": "Generate Report",
     "sendEmail": "Send Email",
     "selectDate": "Select a date",
+    "invalidNorwegianAccountDetail": "Invalid Norwegian account number. Please check that the number is correct (11 digits with valid checksum).",
+    "invalidIbanFormat": "Invalid format. Expected {{countryName}} IBAN format.",
+    "invalidIbanFormatGeneric": "Invalid format. Expected IBAN format (XXkk BBBB...).",
+    "invalidIbanLength": "Wrong length. Expected {{expectedLength}} characters for {{countryName}} IBAN, got {{actualLength}}.",
+    "invalidIbanLengthGeneric": "Wrong length. Expected {{expectedLength}} characters, got {{actualLength}}.",
+    "invalidAccountGeneric": "We couldn't validate the account number. It's highly likely that the account number is incorrect.",
+    "validationOverridePrompt": "If you insist it is correct, you can disable the validation.",
+    "skipValidationLabel": "I accept that validation failed, and that reimbursement might be delayed if the account number is incorrect",
     "errors": {
       "descriptionRequired": "Description is required",
       "categoryRequired": "Category is required",
@@ -170,7 +187,8 @@
       "bankSwiftRequired": "SWIFT/BIC is required",
       "bankNameRequired": "Bank name is required",
       "bankAddressRequired": "Bank address is required",
-      "bankHolderRequired": "Account holder name is required"
+      "bankHolderRequired": "Account holder name is required",
+      "invalidNorwegianAccount": "Invalid Norwegian account number"
     }
   }
 }

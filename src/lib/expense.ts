@@ -2,15 +2,114 @@ import { z } from "zod"
 
 /** ISO2 codes of countries that use IBAN (SEPA / international IBAN zone) */
 export const IBAN_COUNTRY_ISO2 = new Set([
-  "AD", "AT", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FO", "FI", "FR",
-  "DE", "GI", "GR", "GL", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MK",
-  "MT", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "SM", "RS", "SK", "SI", "ES",
-  "SE", "CH", "GB", "VA", "AL", "AZ", "BH", "BR", "CR", "DO", "EG", "GE", "GT",
-  "IL", "JO", "KZ", "KW", "LB", "MR", "MU", "MD", "PK", "PS", "QA", "LC", "SA",
-  "SC", "TL", "TN", "TR", "UA", "AE", "VG", "IQ", "BY", "SV", "LY", "SD", "BI",
-  "DJ", "RU", "SO", "NI", "MN", "FK", "OM", "HN", "AO", "BF", "BJ", "CF", "CG",
-  "CI", "CM", "CV", "DZ", "GA", "GQ", "GW", "IR", "MA", "MG", "ML", "MZ", "NE",
-  "SN", "TD", "TG", "KM",
+  "AD",
+  "AT",
+  "BE",
+  "BA",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FO",
+  "FI",
+  "FR",
+  "DE",
+  "GI",
+  "GR",
+  "GL",
+  "HU",
+  "IS",
+  "IE",
+  "IT",
+  "LV",
+  "LI",
+  "LT",
+  "LU",
+  "MK",
+  "MT",
+  "MC",
+  "ME",
+  "NL",
+  "NO",
+  "PL",
+  "PT",
+  "RO",
+  "SM",
+  "RS",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
+  "CH",
+  "GB",
+  "VA",
+  "AL",
+  "AZ",
+  "BH",
+  "BR",
+  "CR",
+  "DO",
+  "EG",
+  "GE",
+  "GT",
+  "IL",
+  "JO",
+  "KZ",
+  "KW",
+  "LB",
+  "MR",
+  "MU",
+  "MD",
+  "PK",
+  "PS",
+  "QA",
+  "LC",
+  "SA",
+  "SC",
+  "TL",
+  "TN",
+  "TR",
+  "UA",
+  "AE",
+  "VG",
+  "IQ",
+  "BY",
+  "SV",
+  "LY",
+  "SD",
+  "BI",
+  "DJ",
+  "RU",
+  "SO",
+  "NI",
+  "MN",
+  "FK",
+  "OM",
+  "HN",
+  "AO",
+  "BF",
+  "BJ",
+  "CF",
+  "CG",
+  "CI",
+  "CM",
+  "CV",
+  "DZ",
+  "GA",
+  "GQ",
+  "GW",
+  "IR",
+  "MA",
+  "MG",
+  "ML",
+  "MZ",
+  "NE",
+  "SN",
+  "TD",
+  "TG",
+  "KM",
 ])
 
 /**
@@ -20,6 +119,59 @@ export function getBankCountryType(iso2: string): "sepa" | "us" | "other" {
   if (iso2 === "US") return "us"
   if (IBAN_COUNTRY_ISO2.has(iso2)) return "sepa"
   return "other"
+}
+
+/** IBAN total length per country (ISO 13616). Used for validation and building IBAN from BBAN. */
+export const IBAN_COUNTRY_LENGTHS: Record<string, number> = {
+  AD: 24, AT: 20, BE: 16, BA: 20, BG: 22, HR: 21, CY: 28, CZ: 24, DK: 18,
+  EE: 20, FO: 18, FI: 18, FR: 27, DE: 22, GI: 23, GR: 27, GL: 18, HU: 28,
+  IS: 26, IE: 22, IT: 27, LV: 21, LI: 21, LT: 20, LU: 20, MK: 19, MT: 31,
+  MC: 27, ME: 22, NL: 18, NO: 15, PL: 28, PT: 25, RO: 24, SM: 27, RS: 22,
+  SK: 24, SI: 19, ES: 24, SE: 24, CH: 21, GB: 22, VA: 22, AL: 28, AZ: 28,
+  BH: 22, BR: 29, CR: 22, DO: 28, EG: 29, GE: 22, GT: 28, IL: 23, JO: 30,
+  KZ: 20, KW: 30, LB: 28, MR: 27, MU: 30, MD: 24, PK: 24, PS: 29, QA: 29,
+  LC: 32, SA: 24, SC: 31, TL: 23, TN: 24, TR: 26, UA: 29, AE: 23, VG: 24,
+  IQ: 23, BY: 28, SV: 28, LY: 25, SD: 18, BI: 27, DJ: 27, RU: 33, SO: 23,
+  NI: 28, MN: 20, FK: 18, OM: 23, HN: 28, AO: 25, BF: 28, BJ: 28, CF: 27,
+  CG: 27, CI: 28, CM: 27, CV: 25, DZ: 26, GA: 27, GQ: 27, GW: 25, IR: 26,
+  MA: 28, MG: 27, ML: 28, MZ: 25, NE: 28, SN: 28, TD: 27, TG: 28, KM: 27,
+}
+
+/** SEPA countries where the BBAN is digits-only (no letters). Use for country+digits IBAN input. */
+export const IBAN_NUMERIC_BBAN_ISO2 = new Set([
+  "NO", "SE", "DK", "FI", "DE", "ES", "AT", "BE", "PL", "PT", "RO", "SK", "SI",
+  "EE", "LV", "LT", "LU", "HR", "CY", "CZ", "BG", "RS", "ME", "MK", "SM", "VA",
+])
+
+/** Length of the BBAN part (IBAN without country code and check digits) for a country. */
+export function getIBANBbanLength(iso2: string): number | null {
+  const total = IBAN_COUNTRY_LENGTHS[iso2.toUpperCase()]
+  return total != null ? total - 4 : null
+}
+
+/**
+ * Build full IBAN from country code and BBAN (digits only).
+ * Computes check digits per ISO 13616 (mod 97).
+ */
+export function buildIBAN(countryCode: string, bban: string): string {
+  const cc = countryCode.toUpperCase().replace(/\s/g, "")
+  const cleanBban = bban.replace(/\s/g, "").replace(/\D/g, "")
+  if (cc.length !== 2 || !/^[A-Z]{2}$/.test(cc) || !cleanBban) return ""
+  const rearranged = cleanBban + cc + "00"
+  const expanded = rearranged
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0)
+      return code >= 65 && code <= 90 ? (code - 55).toString() : char
+    })
+    .join("")
+  let remainder = 0
+  for (let i = 0; i < expanded.length; i += 7) {
+    const chunk = remainder + expanded.substring(i, i + 7)
+    remainder = parseInt(chunk, 10) % 97
+  }
+  const check = String(98 - remainder).padStart(2, "0")
+  return (cc + check + cleanBban).toUpperCase()
 }
 
 // Create schemas with localized error messages
@@ -62,94 +214,195 @@ export const createExpenseSchemas = (
       .default(new File([], "")),
   })
 
-  const formSchema = z.object({
-    name: z
-      .string({
-        required_error: t("expense.errors.nameRequired"),
-        invalid_type_error: t("expense.errors.nameRequired"),
-      })
-      .min(1, t("expense.errors.nameRequired")),
-    streetAddress: z
-      .string({
-        required_error: t("expense.errors.streetRequired"),
-        invalid_type_error: t("expense.errors.streetRequired"),
-      })
-      .min(1, t("expense.errors.streetRequired")),
-    postalCode: z
-      .string({
-        required_error: t("expense.errors.postalRequired"),
-        invalid_type_error: t("expense.errors.postalRequired"),
-      })
-      .min(1, t("expense.errors.postalRequired")),
-    city: z
-      .string({
-        required_error: t("expense.errors.cityRequired"),
-        invalid_type_error: t("expense.errors.cityRequired"),
-      })
-      .min(1, t("expense.errors.cityRequired")),
-    country: z
-      .string({
-        required_error: t("expense.errors.countryRequired"),
-        invalid_type_error: t("expense.errors.countryRequired"),
-      })
-      .min(1, t("expense.errors.countryRequired"))
-      .default(language === "en" ? "United Kingdom" : "Norway"),
-    // Bank details: country drives which fields are required
-    bankCountry: z
-      .string()
-      .min(1, t("expense.errors.bankCountryRequired"))
-      .default(""),
-    bankCountryIso2: z.string().default(""),
-    bankIban: z.string().optional().default(""),
-    bankRoutingNumber: z.string().optional().default(""),
-    bankAccountNumber: z.string().optional().default(""),
-    bankAccountType: z.enum(["checking", "savings"]).optional().default("checking"),
-    bankSwiftBic: z.string().optional().default(""),
-    bankName: z.string().optional().default(""),
-    bankAddress: z.string().optional().default(""),
-    bankAccountHolderName: z.string().optional().default(""),
-    email: z
-      .string({
-        required_error: t("expense.errors.invalidEmail"),
-        invalid_type_error: t("expense.errors.invalidEmail"),
-      })
-      .email(t("expense.errors.invalidEmail")),
-    expenses: z
-      .array(expenseItemSchema, {
-        required_error: t("expense.errors.expenseRequired"),
-        invalid_type_error: t("expense.errors.expenseRequired"),
-      })
-      .min(1, t("expense.errors.expenseRequired")),
-  }).superRefine((data, ctx) => {
-    const type = getBankCountryType(data.bankCountryIso2 || "")
-    if (type === "sepa") {
-      const iban = (data.bankIban || "").replace(/\s/g, "")
-      if (!iban) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankIbanRequired"), path: ["bankIban"] })
+  const formSchema = z
+    .object({
+      name: z
+        .string({
+          required_error: t("expense.errors.nameRequired"),
+          invalid_type_error: t("expense.errors.nameRequired"),
+        })
+        .min(1, t("expense.errors.nameRequired")),
+      streetAddress: z
+        .string({
+          required_error: t("expense.errors.streetRequired"),
+          invalid_type_error: t("expense.errors.streetRequired"),
+        })
+        .min(1, t("expense.errors.streetRequired")),
+      postalCode: z
+        .string({
+          required_error: t("expense.errors.postalRequired"),
+          invalid_type_error: t("expense.errors.postalRequired"),
+        })
+        .min(1, t("expense.errors.postalRequired")),
+      city: z
+        .string({
+          required_error: t("expense.errors.cityRequired"),
+          invalid_type_error: t("expense.errors.cityRequired"),
+        })
+        .min(1, t("expense.errors.cityRequired")),
+      country: z
+        .string({
+          required_error: t("expense.errors.countryRequired"),
+          invalid_type_error: t("expense.errors.countryRequired"),
+        })
+        .min(1, t("expense.errors.countryRequired"))
+        .default("Norway"),
+      residesInNorway: z.boolean().default(true),
+      bankCountry: z.string().optional().default(""),
+      bankCountryIso2: z.string().optional().default(""),
+      bankIban: z.string().optional().default(""),
+      bankRoutingNumber: z.string().optional().default(""),
+      bankAccountNumber: z.string().optional().default(""),
+      bankAccountType: z
+        .enum(["checking", "savings"])
+        .optional()
+        .default("checking"),
+      bankSwiftBic: z.string().optional().default(""),
+      bankName: z.string().optional().default(""),
+      bankAddress: z.string().optional().default(""),
+      bankAccountHolderName: z.string().optional().default(""),
+      email: z
+        .string({
+          required_error: t("expense.errors.invalidEmail"),
+          invalid_type_error: t("expense.errors.invalidEmail"),
+        })
+        .email(t("expense.errors.invalidEmail")),
+      expenses: z
+        .array(expenseItemSchema, {
+          required_error: t("expense.errors.expenseRequired"),
+          invalid_type_error: t("expense.errors.expenseRequired"),
+        })
+        .min(1, t("expense.errors.expenseRequired")),
+    })
+    .superRefine((data, ctx) => {
+      if (data.residesInNorway) {
+        const accountNumber = (data.bankAccountNumber || "").replace(/\s/g, "")
+        if (!accountNumber) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankAccountNumberRequired"),
+            path: ["bankAccountNumber"],
+          })
+          return
+        }
+        // Validate Norwegian BBAN (11 digits with modulo-11)
+        if (!validateNorwegianBBAN(accountNumber)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.invalidNorwegianAccount"),
+            path: ["bankAccountNumber"],
+          })
+        }
         return
       }
-      if (!validateIBAN(iban.toUpperCase())) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.invalidAccount"), path: ["bankIban"] })
+
+      // International: require country
+      if (!data.bankCountryIso2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankCountryRequired"),
+          path: ["bankCountry"],
+        })
+        return
       }
-      return
-    }
-    if (type === "us") {
-      if (!(data.bankRoutingNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankRoutingRequired"), path: ["bankRoutingNumber"] })
-      if (!(data.bankAccountNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAccountNumberRequired"), path: ["bankAccountNumber"] })
-      if (!(data.bankSwiftBic || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankSwiftRequired"), path: ["bankSwiftBic"] })
-      if (!(data.bankName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankNameRequired"), path: ["bankName"] })
-      if (!(data.bankAddress || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAddressRequired"), path: ["bankAddress"] })
-      if (!(data.bankAccountHolderName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankHolderRequired"), path: ["bankAccountHolderName"] })
-      return
-    }
-    if (type === "other") {
-      if (!(data.bankAccountNumber || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAccountNumberRequired"), path: ["bankAccountNumber"] })
-      if (!(data.bankSwiftBic || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankSwiftRequired"), path: ["bankSwiftBic"] })
-      if (!(data.bankName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankNameRequired"), path: ["bankName"] })
-      if (!(data.bankAddress || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankAddressRequired"), path: ["bankAddress"] })
-      if (!(data.bankAccountHolderName || "").trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t("expense.errors.bankHolderRequired"), path: ["bankAccountHolderName"] })
-    }
-  })
+
+      const type = getBankCountryType(data.bankCountryIso2)
+      if (type === "sepa") {
+        const iban = (data.bankIban || "").replace(/\s/g, "")
+        if (!iban) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankIbanRequired"),
+            path: ["bankIban"],
+          })
+        }
+        if (!(data.bankSwiftBic || "").trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankSwiftRequired"),
+            path: ["bankSwiftBic"],
+          })
+        }
+        if (iban && !validateIBAN(iban.toUpperCase())) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.invalidAccount"),
+            path: ["bankIban"],
+          })
+        }
+        return
+      }
+      if (type === "us") {
+        if (!(data.bankRoutingNumber || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankRoutingRequired"),
+            path: ["bankRoutingNumber"],
+          })
+        if (!(data.bankAccountNumber || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankAccountNumberRequired"),
+            path: ["bankAccountNumber"],
+          })
+        if (!(data.bankSwiftBic || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankSwiftRequired"),
+            path: ["bankSwiftBic"],
+          })
+        if (!(data.bankName || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankNameRequired"),
+            path: ["bankName"],
+          })
+        if (!(data.bankAddress || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankAddressRequired"),
+            path: ["bankAddress"],
+          })
+        if (!(data.bankAccountHolderName || "").trim())
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.bankHolderRequired"),
+            path: ["bankAccountHolderName"],
+          })
+        return
+      }
+      // type === "other"
+      if (!(data.bankAccountNumber || "").trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankAccountNumberRequired"),
+          path: ["bankAccountNumber"],
+        })
+      if (!(data.bankSwiftBic || "").trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankSwiftRequired"),
+          path: ["bankSwiftBic"],
+        })
+      if (!(data.bankName || "").trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankNameRequired"),
+          path: ["bankName"],
+        })
+      if (!(data.bankAddress || "").trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankAddressRequired"),
+          path: ["bankAddress"],
+        })
+      if (!(data.bankAccountHolderName || "").trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("expense.errors.bankHolderRequired"),
+          path: ["bankAccountHolderName"],
+        })
+    })
 
   return { expenseItemSchema, formSchema }
 }
@@ -209,125 +462,7 @@ export const validateIBAN = (iban: string): boolean => {
   }
 
   const countryCode = iban.substring(0, 2)
-
-  // Country-specific length validation
-  const countryLengths: Record<string, number> = {
-    // European countries
-    AD: 24, // Andorra
-    AT: 20, // Austria
-    BE: 16, // Belgium
-    BA: 20, // Bosnia and Herzegovina
-    BG: 22, // Bulgaria
-    HR: 21, // Croatia
-    CY: 28, // Cyprus
-    CZ: 24, // Czech Republic
-    DK: 18, // Denmark
-    EE: 20, // Estonia
-    FO: 18, // Faroe Islands
-    FI: 18, // Finland
-    FR: 27, // France
-    DE: 22, // Germany
-    GI: 23, // Gibraltar
-    GR: 27, // Greece
-    GL: 18, // Greenland
-    HU: 28, // Hungary
-    IS: 26, // Iceland
-    IE: 22, // Ireland
-    IT: 27, // Italy
-    LV: 21, // Latvia
-    LI: 21, // Liechtenstein
-    LT: 20, // Lithuania
-    LU: 20, // Luxembourg
-    MK: 19, // North Macedonia
-    MT: 31, // Malta
-    MC: 27, // Monaco
-    ME: 22, // Montenegro
-    NL: 18, // Netherlands
-    NO: 15, // Norway
-    PL: 28, // Poland
-    PT: 25, // Portugal
-    RO: 24, // Romania
-    SM: 27, // San Marino
-    RS: 22, // Serbia
-    SK: 24, // Slovakia
-    SI: 19, // Slovenia
-    ES: 24, // Spain
-    SE: 24, // Sweden
-    CH: 21, // Switzerland
-    GB: 22, // United Kingdom
-
-    // Non-European countries
-    AL: 28, // Albania
-    AZ: 28, // Azerbaijan
-    BH: 22, // Bahrain
-    BR: 29, // Brazil
-    CR: 22, // Costa Rica
-    DO: 28, // Dominican Republic
-    EG: 29, // Egypt
-    GE: 22, // Georgia
-    GT: 28, // Guatemala
-    IL: 23, // Israel
-    JO: 30, // Jordan
-    KZ: 20, // Kazakhstan
-    KW: 30, // Kuwait
-    LB: 28, // Lebanon
-    MR: 27, // Mauritania
-    MU: 30, // Mauritius
-    MD: 24, // Moldova
-    PK: 24, // Pakistan
-    PS: 29, // Palestine
-    QA: 29, // Qatar
-    LC: 32, // Saint Lucia
-    SA: 24, // Saudi Arabia
-    SC: 31, // Seychelles
-    TL: 23, // Timor-Leste
-    TN: 24, // Tunisia
-    TR: 26, // Turkey
-    UA: 29, // Ukraine
-    AE: 23, // United Arab Emirates
-    VA: 22, // Vatican City
-    VG: 24, // British Virgin Islands
-    IQ: 23, // Iraq
-    BY: 28, // Belarus
-    SV: 28, // El Salvador
-    LY: 25, // Libya
-    SD: 18, // Sudan
-    BI: 27, // Burundi
-    DJ: 27, // Djibouti
-    RU: 33, // Russia
-    SO: 23, // Somalia
-    NI: 28, // Nicaragua
-    MN: 20, // Mongolia
-    FK: 18, // Falkland Islands
-    OM: 23, // Oman
-    HN: 28, // Honduras
-
-    // Experimental/Partial IBAN countries
-    AO: 25, // Angola
-    BF: 28, // Burkina Faso
-    BJ: 28, // Benin
-    CF: 27, // Central African Republic
-    CG: 27, // Congo
-    CI: 28, // Ivory Coast
-    CM: 27, // Cameroon
-    CV: 25, // Cape Verde
-    DZ: 26, // Algeria
-    GA: 27, // Gabon
-    GQ: 27, // Equatorial Guinea
-    GW: 25, // Guinea-Bissau
-    IR: 26, // Iran
-    MA: 28, // Morocco
-    MG: 27, // Madagascar
-    ML: 28, // Mali
-    MZ: 25, // Mozambique
-    NE: 28, // Niger
-    SN: 28, // Senegal
-    TD: 27, // Chad
-    TG: 28, // Togo
-    KM: 27, // Comoros
-  }
-
-  const expectedLength = countryLengths[countryCode]
+  const expectedLength = IBAN_COUNTRY_LENGTHS[countryCode]
 
   // If we know the expected length for this country and it doesn't match, reject it
   if (expectedLength && iban.length !== expectedLength) {
@@ -438,10 +573,14 @@ async function fetchExchangeRateData(
           }
         }
       } catch (e) {
-        console.log("Could not parse UNIT_MULT from API response, assuming 1", e)
+        console.log(
+          "Could not parse UNIT_MULT from API response, assuming 1",
+          e,
+        )
       }
 
-      const observations = responseData.data.dataSets[0].series["0:0:0:0"].observations
+      const observations =
+        responseData.data.dataSets[0].series["0:0:0:0"].observations
 
       const observationKeys = Object.keys(observations).sort(
         (a, b) => parseInt(a) - parseInt(b),

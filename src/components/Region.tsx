@@ -82,15 +82,17 @@ export const Meetings = ({ meetings, meetupUrl }: MeetingProps) => {
                                 margin: `0 ${index * 25}px`,
                               }}
                             >
-                              <Image
-                                alt={t("attendeePhoto", {
-                                  name: attendee.name,
-                                })}
-                                src={attendee.photoUrl}
-                                width={34}
-                                height={34}
-                                className="rounded-full border border-solid border-red-400 object-cover"
-                              />
+                              <div className="relative h-[34px] w-[34px] overflow-hidden rounded-full border border-solid border-red-400">
+                                <Image
+                                  alt={t("attendeePhoto", {
+                                    name: attendee.name,
+                                  })}
+                                  src={attendee.photoUrl}
+                                  fill
+                                  className="object-cover"
+                                  sizes="34px"
+                                />
+                              </div>
                             </li>
                           ))}
                         </ul>
@@ -133,8 +135,8 @@ export const Region = ({ region }: Props) => {
 
   return (
     <>
-      <div className="row">
-        <div className="col-md-11 col-md-offset-3 max-w-screen-md">
+      <div className="flex justify-center">
+        <div className="max-w-screen-md">
           <h3>{region.name}</h3>
           <div>
             <p>

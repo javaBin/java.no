@@ -107,6 +107,8 @@
   },
   "expense": {
     "title": "Utleggsrapport",
+    "subtitle": "Fyll ut skjemaet for å generere en PDF-rapport som du kan sende til faktura@java.no.",
+    "personalInfo": "Personlige opplysninger",
     "name": "Navn",
     "namePlaceholder": "Ola Nordmann",
     "address": "Adresse",
@@ -116,12 +118,18 @@
     "city": "Poststed",
     "cityPlaceholder": "F.eks. Oslo",
     "country": "Land",
-    "bankAccount": "Kontonummer",
+    "residesInNorway": "Jeg bor i Norge",
+    "residesAbroad": "Jeg bor i utlandet",
+    "bankAccount": "Bankkonto",
+    "bankDescription": "Oppgi bankkontoen du ønsker å få refundert til.",
+    "bankDescriptionNorwegian": "Du trenger bare ditt norske kontonummer (11 siffer).",
+    "bankDescriptionInternational": "Velg landet for din bankkonto nedenfor.",
     "bankCountry": "Land for bankkonto",
     "bankIban": "IBAN",
     "bankIbanPlaceholder": "F.eks. NO93 8601 1117 947",
     "bankRoutingNumber": "Routing number (ABA)",
     "bankAccountNumber": "Kontonummer",
+    "bankAccountNumberPlaceholder": "F.eks. 8601 11 17947",
     "bankAccountType": "Kontotype",
     "bankAccountTypeChecking": "Checking",
     "bankAccountTypeSavings": "Savings",
@@ -131,6 +139,7 @@
     "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
     "emailPlaceholder": "ola@nordmann.no",
+    "descriptionPlaceholder": "Hva ble kjøpt, hvor og til hvilken anledning?",
     "date": "Dato",
     "dateDescription": "Datoen brukes til å datere utgiften.",
     "clearForm": "Tøm skjema",
@@ -149,6 +158,14 @@
     "generateReport": "Generer rapport",
     "sendEmail": "Send e-post",
     "selectDate": "Velg en dato",
+    "invalidNorwegianAccountDetail": "Ugyldig norsk kontonummer. Sjekk at nummeret er korrekt (11 siffer med gyldig kontrollsiffer).",
+    "invalidIbanFormat": "Ugyldig format. Forventet {{countryName}} IBAN-format.",
+    "invalidIbanFormatGeneric": "Ugyldig format. Forventet IBAN-format (XXkk BBBB...).",
+    "invalidIbanLength": "Feil lengde. Forventet {{expectedLength}} tegn for {{countryName}} IBAN, fikk {{actualLength}}.",
+    "invalidIbanLengthGeneric": "Feil lengde. Forventet {{expectedLength}} tegn, fikk {{actualLength}}.",
+    "invalidAccountGeneric": "Vi kunne ikke validere kontonummeret. Det er svært sannsynlig at kontonummeret er feil.",
+    "validationOverridePrompt": "Hvis du insisterer på at det er riktig, kan du deaktivere valideringen.",
+    "skipValidationLabel": "Jeg godtar at valideringen feilet, og at utbetaling kan bli forsinket hvis nummeret er feil",
     "errors": {
       "descriptionRequired": "Beskrivelse er påkrevd",
       "categoryRequired": "Kategori er påkrevd",
@@ -171,7 +188,8 @@
       "bankSwiftRequired": "SWIFT/BIC er påkrevd",
       "bankNameRequired": "Banknavn er påkrevd",
       "bankAddressRequired": "Bankadresse er påkrevd",
-      "bankHolderRequired": "Kontoinnehaverens navn er påkrevd"
+      "bankHolderRequired": "Kontoinnehaverens navn er påkrevd",
+      "invalidNorwegianAccount": "Ugyldig norsk kontonummer"
     }
   }
 }

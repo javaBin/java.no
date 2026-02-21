@@ -2,6 +2,12 @@ import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import React from "react"
 import { banks } from "@/data/NorwegianBanks"
+import {
+  buildIBAN,
+  getIBANBbanLength,
+  validateNorwegianBBAN,
+  validateIBAN,
+} from "@/lib/expense"
 import { PiggyBank } from "lucide-react"
 
 // IBAN country code to country name and expected length
@@ -61,6 +67,24 @@ const AccountInputBase = React.forwardRef<
     onBlur: () => void
   }
 >(({ value, onChange, onBlur, onValidationChange, ...props }, ref) => {
+  const sanitizeInput = React.useCallback((input: string) => {
+    let nextValue = input.replace(/[^a-zA-Z0-9\s]/g, "")
+    const previousCompactValue = value.replace(/\s/g, "")
+    const compactValue = nextValue.replace(/\s/g, "")
+    const isExistingIban = /^[A-Za-z]{2}/.test(previousCompactValue)
+    const startsAsIban = /^[A-Za-z]/.test(compactValue)
+
+    // Keep IBAN mode stable while editing an existing IBAN value.
+    if (isExistingIban || startsAsIban) {
+      if (compactValue.length > 34) return null
+    } else if (/^\d/.test(compactValue)) {
+      if (compactValue.length > 11) return null
+      nextValue = nextValue.replace(/[^0-9\s]/g, "")
+    }
+
+    return nextValue
+  }, [value])
+
   // Validate Norwegian BBAN (11 digits) or IBAN (starts with country code, 15-34 chars)
   const validateAccount = React.useCallback(
     (accountValue: string): AccountValidationResult => {
@@ -183,29 +207,10 @@ const AccountInputBase = React.forwardRef<
       description={description}
       value={value}
       onChange={(e) => {
-        let newValue = e.target.value
-
-        // Allow both letters and numbers for all inputs
-        // This way users can type either IBAN or BBAN format
-        newValue = newValue.replace(/[^a-zA-Z0-9\s]/g, "")
-
-        // If it starts with letters, it's likely an IBAN - convert to uppercase
-        if (/^[A-Za-z]/.test(newValue)) {
-          newValue = newValue.toUpperCase()
-          // Max IBAN length is 34 characters
-          if (newValue.replace(/\s/g, "").length > 34) return
-        } else {
-          // If it starts with numbers, treat as Norwegian account number
-          // and only allow digits
-          newValue = newValue.replace(/[^0-9\s]/g, "")
-          if (newValue.replace(/\s/g, "").length > 11) return
-        }
+        const newValue = sanitizeInput(e.target.value)
+        if (newValue === null) return
 
         onChange(newValue)
-
-        // Run validation on change so "only letters" etc. show invalid immediately
-        const validationResult = validateAccount(newValue)
-        onValidationChange?.(validationResult)
       }}
       onBlur={() => {
         onBlur()
@@ -217,7 +222,10 @@ const AccountInputBase = React.forwardRef<
 
         if (isIBAN) {
           // Format IBAN with a space every 4 characters
-          const formattedIBAN = cleanValue.replace(/(.{4})/g, "$1 ").trim()
+          const formattedIBAN = cleanValue
+            .toUpperCase()
+            .replace(/(.{4})/g, "$1 ")
+            .trim()
           onChange(formattedIBAN)
         } else {
           // Format Norwegian account number as XXXX XX XXXXX
@@ -227,15 +235,234 @@ const AccountInputBase = React.forwardRef<
           )
         }
       }}
-      onFocus={(e) => {
-        const value = e.currentTarget.value
-        onChange(value.replace(/\s/g, ""))
-      }}
       placeholder="e.g. 8601 11 17947 or NO93 8601 1117 947"
     />
   )
 })
 AccountInputBase.displayName = "AccountInputBase"
+
+/** Norwegian BBAN-only input: 11 digits, format XXXX XX XXXXX, bank image, no IBAN */
+const NorwegianAccountInputBase = React.forwardRef<
+  HTMLInputElement,
+  AccountInputBaseProps & {
+    value: string
+    onChange: (value: string) => void
+    onBlur: () => void
+  }
+>(({ value, onChange, onBlur, onValidationChange, ...props }, ref) => {
+  const sanitizeInput = React.useCallback((input: string) => {
+    const nextValue = input.replace(/[^0-9\s]/g, "")
+    const compact = nextValue.replace(/\s/g, "")
+    if (compact.length > 11) return null
+    return nextValue
+  }, [])
+
+  const validateAccount = React.useCallback(
+    (accountValue: string): AccountValidationResult => {
+      const digitsOnly = accountValue.replace(/\s/g, "").replace(/\D/g, "")
+      if (!digitsOnly) return { isValid: true }
+      if (digitsOnly.length !== 11) {
+        return {
+          isValid: false,
+          errorType: "length",
+          expectedLength: 11,
+          actualLength: digitsOnly.length,
+        }
+      }
+      if (!validateNorwegianBBAN(digitsOnly)) {
+        return { isValid: false, errorType: "format" }
+      }
+      return { isValid: true }
+    },
+    [],
+  )
+
+  const bank = React.useMemo(() => {
+    const cleanValue = value?.replace(/\D/g, "")
+    return (
+      banks.find((b) => b.clearingCodes.includes(cleanValue?.slice(0, 4))) ||
+      null
+    )
+  }, [value])
+
+  return (
+    <Input
+      {...props}
+      ref={ref}
+      type="text"
+      inputMode="numeric"
+      startIcon={
+        bank ? (
+          <Image
+            src={`/bank/${bank.identifier}.png`}
+            alt={`${bank.name} logo`}
+            width={30}
+            height={30}
+            className="object-contain"
+          />
+        ) : (
+          <PiggyBank
+            size="1rem"
+            className="absolute left-2 top-1/2 -translate-y-1/2 transform"
+          />
+        )
+      }
+      description={bank?.name}
+      value={value}
+      onChange={(e) => {
+        const newValue = sanitizeInput(e.target.value)
+        if (newValue === null) return
+        onChange(newValue)
+      }}
+      onBlur={() => {
+        onBlur()
+        const cleanValue = value.replace(/\s/g, "").replace(/\D/g, "")
+        if (!cleanValue) return
+        const validationResult = validateAccount(value)
+        onValidationChange?.(validationResult)
+        const formatted = `${cleanValue.slice(0, 4)} ${cleanValue.slice(4, 6)} ${cleanValue.slice(6)}`
+        onChange(formatted)
+      }}
+      placeholder="e.g. 8601 11 17947"
+    />
+  )
+})
+NorwegianAccountInputBase.displayName = "NorwegianAccountInputBase"
+
+export function NorwegianAccountInput({
+  value,
+  onChange,
+  onBlur,
+  onValidationChange,
+  ...props
+}: AccountInputBaseProps & {
+  value: string
+  onChange: (value: string) => void
+  onBlur: () => void
+  onValidationChange?: (result: AccountValidationResult) => void
+}) {
+  return (
+    <NorwegianAccountInputBase
+      {...props}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+      onValidationChange={onValidationChange}
+    />
+  )
+}
+
+/** IBAN input: country from selector (prefix), digits only. Builds full IBAN on change. */
+type IbanAccountInputProps = AccountInputBaseProps & {
+  value: string
+  onChange: (value: string) => void
+  onBlur: () => void
+  onValidationChange?: (result: AccountValidationResult) => void
+  countryIso2: string
+}
+
+const IbanAccountInputBase = React.forwardRef<
+  HTMLInputElement,
+  IbanAccountInputProps
+>(({ value, onChange, onBlur, onValidationChange, countryIso2, ...props }, ref) => {
+  const bbanLength = getIBANBbanLength(countryIso2) ?? 18
+  const bbanFromValue = React.useMemo(() => {
+    const clean = (value || "").replace(/\s/g, "")
+    if (clean.length > 4 && /^[A-Z]{2}[0-9]{2}/.test(clean)) {
+      return clean.slice(4).replace(/\D/g, "")
+    }
+    return ""
+  }, [value])
+
+  const sanitize = React.useCallback(
+    (input: string) => {
+      const digits = input.replace(/\D/g, "")
+      return digits.slice(0, bbanLength)
+    },
+    [bbanLength],
+  )
+
+  const validate = React.useCallback(
+    (fullIban: string): AccountValidationResult => {
+      const clean = fullIban.replace(/\s/g, "")
+      if (!clean) return { isValid: true }
+      if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(clean)) {
+        return { isValid: false, errorType: "format" }
+      }
+      const expected = bbanLength + 4
+      if (clean.length !== expected) {
+        return {
+          isValid: false,
+          errorType: "length",
+          expectedLength: expected,
+          actualLength: clean.length,
+        }
+      }
+      if (!validateIBAN(clean)) return { isValid: false, errorType: "format" }
+      return { isValid: true }
+    },
+    [bbanLength],
+  )
+
+  const displayValue = bbanFromValue.replace(/(.{4})/g, "$1 ").trim()
+
+  return (
+    <div className="flex w-full items-center gap-2">
+      <span
+        className="flex h-9 shrink-0 items-center rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-sm font-medium text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
+        aria-hidden
+      >
+        {countryIso2.toUpperCase()}
+      </span>
+      <Input
+        {...props}
+        ref={ref}
+        type="text"
+        inputMode="numeric"
+        value={displayValue}
+        placeholder={props.placeholder ?? "e.g. 8601 11 17947"}
+        description={props.description}
+        onChange={(e) => {
+          const digits = sanitize(e.target.value)
+          const fullIban = buildIBAN(countryIso2, digits)
+          onChange(fullIban || "")
+        }}
+        onBlur={() => {
+          onBlur()
+          const fullIban = (value || "").replace(/\s/g, "")
+          if (!fullIban) return
+          const result = validate(fullIban)
+          onValidationChange?.(result)
+          if (result.isValid && bbanFromValue) {
+            const formatted = buildIBAN(countryIso2, bbanFromValue)
+            if (formatted) onChange(formatted)
+          }
+        }}
+      />
+    </div>
+  )
+})
+IbanAccountInputBase.displayName = "IbanAccountInputBase"
+
+export function IbanAccountInput({
+  value,
+  onChange,
+  onBlur,
+  onValidationChange,
+  countryIso2,
+  ...props
+}: IbanAccountInputProps) {
+  return (
+    <IbanAccountInputBase
+      {...props}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+      onValidationChange={onValidationChange}
+      countryIso2={countryIso2}
+    />
+  )
+}
 
 // Export the controlled version for use with React Hook Form
 // Used inside FormField - validation is handled by the Zod schema

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect } from "react"
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import {
   FormControl,
@@ -11,8 +11,12 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import LocationInput from "@/components/ui/location-input"
-import AccountInput, { type AccountValidationResult } from "@/components/AccountInput"
-import { getBankCountryType } from "@/lib/expense"
+import {
+  IbanAccountInput,
+  NorwegianAccountInput,
+  type AccountValidationResult,
+} from "@/components/AccountInput"
+import { getBankCountryType, IBAN_NUMERIC_BBAN_ISO2 } from "@/lib/expense"
 import {
   Select,
   SelectContent,
@@ -20,29 +24,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
 
 type BankDetailsFormProps = {
   form: UseFormReturn<any>
   t: (key: string) => string
   language: string
-  /** When validation fails and user chose to skip, hide validation errors for bank fields */
-  skipAccountValidation?: boolean
   onValidationChange?: (result: AccountValidationResult) => void
+  isInternational: boolean
 }
 
 export function BankDetailsForm({
   form,
   t,
   language,
-  skipAccountValidation,
   onValidationChange,
+  isInternational,
 }: BankDetailsFormProps) {
-  const bankCountryIso2 = form.watch("bankCountryIso2")
+  const bankCountryIso2 = useWatch({
+    control: form.control,
+    name: "bankCountryIso2",
+  })
   const type = getBankCountryType(bankCountryIso2 || "")
+  const previousTypeRef = React.useRef(type)
 
-  // Clear conditional fields when switching country type to avoid submitting stale data
   useEffect(() => {
+    if (previousTypeRef.current === type) return
+    previousTypeRef.current = type
+
     if (type === "sepa") {
       form.setValue("bankRoutingNumber", "")
       form.setValue("bankAccountNumber", "")
@@ -54,6 +62,46 @@ export function BankDetailsForm({
       form.setValue("bankIban", "")
     }
   }, [type, form])
+
+  const prevBankCountryIso2Ref = React.useRef(bankCountryIso2)
+  useEffect(() => {
+    if (type !== "sepa") return
+    if (prevBankCountryIso2Ref.current === bankCountryIso2) return
+    prevBankCountryIso2Ref.current = bankCountryIso2 || ""
+    const iban = (form.getValues("bankIban") || "").replace(/\s/g, "")
+    const ibanCountry = iban.slice(0, 2).toUpperCase()
+    if (
+      iban.length >= 4 &&
+      ibanCountry !== (bankCountryIso2 || "").toUpperCase()
+    ) {
+      form.setValue("bankIban", "")
+    }
+  }, [type, bankCountryIso2, form])
+
+  if (!isInternational) {
+    return (
+      <FormField
+        control={form.control}
+        name="bankAccountNumber"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
+            <FormControl>
+              <NorwegianAccountInput
+                {...field}
+                placeholder={t("expense.bankAccountNumberPlaceholder")}
+                onValidationChange={(result) => {
+                  onValidationChange?.(result)
+                  if (result.isValid) form.clearErrors("bankAccountNumber")
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -78,26 +126,56 @@ export function BankDetailsForm({
       />
 
       {type === "sepa" && (
-        <FormField
-          control={form.control}
-          name="bankIban"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("expense.bankIban")}</FormLabel>
-              <FormControl>
-                <AccountInput
-                  {...field}
-                  placeholder={t("expense.bankIbanPlaceholder")}
-                  onValidationChange={(result) => {
-                    onValidationChange?.(result)
-                    if (result.isValid) form.clearErrors("bankIban")
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <>
+          <FormField
+            control={form.control}
+            name="bankIban"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("expense.bankIban")}</FormLabel>
+                <FormControl>
+                  {IBAN_NUMERIC_BBAN_ISO2.has(
+                    (bankCountryIso2 || "").toUpperCase(),
+                  ) ? (
+                    <IbanAccountInput
+                      {...field}
+                      countryIso2={bankCountryIso2 || ""}
+                      placeholder={t("expense.bankIbanPlaceholder")}
+                      onValidationChange={(result) => {
+                        onValidationChange?.(result)
+                        if (result.isValid) form.clearErrors("bankIban")
+                      }}
+                    />
+                  ) : (
+                    <Input
+                      {...field}
+                      placeholder={t("expense.bankIbanPlaceholder")}
+                      className="uppercase"
+                    />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="bankSwiftBic"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("expense.bankSwiftBic")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. DNBANOKK"
+                    className="uppercase"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
 
       {type === "us" && (
@@ -140,10 +218,7 @@ export function BankDetailsForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t("expense.bankAccountType")}</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue />
@@ -215,7 +290,10 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankAccountHolderName")}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={t("expense.namePlaceholder")} />
+                  <Input
+                    {...field}
+                    placeholder={t("expense.namePlaceholder")}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -234,24 +312,6 @@ export function BankDetailsForm({
                 <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Account or IBAN" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="bankIban"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className={cn("text-muted-foreground")}>
-                  {t("expense.bankIban")} ({language === "no" ? "valgfritt" : "optional"})
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("expense.bankIbanPlaceholder")}
-                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -307,7 +367,10 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankAccountHolderName")}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={t("expense.namePlaceholder")} />
+                  <Input
+                    {...field}
+                    placeholder={t("expense.namePlaceholder")}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

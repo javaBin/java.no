@@ -6,16 +6,18 @@ const BoardMember = (props: BoardMemberType) => {
   const { t } = useTranslation("common", { keyPrefix: "boardMember" })
 
   return (
-    <div className="board-member">
-      <Image
-        src={`/img/styret/${props.img}`}
-        className="img-circle"
-        height={150}
-        width={150}
-        alt={props.name}
-      />
-      <h4>{props.name}</h4>
-      <p className="text-muted">{t(props.title)}</p>
+    <div className="flex flex-col items-center text-center">
+      <div className="relative mx-auto h-[150px] w-[150px] shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={`/img/styret/${props.img}`}
+          fill
+          className="object-cover"
+          alt={props.name}
+          sizes="150px"
+        />
+      </div>
+      <h4 className="mt-3 font-semibold">{props.name}</h4>
+      <p className="text-muted text-sm">{props.title ? t(props.title) : ""}</p>
     </div>
   )
 }
@@ -28,15 +30,18 @@ const BoardMembers = (props: Props) => {
   const { t } = useTranslation("common", { keyPrefix: "main" });
 
   return (
-    <div className="container">
-      <div className="row">
-        <div className="col-md-12 text-center">
-          <h1 className="section-heading">{t("theBoard")}</h1>
-        </div>
+    <div className="mx-auto max-w-[1200px] px-4">
+      <div className="text-center">
+        <h1 className="section-heading">{t("theBoard")}</h1>
       </div>
-      <div className="board-members">
+      <div className="mt-8 flex flex-wrap justify-center gap-8">
         {props.boardMembers.map((boardMember) => (
-          <BoardMember key={boardMember.name} {...boardMember} />
+          <div
+            key={boardMember.name}
+            className="flex min-w-[45%] flex-1 basis-0 flex-col items-center justify-start sm:min-w-[30%] md:min-w-[22%]"
+          >
+            <BoardMember {...boardMember} />
+          </div>
         ))}
       </div>
     </div>

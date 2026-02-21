@@ -9,14 +9,14 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, startIcon, description, error, ...props }, ref) => {
+  ({ className, type, startIcon, description, error, style, ...props }, ref) => {
     const StartIcon = startIcon
 
     return (
       <div className="relative w-full">
         <div className="relative">
           {StartIcon && (
-            <div className="absolute left-1 top-1/2 -translate-y-1/2 transform">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-[1] pointer-events-none">
               {startIcon}
             </div>
           )}
@@ -27,6 +27,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               StartIcon ? "pl-10" : "px-3",
               className,
             )}
+            style={
+              StartIcon
+                ? { paddingLeft: "2.5rem", ...style }
+                : style
+            }
             ref={ref}
             {...props}
           />
