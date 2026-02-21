@@ -1,0 +1,19 @@
+[tools]
+node = "25.6"
+pnpm = "10.30"
+
+[tasks.install]
+description = "Install NPM dependencies"
+run = "pnpm install"
+
+[tasks.build]
+description = "Production build"
+run = "pnpm run build"
+
+[tasks.dev]
+description = "Start dev server (http://localhost:3000)"
+run = "pnpm run dev"
+
+[tasks.start]
+description = "Start production server"
+run = "pnpm run start"

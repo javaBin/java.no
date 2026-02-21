@@ -1,33 +1,44 @@
-## Getting Started
+# java.no
 
-You need to:
+## Tech stack
 
-- Install the javascript libraries:
+- **Framework:** Next.js (Pages Router)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS + Shadcn UI
+- **i18n:** next-i18next (Norwegian / English)
+- **Package manager:** pnpm
+
+**Requirements:** Node.js ≥ 25.
+
+## Getting started
+
+### With Mise
+
+```bash
+mise install   # install Node (and use project tools)
+mise run install
+mise run dev   # or: mise dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+**Tasks:** `mise run install` | `mise run dev` | `mise run build` | `mise run start`
+
+### Without Mise
+
+Install Node and pnpm
 
 ```bash
 pnpm install
-```
-
-- Run Next.js dev server:
-
-```bash
 pnpm dev
 ```
 
-## Meetup.com API
+Open [http://localhost:3000](http://localhost:3000).
 
-Since the meetup.com API was deprecated we've implemented web scraping instead, it might be brittle, if it fails, it
-will simply not show any events.
+## Meetup.com and events
 
-Events are regenerated through Next.js [Incremental Static Regeneration
-](https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration) with a revalidate timer set to 1
-hour.
+Meetup’s public API is deprecated; events are fetched via scraping. If it fails, events are hidden, but everything will keep working. Event pages use Next.js [ISR](https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration) with 1-hour revalidation.
 
-This will recreate the page server-side at most once per hour
+## Contributing
 
-## Styling
-
-The site currently uses Bootstrap, since that is what the old site used, but we wish to switch to styling done in
-Tailwindcss.
-
-**HELP WANTED WITH DESIGN AND STYLING**
+See [AGENTS.md](./AGENTS.md) for code style, structure, and conventions.
