@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useCallback, useState, forwardRef, useEffect } from "react"
+import { useTranslation } from "next-i18next"
 
 // shadcn
 import {
@@ -52,7 +53,7 @@ const CurrencyDropdownComponent = (
     value,
     onValueChange,
     onCurrencySelect,
-    placeholder = "Select currency",
+    placeholder,
     currencies = "custom",
     disabled = false,
     slim = false,
@@ -62,11 +63,14 @@ const CurrencyDropdownComponent = (
   }: CurrencyDropdownProps,
   ref: React.ForwardedRef<HTMLButtonElement>,
 ) => {
-  const [open, setOpen] = useState(false)
-  const [selectedCurrency, setSelectedCurrency] = useState<
-    Currency | undefined
-  >(undefined)
-
+  const { t, i18n } = useTranslation("common", {
+    keyPrefix: "currencyDropdown",
+  })
+  const resolvedPlaceholder = placeholder ?? t("selectCurrency")
+  const norgesBankCodes = React.useMemo(
+    () => norgesBankCurrencies.map((c) => c.code),
+    [],
+  )
   const uniqueCurrencies = React.useMemo<Currency[]>(() => {
     if (currencies === "custom") {
       return norgesBankCurrencies.map((c) => ({
@@ -84,7 +88,7 @@ const CurrencyDropdownComponent = (
         currency.code &&
         currency.name &&
         currency.symbol &&
-        !allCurrencies.includes(currency.code)
+        !norgesBankCodes.includes(currency.code)
       ) {
         const entry: Currency =
           currency.code === "EUR"
@@ -106,10 +110,28 @@ const CurrencyDropdownComponent = (
       }
     })
 
-    return Array.from(currencyMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    )
-  }, [currencies])
+    return Array.from(currencyMap.values())
+  }, [currencies, norgesBankCodes])
+  const currencyDisplayNames = React.useMemo(
+    () => new Intl.DisplayNames([i18n.language], { type: "currency" }),
+    [i18n.language],
+  )
+  const getCurrencyName = useCallback(
+    (currency: Currency): string => {
+      try {
+        return (
+          currencyDisplayNames.of(currency.code) ?? currency.name
+        )
+      } catch {
+        return currency.name
+      }
+    },
+    [currencyDisplayNames],
+  )
+  const [open, setOpen] = useState(false)
+  const [selectedCurrency, setSelectedCurrency] = useState<
+    Currency | undefined
+  >(undefined)
 
   useEffect(() => {
     if (value) {
@@ -152,7 +174,11 @@ const CurrencyDropdownComponent = (
           </span>
         ) : (
           <span className="flex items-center gap-2">
-            {slim ? <Banknote size={20} className="shrink-0" /> : placeholder}
+            {slim ? (
+              <Banknote size={20} className="shrink-0" />
+            ) : (
+              resolvedPlaceholder
+            )}
           </span>
         )}
         <ChevronDown size={16} className="shrink-0" />
@@ -165,9 +191,9 @@ const CurrencyDropdownComponent = (
         <Command className="max-h-[200px] w-full sm:max-h-[270px]">
           <CommandList>
             <div className="sticky top-0 z-10 bg-white">
-              <CommandInput placeholder="Search currency..." />
+              <CommandInput placeholder={t("searchCurrency")} />
             </div>
-            <CommandEmpty>No currency found.</CommandEmpty>
+            <CommandEmpty>{t("noCurrencyFound")}</CommandEmpty>
             <CommandGroup>
               {uniqueCurrencies.map((currency) => (
                 <CommandItem
@@ -180,7 +206,7 @@ const CurrencyDropdownComponent = (
                       {currency.code}
                     </span>
                     <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                      {currency.name}
+                      {getCurrencyName(currency)}
                     </span>
                   </div>
                   <CheckIcon

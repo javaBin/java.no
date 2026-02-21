@@ -1,5 +1,6 @@
 "use client"
 import React, { useCallback, useState, forwardRef, useEffect } from "react"
+import { useTranslation } from "next-i18next"
 
 // shadcn
 import {
@@ -58,12 +59,30 @@ const CountryDropdownComponent = (
     onChange,
     defaultValue,
     disabled = false,
-    placeholder = "Select a country",
+    placeholder,
     slim = false,
     ...props
   }: CountryDropdownProps,
   ref: React.ForwardedRef<HTMLButtonElement>,
 ) => {
+  const { t, i18n } = useTranslation("common", { keyPrefix: "countryDropdown" })
+  const resolvedPlaceholder = placeholder ?? t("selectCountry")
+  const regionDisplayNames = React.useMemo(
+    () => new Intl.DisplayNames([i18n.language], { type: "region" }),
+    [i18n.language],
+  )
+  const getRegionName = useCallback(
+    (country: Country): string => {
+      try {
+        return (
+          regionDisplayNames.of(country.alpha2.toUpperCase()) ?? country.name
+        )
+      } catch {
+        return country.name
+      }
+    },
+    [regionDisplayNames],
+  )
   const [open, setOpen] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
     undefined,
@@ -119,14 +138,14 @@ const CountryDropdownComponent = (
             </div>
             {slim === false && (
               <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                {selectedCountry.name}
+                {getRegionName(selectedCountry)}
               </span>
             )}
           </div>
         ) : (
           <span>
             {slim === false ? (
-              placeholder || setSelectedCountry.name
+              resolvedPlaceholder
             ) : (
               <Globe size={20} />
             )}
@@ -142,9 +161,9 @@ const CountryDropdownComponent = (
         <Command className="max-h-[200px] w-full sm:max-h-[270px]">
           <CommandList>
             <div className="sticky top-0 z-10 bg-white">
-              <CommandInput placeholder="Search country..." />
+              <CommandInput placeholder={t("searchCountry")} />
             </div>
-            <CommandEmpty>No country found.</CommandEmpty>
+            <CommandEmpty>{t("noCountryFound")}</CommandEmpty>
             <CommandGroup>
               {options
                 .filter((x) => x.name)
@@ -162,13 +181,13 @@ const CountryDropdownComponent = (
                         />
                       </div>
                       <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                        {option.name}
+                        {getRegionName(option)}
                       </span>
                     </div>
                     <CheckIcon
                       className={cn(
                         "ml-auto h-4 w-4 shrink-0",
-                        option.name === selectedCountry?.name
+                        option.alpha2 === selectedCountry?.alpha2
                           ? "opacity-100"
                           : "opacity-0",
                       )}

@@ -13,7 +13,6 @@ import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { getBankCountryType } from "@/lib/expense"
 import { FileUploader } from "@/components/FileUploader"
 import { Toaster } from "sonner"
-import LocationInput from "@/components/ui/location-input"
 import { format } from "date-fns"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -36,7 +35,6 @@ import { cn } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
 import type { GetServerSideProps } from "next"
-import { useQueryState, parseAsBoolean } from "nuqs"
 import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
 import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
 import { getSymbolFromCurrency, countries } from "country-data-list"
@@ -160,7 +158,9 @@ function ExpenseAmountInput({
       control={control}
       name={name}
       render={({ field }) => {
-        const displayLocale = displayLocaleProp || (typeof navigator !== "undefined" ? navigator.language : "en-GB")
+        const displayLocale =
+          displayLocaleProp ||
+          (typeof navigator !== "undefined" ? navigator.language : "en-GB")
         const displayValue = isFocused
           ? localValue
           : formatAmountDisplay(field.value ?? 0, displayLocale)
@@ -231,11 +231,6 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
     countryName?: string
   } | null>(null)
 
-  const [residesInNorwayUrl, setResidesInNorwayUrl] = useQueryState(
-    "residesInNorway",
-    parseAsBoolean.withDefault(true),
-  )
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -277,19 +272,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
 
   const residesInNorway = form.watch("residesInNorway")
 
-  React.useEffect(() => {
-    form.setValue("residesInNorway", residesInNorwayUrl ?? true)
-  }, [residesInNorwayUrl, form])
-
-  React.useEffect(() => {
-    if (residesInNorwayUrl !== initialFormValues.residesInNorway) {
-      setResidesInNorwayUrl(initialFormValues.residesInNorway)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- sync URL to server-parsed query on mount
-
   const handleResidenceChange = (value: string) => {
     const isNorway = value === "norway"
-    setResidesInNorwayUrl(isNorway)
+    form.setValue("residesInNorway", isNorway)
 
     if (isNorway) {
       form.setValue("country", "Norway")
@@ -316,8 +301,15 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
   const watchedCountry = form.watch("country")
   const amountDisplayLocale = React.useMemo(() => {
     if (watchedCountry) {
-      const countryData = countries.all.find((c: any) => c.name === watchedCountry)
-      if (countryData && countryData.alpha2 && countryData.languages && countryData.languages.length > 0) {
+      const countryData = countries.all.find(
+        (c: any) => c.name === watchedCountry,
+      )
+      if (
+        countryData &&
+        countryData.alpha2 &&
+        countryData.languages &&
+        countryData.languages.length > 0
+      ) {
         return `${countryData.languages[0]}-${countryData.alpha2}`
       }
     }
@@ -500,7 +492,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Residence toggle */}
           <Tabs
-            value={residesInNorwayUrl ? "norway" : "abroad"}
+            value={residesInNorway ? "norway" : "abroad"}
             onValueChange={handleResidenceChange}
             className="w-full"
           >
@@ -747,7 +739,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-[auto_1fr_auto]">
                     <FormField
                       control={form.control}
                       name={`expenses.${index}.date`}
@@ -814,6 +806,7 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                           <FormLabel>{t("expense.currency")}</FormLabel>
                           <FormControl>
                             <CurrencyDropdown
+                              slim={true}
                               value={field.value}
                               onValueChange={field.onChange}
                               placeholder={t("expense.selectCurrency")}

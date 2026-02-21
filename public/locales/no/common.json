@@ -105,6 +105,16 @@
     "viewInConfluence": "Les på Confluence",
     "lastUpdated": "Sist oppdatert"
   },
+  "countryDropdown": {
+    "selectCountry": "Velg land",
+    "searchCountry": "Søk land...",
+    "noCountryFound": "Ingen land funnet."
+  },
+  "currencyDropdown": {
+    "selectCurrency": "Velg valuta",
+    "searchCurrency": "Søk valuta...",
+    "noCurrencyFound": "Ingen valuta funnet."
+  },
   "expense": {
     "title": "Utleggsrapport",
     "subtitle": "Fyll ut skjemaet for å generere en PDF-rapport som du kan sende til faktura@java.no.",

@@ -10,13 +10,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import LocationInput from "@/components/ui/location-input"
 import {
   IbanAccountInput,
   NorwegianAccountInput,
   type AccountValidationResult,
 } from "@/components/AccountInput"
-import { getBankCountryType, IBAN_NUMERIC_BBAN_ISO2 } from "@/lib/expense"
+import { getBankCountryType } from "@/lib/expense"
 import {
   Select,
   SelectContent,
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Country, CountryDropdown } from "./ui/country-dropdown"
 
 type BankDetailsFormProps = {
   form: UseFormReturn<any>
@@ -112,11 +112,11 @@ export function BankDetailsForm({
           <FormItem>
             <FormLabel>{t("expense.bankCountry")}</FormLabel>
             <FormControl>
-              <LocationInput
+              <CountryDropdown
                 defaultValue={field.value}
-                onCountryChange={(country) => {
-                  field.onChange(country?.name ?? "")
-                  form.setValue("bankCountryIso2", country?.iso2 ?? "")
+                onChange={(country: Country) => {
+                  field.onChange(country?.alpha3 ?? "")
+                  form.setValue("bankCountryIso2", country?.alpha2 || "")
                 }}
               />
             </FormControl>
@@ -134,25 +134,15 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankIban")}</FormLabel>
                 <FormControl>
-                  {IBAN_NUMERIC_BBAN_ISO2.has(
-                    (bankCountryIso2 || "").toUpperCase(),
-                  ) ? (
-                    <IbanAccountInput
-                      {...field}
-                      countryIso2={bankCountryIso2 || ""}
-                      placeholder={t("expense.bankIbanPlaceholder")}
-                      onValidationChange={(result) => {
-                        onValidationChange?.(result)
-                        if (result.isValid) form.clearErrors("bankIban")
-                      }}
-                    />
-                  ) : (
-                    <Input
-                      {...field}
-                      placeholder={t("expense.bankIbanPlaceholder")}
-                      className="uppercase"
-                    />
-                  )}
+                  <IbanAccountInput
+                    {...field}
+                    countryIso2={bankCountryIso2 || ""}
+                    placeholder={t("expense.bankIbanPlaceholder")}
+                    onValidationChange={(result) => {
+                      onValidationChange?.(result)
+                      if (result.isValid) form.clearErrors("bankIban")
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

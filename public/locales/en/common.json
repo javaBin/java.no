@@ -105,6 +105,16 @@
     "viewInConfluence": "View on Confluence",
     "lastUpdated": "Last updated"
   },
+  "countryDropdown": {
+    "selectCountry": "Select a country",
+    "searchCountry": "Search country...",
+    "noCountryFound": "No country found."
+  },
+  "currencyDropdown": {
+    "selectCurrency": "Select currency",
+    "searchCurrency": "Search currency...",
+    "noCurrencyFound": "No currency found."
+  },
   "expense": {
     "title": "Expense Report",
     "subtitle": "Fill out the form to generate a PDF report you can send to faktura@java.no.",
