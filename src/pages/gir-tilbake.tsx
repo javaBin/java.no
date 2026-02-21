@@ -30,17 +30,19 @@ const GirTilbake = ({
         <title>javaBin | {title}</title>
         <meta name="description" content={t("description")!} />
       </Head>
-      <div className="policy confluence-content container">
-        <div style={{ padding: "60px" }}></div>
-
-        {!error && title && <h1 className="confluence-page-title">{title}</h1>}
+      <div className="mx-auto max-w-content px-4 pt-24 pb-10">
+        {!error && title && (
+          <h1 className="mb-2 text-jz-salmon">{title}</h1>
+        )}
 
         {error ? (
-          <div className="confluence-error">
+          <div className="py-4">
             <p>{t("unavailable")}</p>
             {process.env.NODE_ENV === "development" && errorMessage && (
-              <p className="confluence-debug-error">
-                <code>{errorMessage}</code>
+              <p className="text-muted text-sm">
+                <code className="rounded bg-[#eee] px-1 py-0.5 break-all">
+                  {errorMessage}
+                </code>
               </p>
             )}
             <p>
@@ -48,6 +50,7 @@ const GirTilbake = ({
                 href={CONFLUENCE_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-jz-salmon no-underline hover:underline"
               >
                 {t("viewInConfluence")}
               </a>
@@ -56,21 +59,22 @@ const GirTilbake = ({
         ) : (
           <>
             {lastUpdated && (
-              <p className="confluence-last-updated">
+              <p className="text-muted mb-2 text-sm">
                 {t("lastUpdated")}: {lastUpdated}
               </p>
             )}
             {html && (
               <div
-                className="confluence-body"
+                className="content-prose"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             )}
-            <p className="confluence-source-link">
+            <p className="mt-6 border-t border-[#ddd] pt-3 text-sm">
               <a
                 href={CONFLUENCE_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-jz-salmon no-underline hover:underline"
               >
                 {t("viewInConfluence")}
               </a>
@@ -78,7 +82,6 @@ const GirTilbake = ({
           </>
         )}
       </div>
-      <div style={{ paddingBottom: "60px" }}></div>
     </>
   )
 }

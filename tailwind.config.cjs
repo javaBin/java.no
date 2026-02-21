@@ -4,6 +4,9 @@ module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      maxWidth: {
+        content: "1280px",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -27,7 +30,6 @@ module.exports = {
   },
   plugins: [
     require("tailwindcss-animate"),
-    require("@tailwindcss/typography"),
     function ({ addBase }) {
       addBase({
         "::selection": { background: "#fed136", textShadow: "none" },

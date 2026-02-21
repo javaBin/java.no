@@ -11,7 +11,7 @@ export const Footer = () => {
     <footer className="bg-hero bg-cover bg-center text-white">
       <div className="flex flex-wrap justify-center gap-4 bg-[hsl(0_57%_31%_/_74%)] p-5 max-[900px]:justify-start">
         <div className="min-w-[200px] px-5 py-2.5 max-[900px]:basis-full">
-          <strong className="mb-5 block font-montserrat text-xl uppercase text-jz-yellow">
+          <strong className="block font-montserrat text-xl uppercase text-jz-yellow">
             javabin
           </strong>
           <p className="max-w-[500px]">{t("aboutShortText")}</p>
@@ -20,7 +20,7 @@ export const Footer = () => {
           </Link>
         </div>
         <div className="min-w-[200px] px-5 py-2.5">
-          <strong className="mb-5 block font-montserrat text-xl uppercase text-jz-yellow">
+          <strong className="block font-montserrat text-xl uppercase text-jz-yellow">
             {t("links")}
           </strong>
           <ul className="[&_li]:pb-0.5">
@@ -66,7 +66,7 @@ export const Footer = () => {
           </ul>
         </div>
         <div className="min-w-[200px] px-5 py-2.5">
-          <strong className="mb-5 block font-montserrat text-xl uppercase text-jz-yellow">
+          <strong className="block font-montserrat text-xl uppercase text-jz-yellow">
             {t("external")}
           </strong>
           <ul className="[&_li]:pb-0.5">

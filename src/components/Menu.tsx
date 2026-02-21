@@ -17,7 +17,7 @@ export const Menu = () => {
       id="navbar"
       className="fixed left-0 right-0 top-0 z-[1100] border-b border-transparent bg-[#222] px-4 py-2 transition-[background-color] lg:px-5 lg:py-3"
     >
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between">
+      <div className="mx-auto flex max-w-content items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/"

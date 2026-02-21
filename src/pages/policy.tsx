@@ -12,10 +12,10 @@ const Policy = () => {
         <title>{t("title")}</title>
         <meta name="description" content={t("title")!} />
       </Head>
-      <div className="mx-auto max-w-3xl px-4 py-16 prose prose-headings:text-jz-salmon prose-p:text-justify prose-ul:list-[circle] prose-ul:pl-10 prose-ul:pb-4 prose-a:text-jz-salmon prose-a:no-underline hover:prose-a:underline">
-        <h2 id="disclaimer-and-limitation-of-liability---terms-and-conditions">
+      <div className="mx-auto max-w-content px-4 py-24 content-prose">
+        <h1 id="disclaimer-and-limitation-of-liability---terms-and-conditions">
           Disclaimer and Limitation of Liability - Terms and Conditions
-        </h2>
+        </h1>
 
         <p>
           These Terms and Conditions (“Terms”) apply to any and all use of
@@ -31,10 +31,10 @@ const Policy = () => {
           that it is up to date at any point of time.
         </p>
 
-        <h3 id="1-about">1. About</h3>
-        <h4 id="javabin">
+        <h2 id="1-about">1. About</h2>
+        <h3 id="javabin">
           <a href="https://java.no">javaBin</a>
-        </h4>
+        </h3>
         <p>
           javaBin is one of the largest community groups in Norway. It is driven
           by volunteer enthusiasts from across the country. We have branches

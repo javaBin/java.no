@@ -29,3 +29,34 @@
   h5 { @apply text-base; }
   h6 { @apply text-sm; }
 }
+
+@layer components {
+  .content-prose p {
+    @apply mb-2 text-justify;
+  }
+  .content-prose ul,
+  .content-prose ol {
+    @apply my-2 pl-8 pb-1;
+  }
+  .content-prose ul {
+    list-style-type: circle;
+  }
+  .content-prose ul li::marker,
+  .content-prose ol li::marker {
+    color: #4b5563;
+  }
+  .content-prose li {
+    @apply my-0 text-[14px] leading-[1.75];
+  }
+  .content-prose a {
+    @apply no-underline hover:underline;
+  }
+  .content-prose h1,
+  .content-prose h2,
+  .content-prose h3,
+  .content-prose h4,
+  .content-prose h5,
+  .content-prose h6 {
+    @apply mt-4 mb-1 text-jz-salmon;
+  }
+}

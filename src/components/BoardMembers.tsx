@@ -30,7 +30,7 @@ const BoardMembers = (props: Props) => {
   const { t } = useTranslation("common", { keyPrefix: "main" });
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4">
+    <div className="mx-auto max-w-content px-4">
       <div className="text-center">
         <h1 className="text-[40px] mt-0 mb-4">{t("theBoard")}</h1>
       </div>

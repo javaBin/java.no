@@ -2,7 +2,7 @@ import Link from "next/link"
 
 export const Membership = () => (
   <section id="membership">
-    <div className="mx-auto max-w-[1200px] px-4">
+    <div className="mx-auto max-w-content px-4">
       <div className="text-center">
         <h1 className="section-heading">Medlemskap</h1>
       </div>

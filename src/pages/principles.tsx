@@ -12,10 +12,11 @@ const Principles = () => {
         <title>{t("title")}</title>
         <meta name="description" content={t("title")!} />
       </Head>
-      <div className="mx-auto max-w-3xl px-4 py-16 prose prose-headings:text-jz-salmon prose-p:text-justify prose-ul:list-[circle] prose-ul:pl-10 prose-ul:pb-4 prose-a:text-jz-salmon prose-a:no-underline hover:prose-a:underline">
-        <h2 id="a-few-very-important-principles">
+      <div className="mx-auto max-w-content px-4 pt-24 pb-10">
+        <div className="content-prose">
+        <h1 id="a-few-very-important-principles">
           A few very important principles
-        </h2>
+        </h1>
 
         <h4 id="code-of-conduct">Code of Conduct</h4>
 
@@ -79,8 +80,9 @@ const Principles = () => {
           these regulations, a session of the javaBin board will rule on a case
           by case basis.
         </p>
+        </div>
       </div>
-      <div style={{ paddingBottom: "60px" }}></div>
+      <div className="h-10" aria-hidden />
     </>
   )
 }
