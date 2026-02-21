@@ -2,6 +2,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { useTranslation } from "next-i18next"
 import Head from "next/head"
+import { ContentProse } from "@/components/ContentProse"
 
 const Principles = () => {
   const { t } = useTranslation("common", { keyPrefix: "main" })
@@ -13,7 +14,7 @@ const Principles = () => {
         <meta name="description" content={t("title")!} />
       </Head>
       <div className="mx-auto max-w-content px-4 pt-24 pb-10">
-        <div className="content-prose">
+        <ContentProse>
         <h1 id="a-few-very-important-principles">
           A few very important principles
         </h1>
@@ -80,7 +81,7 @@ const Principles = () => {
           these regulations, a session of the javaBin board will rule on a case
           by case basis.
         </p>
-        </div>
+        </ContentProse>
       </div>
       <div className="h-10" aria-hidden />
     </>

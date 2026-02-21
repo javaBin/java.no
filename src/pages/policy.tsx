@@ -2,6 +2,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { useTranslation } from "next-i18next"
 import Head from "next/head"
+import { ContentProse } from "@/components/ContentProse"
 
 const Policy = () => {
   const { t } = useTranslation("common", { keyPrefix: "main" })
@@ -12,7 +13,8 @@ const Policy = () => {
         <title>{t("title")}</title>
         <meta name="description" content={t("title")!} />
       </Head>
-      <div className="mx-auto max-w-content px-4 py-24 content-prose">
+      <div className="mx-auto max-w-content px-4 py-24">
+        <ContentProse>
         <h1 id="disclaimer-and-limitation-of-liability---terms-and-conditions">
           Disclaimer and Limitation of Liability - Terms and Conditions
         </h1>
@@ -107,6 +109,7 @@ const Policy = () => {
           services. This also applies to cases where there are errors or defects
           in the applications or services.
         </p>
+        </ContentProse>
       </div>
       <div style={{ paddingBottom: "60px" }}></div>
     </>

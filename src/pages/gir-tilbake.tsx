@@ -3,6 +3,7 @@ import nextI18nConfig from "../../next-i18next.config.mjs"
 import { useTranslation } from "next-i18next"
 import Head from "next/head"
 import DOMPurify from "isomorphic-dompurify"
+import { ContentProse } from "@/components/ContentProse"
 
 const CONFLUENCE_PAGE_URL =
   "https://javabin.atlassian.net/wiki/spaces/javabin/pages/3083567105/javaBin+gir+tilbake"
@@ -64,10 +65,9 @@ const GirTilbake = ({
               </p>
             )}
             {html && (
-              <div
-                className="content-prose"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
+              <ContentProse>
+                <div dangerouslySetInnerHTML={{ __html: html }} />
+              </ContentProse>
             )}
             <p className="mt-6 border-t border-[#ddd] pt-3 text-sm">
               <a
