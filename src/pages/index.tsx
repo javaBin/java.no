@@ -85,7 +85,7 @@ const Home = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
           <br />
           <div className="relative">
             <ul className="relative z-10 list-none p-0">
-              <li className="relative min-h-[50px] sm:mb-[30px] md:mb-0 md:min-h-[100px] lg:min-h-[150px] xl:min-h-[170px]">
+              <li className="relative min-h-[50px] mb-[30px] md:mb-0 md:min-h-[100px] lg:min-h-[150px] xl:min-h-[170px]">
                 <div
                   className="absolute bottom-[-30px] left-[40px] top-0 z-0 ml-[-1px] w-[2px] bg-[#f1f1f1] md:bottom-[-50px] md:left-1/2"
                   aria-hidden
