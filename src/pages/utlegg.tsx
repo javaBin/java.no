@@ -1,10 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  useController,
-  useForm,
-  useFieldArray,
-  type Control,
-} from "react-hook-form"
+import { useForm, useFieldArray, useWatch, type Control } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import React from "react"
@@ -24,13 +19,6 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Form,
   FormControl,
   FormDescription,
@@ -49,7 +37,9 @@ import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
 import type { GetServerSideProps } from "next"
 import { useQueryState, parseAsBoolean } from "nuqs"
-import { currencies } from "@/data/currencies"
+import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
+import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
+import { getSymbolFromCurrency, countries } from "country-data-list"
 
 function getString(
   query: Record<string, string | string[] | undefined>,
@@ -65,7 +55,8 @@ function getString(
 function parseFormQueryParams(
   query: Record<string, string | string[] | undefined>,
 ) {
-  const isInternationalBank = getString(query, "isInternationalBank", "false") === "true"
+  const isInternationalBank =
+    getString(query, "isInternationalBank", "false") === "true"
   const country = getString(query, "country", "Norway")
   const residesInNorway =
     getString(query, "residesInNorway", "") === ""
@@ -80,8 +71,16 @@ function parseFormQueryParams(
     city: getString(query, "city", ""),
     country,
     residesInNorway,
-    bankCountry: getString(query, "bankCountry", residesInNorway ? "Norway" : ""),
-    bankCountryIso2: getString(query, "bankCountryIso2", residesInNorway ? "NO" : ""),
+    bankCountry: getString(
+      query,
+      "bankCountry",
+      residesInNorway ? "Norway" : "",
+    ),
+    bankCountryIso2: getString(
+      query,
+      "bankCountryIso2",
+      residesInNorway ? "NO" : "",
+    ),
     bankIban: getString(query, "bankIban", getString(query, "bankAccount", "")),
     bankRoutingNumber: getString(query, "bankRoutingNumber", ""),
     bankAccountNumber: getString(query, "bankAccountNumber", ""),
@@ -102,76 +101,117 @@ type ExpensePageProps = {
 type ExpenseAmountInputProps = {
   control: Control<any>
   name: `expenses.${number}.amount`
+  currencyName: `expenses.${number}.currency`
   label: string
+  /** Locale for formatting (e.g. from selected country). Falls back to browser language. */
+  displayLocale?: string
 }
 
-function ExpenseAmountInput({ control, name, label }: ExpenseAmountInputProps) {
-  const { field } = useController({ control, name })
-  const [displayValue, setDisplayValue] = useState<string>(
-    field.value && field.value !== 0 ? field.value.toString() : "",
-  )
-  const [isFocused, setIsFocused] = useState(false)
+function formatAmountDisplay(value: number, locale: string): string {
+  if (value === 0) return ""
+  const formatter = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  return formatter.format(value)
+}
 
-  React.useEffect(() => {
-    if (isFocused) return
-    const nextValue =
-      typeof field.value === "number" && field.value !== 0
-        ? field.value.toString()
-        : ""
-    setDisplayValue((current) => (current === nextValue ? current : nextValue))
-  }, [field.value, isFocused])
+function parseAmountInput(raw: string): number {
+  const trimmed = raw.trim().replace(/\s/g, "")
+  if (trimmed === "" || trimmed === "." || trimmed === ",") return 0
+
+  const lastComma = trimmed.lastIndexOf(",")
+  const lastPeriod = trimmed.lastIndexOf(".")
+
+  let normalized: string
+  if (lastComma > lastPeriod) {
+    // Comma is decimal separator (e.g. European "99.999,00")
+    normalized = trimmed.replace(/\./g, "").replace(",", ".")
+  } else if (lastPeriod > lastComma) {
+    // Period is decimal separator (e.g. US "99,999.00")
+    normalized = trimmed.replace(/,/g, "")
+  } else {
+    normalized = trimmed.replace(",", ".")
+  }
+
+  const num = parseFloat(normalized)
+  if (Number.isNaN(num) || num < 0) return 0
+  return Math.round(num * 100) / 100
+}
+
+function ExpenseAmountInput({
+  control,
+  name,
+  currencyName,
+  label,
+  displayLocale: displayLocaleProp,
+}: ExpenseAmountInputProps) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [localValue, setLocalValue] = useState("")
+
+  const selectedCurrencyCode = useWatch({ control, name: currencyName })
+  const symbol =
+    selectedCurrencyCode && typeof selectedCurrencyCode === "string"
+      ? getSymbolFromCurrency(selectedCurrencyCode)
+      : ""
 
   return (
-    <FormItem>
-      <FormLabel>{label}</FormLabel>
-      <FormControl>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={displayValue}
-          onChange={(e) => {
-            const nextValue = e.target.value
-            setDisplayValue(nextValue)
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => {
+        const displayLocale = displayLocaleProp || (typeof navigator !== "undefined" ? navigator.language : "en-GB")
+        const displayValue = isFocused
+          ? localValue
+          : formatAmountDisplay(field.value ?? 0, displayLocale)
 
-            if (nextValue === "" || nextValue === "-") {
-              field.onChange(0)
-              return
-            }
-
-            const parsedValue = parseFloat(nextValue)
-            if (!isNaN(parsedValue) && isFinite(parsedValue)) {
-              field.onChange(parsedValue)
-            }
-          }}
-          onBlur={(e) => {
-            setIsFocused(false)
-            const nextValue = e.target.value
-
-            if (
-              nextValue === "" ||
-              nextValue === "-" ||
-              isNaN(parseFloat(nextValue))
-            ) {
-              field.onChange(0)
-              setDisplayValue("")
-            } else {
-              const parsedValue = parseFloat(nextValue)
-              if (!isNaN(parsedValue) && isFinite(parsedValue)) {
-                setDisplayValue(parsedValue.toString())
-                field.onChange(parsedValue)
-              }
-            }
-
-            field.onBlur()
-          }}
-          onFocus={() => setIsFocused(true)}
-          name={field.name}
-          ref={field.ref}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
+        return (
+          <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <div className="relative w-full">
+              <FormControl>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  {...field}
+                  value={displayValue}
+                  disabled={!selectedCurrencyCode}
+                  onChange={(e) => {
+                    setLocalValue(e.target.value)
+                    field.onChange(parseAmountInput(e.target.value))
+                  }}
+                  onFocus={() => {
+                    setIsFocused(true)
+                    setLocalValue(
+                      field.value != null && field.value !== 0
+                        ? formatAmountDisplay(field.value, displayLocale)
+                        : "",
+                    )
+                  }}
+                  onBlur={() => {
+                    const parsed = parseAmountInput(localValue)
+                    field.onChange(parsed)
+                    setLocalValue("")
+                    setIsFocused(false)
+                    field.onBlur()
+                  }}
+                  ref={field.ref}
+                  name={field.name}
+                  className="pr-10"
+                />
+              </FormControl>
+              {symbol ? (
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  {symbol}
+                </span>
+              ) : null}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )
+      }}
+    />
   )
 }
 
@@ -210,7 +250,9 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
       bankIban: initialFormValues.bankIban,
       bankRoutingNumber: initialFormValues.bankRoutingNumber,
       bankAccountNumber: initialFormValues.bankAccountNumber,
-      bankAccountType: (initialFormValues.bankAccountType as "checking" | "savings") || "checking",
+      bankAccountType:
+        (initialFormValues.bankAccountType as "checking" | "savings") ||
+        "checking",
       bankSwiftBic: initialFormValues.bankSwiftBic,
       bankName: initialFormValues.bankName,
       bankAddress: initialFormValues.bankAddress,
@@ -271,6 +313,16 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
 
   const watchedBankIban = form.watch("bankIban")
   const watchedBankCountryIso2 = form.watch("bankCountryIso2")
+  const watchedCountry = form.watch("country")
+  const amountDisplayLocale = React.useMemo(() => {
+    if (watchedCountry) {
+      const countryData = countries.all.find((c: any) => c.name === watchedCountry)
+      if (countryData && countryData.alpha2 && countryData.languages && countryData.languages.length > 0) {
+        return `${countryData.languages[0]}-${countryData.alpha2}`
+      }
+    }
+    return typeof navigator !== "undefined" ? navigator.language : "en-GB"
+  }, [watchedCountry])
   const bankCountryType = getBankCountryType(watchedBankCountryIso2 || "")
 
   React.useEffect(() => {
@@ -436,407 +488,336 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-16 pt-32">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            {t("expense.title")}
-          </h1>
-          <p className="mt-2 text-base text-gray-500">
-            {t("expense.subtitle")}
-          </p>
-        </div>
+    <div className="mx-auto max-w-2xl px-4 pb-16 pt-24">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          {t("expense.title")}
+        </h1>
+        <p className="mt-2 text-base text-gray-500">{t("expense.subtitle")}</p>
+      </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Residence toggle */}
-            <Tabs
-              value={residesInNorwayUrl ? "norway" : "abroad"}
-              onValueChange={handleResidenceChange}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="norway">
-                  {t("expense.residesInNorway")}
-                </TabsTrigger>
-                <TabsTrigger value="abroad">
-                  {t("expense.residesAbroad")}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Residence toggle */}
+          <Tabs
+            value={residesInNorwayUrl ? "norway" : "abroad"}
+            onValueChange={handleResidenceChange}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="norway">
+                {t("expense.residesInNorway")}
+              </TabsTrigger>
+              <TabsTrigger value="abroad">
+                {t("expense.residesAbroad")}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-            {/* Bank details */}
-            <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-5">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {t("expense.bankAccount")}
-              </h2>
-              <p className="mb-4 mt-1 text-sm text-gray-500">
-                {residesInNorway
-                  ? t("expense.bankDescriptionNorwegian")
-                  : t("expense.bankDescriptionInternational")}
+          {/* Bank details */}
+          <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-5">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t("expense.bankAccount")}
+            </h2>
+            <p className="mb-4 mt-1 text-sm text-gray-500">
+              {residesInNorway
+                ? t("expense.bankDescriptionNorwegian")
+                : t("expense.bankDescriptionInternational")}
+            </p>
+
+            <BankDetailsForm
+              form={form}
+              t={t}
+              language={i18n.language}
+              isInternational={!residesInNorway}
+              onValidationChange={(result) => {
+                setAccountValidationFailed(!result.isValid)
+                setAccountValidationResult(
+                  result.isValid
+                    ? null
+                    : {
+                        errorType: result.errorType,
+                        expectedLength: result.expectedLength,
+                        actualLength: result.actualLength,
+                        countryName: result.countryName,
+                      },
+                )
+              }}
+            />
+
+            {accountValidationFailed && !skipAccountValidation && (
+              <p className="mt-3 text-sm text-red-600">
+                {getValidationErrorMessage()}
               </p>
+            )}
 
-              <BankDetailsForm
-                form={form}
-                t={t}
-                language={i18n.language}
-                isInternational={!residesInNorway}
-                onValidationChange={(result) => {
-                  setAccountValidationFailed(!result.isValid)
-                  setAccountValidationResult(
-                    result.isValid
-                      ? null
-                      : {
-                          errorType: result.errorType,
-                          expectedLength: result.expectedLength,
-                          actualLength: result.actualLength,
-                          countryName: result.countryName,
-                        },
-                  )
-                }}
+            {accountValidationFailed && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={skipAccountValidation}
+                  onChange={(e) => {
+                    setSkipAccountValidation(e.target.checked)
+                    if (e.target.checked) {
+                      if (!residesInNorway) {
+                        form.clearErrors("bankIban")
+                      } else {
+                        form.clearErrors("bankAccountNumber")
+                      }
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                {t("expense.skipValidationLabel")}
+              </label>
+            )}
+          </section>
+
+          {/* Personal information */}
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              {t("expense.personalInfo")}
+            </h2>
+
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("expense.name")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("expense.namePlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
-              {accountValidationFailed && !skipAccountValidation && (
-                <p className="mt-3 text-sm text-red-600">
-                  {getValidationErrorMessage()}
-                </p>
-              )}
-
-              {accountValidationFailed && (
-                <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
-                  <input
-                    type="checkbox"
-                    checked={skipAccountValidation}
-                    onChange={(e) => {
-                      setSkipAccountValidation(e.target.checked)
-                      if (e.target.checked) {
-                        if (!residesInNorway) {
-                          form.clearErrors("bankIban")
-                        } else {
-                          form.clearErrors("bankAccountNumber")
-                        }
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  {t("expense.skipValidationLabel")}
-                </label>
-              )}
-            </section>
-
-            {/* Personal information */}
-            <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                {t("expense.personalInfo")}
-              </h2>
-
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("expense.name")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={t("expense.namePlaceholder")}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("expense.email")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder={t("expense.emailPlaceholder")}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="streetAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("expense.address")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={t("expense.addressPlaceholder")}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="postalCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("expense.postalCode")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t("expense.postalCodePlaceholder")}
-                            {...field}
-                            onChange={(e) => {
-                              const value = residesInNorway
-                                ? e.target.value.replace(/\D/g, "")
-                                : e.target.value
-                              field.onChange(value)
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("expense.city")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t("expense.cityPlaceholder")}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {!residesInNorway && (
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("expense.country")}</FormLabel>
-                        <FormControl>
-                          <LocationInput
-                            {...field}
-                            defaultValue={field.value}
-                            onCountryChange={(country) => {
-                              form.setValue(field.name, country?.name || "")
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("expense.email")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder={t("expense.emailPlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
+
+              <FormField
+                control={form.control}
+                name="streetAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("expense.address")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("expense.addressPlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("expense.postalCode")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("expense.postalCodePlaceholder")}
+                          {...field}
+                          onChange={(e) => {
+                            const value = residesInNorway
+                              ? e.target.value.replace(/\D/g, "")
+                              : e.target.value
+                            field.onChange(value)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("expense.city")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("expense.cityPlaceholder")}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </section>
 
-            {/* Expenses */}
-            <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                {t("expense.expenses")}
-              </h2>
+              {!residesInNorway && (
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("expense.country")}</FormLabel>
+                      <FormControl>
+                        <CountryDropdown
+                          {...field}
+                          defaultValue={field.value}
+                          onChange={(country: Country) => {
+                            form.setValue(field.name, country?.alpha3 || "")
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+          </section>
 
-              <div className="space-y-5">
-                {fields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className={cn(
-                      "relative space-y-3 rounded-lg bg-gray-50 p-4",
-                      index > 0 && "border-t border-gray-100",
+          {/* Expenses */}
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              {t("expense.expenses")}
+            </h2>
+
+            <div className="space-y-5">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={cn(
+                    "relative space-y-3 rounded-lg bg-gray-50 p-4",
+                    index > 0 && "border-t border-gray-100",
+                  )}
+                >
+                  {fields.length > 1 && (
+                    <div className="absolute right-3 top-3 z-10">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        className="gap-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name={`expenses.${index}.description`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("expense.description")}</FormLabel>
+                        <FormDescription>
+                          {t("expense.descriptionDescription")}
+                        </FormDescription>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder={t("expense.descriptionPlaceholder")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  >
-                    {fields.length > 1 && (
-                      <div className="absolute right-3 top-3 z-10">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => remove(index)}
-                          className="gap-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                  />
 
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <FormField
                       control={form.control}
-                      name={`expenses.${index}.description`}
+                      name={`expenses.${index}.date`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("expense.description")}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder={t("expense.descriptionPlaceholder")}
-                            />
-                          </FormControl>
+                          <FormLabel>{t("expense.date")}</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP", {
+                                      locale:
+                                        i18n.language === "no" ? nb : undefined,
+                                    })
+                                  ) : (
+                                    <span>{t("expense.selectDate")}</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                locale={i18n.language === "no" ? nb : undefined}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  date < new Date("2020-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name={`expenses.${index}.date`}
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>{t("expense.date")}</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground",
-                                    )}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP", {
-                                        locale:
-                                          i18n.language === "no"
-                                            ? nb
-                                            : undefined,
-                                      })
-                                    ) : (
-                                      <span>{t("expense.selectDate")}</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  locale={
-                                    i18n.language === "no" ? nb : undefined
-                                  }
-                                  disabled={(date) =>
-                                    date > new Date() ||
-                                    date < new Date("2020-01-01")
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormDescription className="hidden sm:block">
-                              {t("expense.dateDescription")}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <ExpenseAmountInput
-                        control={form.control}
-                        name={`expenses.${index}.amount`}
-                        label={t("expense.amount")}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`expenses.${index}.currency`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("expense.currency")}</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={t("expense.selectCurrency")}
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {currencies.map((currency) => (
-                                  <SelectItem
-                                    key={currency.code}
-                                    value={currency.code}
-                                  >
-                                    {currency.code} -{" "}
-                                    {new Intl.DisplayNames([i18n.language], {
-                                      type: "currency",
-                                    }).of(currency.code)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <ExpenseAmountInput
+                      control={form.control}
+                      name={`expenses.${index}.amount`}
+                      currencyName={`expenses.${index}.currency`}
+                      label={t("expense.amount")}
+                      displayLocale={amountDisplayLocale}
+                    />
 
                     <FormField
                       control={form.control}
-                      name={`expenses.${index}.attachment`}
+                      name={`expenses.${index}.currency`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("expense.attachment")}</FormLabel>
+                          <FormLabel>{t("expense.currency")}</FormLabel>
                           <FormControl>
-                            <FileUploader
-                              onUpload={async (files) => {
-                                const file = files[0]
-                                if (!file) {
-                                  field.onChange(undefined)
-                                  return
-                                }
-
-                                if (file.type.startsWith("image/")) {
-                                  const resizedFile = await resizeImage(file, {
-                                    maxWidth: 1800,
-                                    maxHeight: 1800,
-                                    quality: 0.8,
-                                  })
-                                  field.onChange(resizedFile)
-                                } else {
-                                  field.onChange(file)
-                                }
-                              }}
-                              accept={{
-                                "image/*": [],
-                                "application/pdf": [],
-                              }}
-                              maxSize={10 * 1024 * 1024}
-                              {...field}
-                              value={
-                                field.value?.size > 0 ? [field.value] : []
-                              }
-                              onValueChange={(files) => {
-                                const file = files?.[0]
-                                field.onChange(
-                                  file && file?.size > 0 ? file : undefined,
-                                )
-                              }}
+                            <CurrencyDropdown
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              placeholder={t("expense.selectCurrency")}
+                              currencies="custom"
                             />
                           </FormControl>
                           <FormMessage />
@@ -844,69 +825,116 @@ export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
                       )}
                     />
                   </div>
-                ))}
-              </div>
 
-              {fields.length > 0 && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      append({
-                        description: "",
-                        amount: 0,
-                        currency: "NOK",
-                        date: new Date(),
-                        attachment: new File([], ""),
-                      })
-                    }
-                    className="gap-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t("expense.addExpense")}
-                  </Button>
+                  <FormField
+                    control={form.control}
+                    name={`expenses.${index}.attachment`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("expense.attachment")}</FormLabel>
+                        <FormControl>
+                          <FileUploader
+                            onUpload={async (files) => {
+                              const file = files[0]
+                              if (!file) {
+                                field.onChange(undefined)
+                                return
+                              }
+
+                              if (file.type.startsWith("image/")) {
+                                const resizedFile = await resizeImage(file, {
+                                  maxWidth: 1800,
+                                  maxHeight: 1800,
+                                  quality: 0.8,
+                                })
+                                field.onChange(resizedFile)
+                              } else {
+                                field.onChange(file)
+                              }
+                            }}
+                            accept={{
+                              "image/*": [],
+                              "application/pdf": [],
+                            }}
+                            maxSize={10 * 1024 * 1024}
+                            {...field}
+                            value={field.value?.size > 0 ? [field.value] : []}
+                            onValueChange={(files) => {
+                              const file = files?.[0]
+                              field.onChange(
+                                file && file?.size > 0 ? file : undefined,
+                              )
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              )}
-            </section>
+              ))}
+            </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="bg-blue-600 px-6 text-white hover:bg-blue-700"
-              >
-                {isLoading
-                  ? t("expense.processing")
-                  : t("expense.generateReport")}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                asChild
-                className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                <a
-                  target="_blank"
-                  href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
-                    .getValues("expenses")
-                    .map((expense) => expense.description)
-                    .join(", ")}.
+            {fields.length > 0 && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    append({
+                      description: "",
+                      amount: 0,
+                      currency: "NOK",
+                      date: new Date(),
+                      attachment: new File([], ""),
+                    })
+                  }
+                  className="gap-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("expense.addExpense")}
+                </Button>
+              </div>
+            )}
+          </section>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-600 px-6 text-white hover:bg-blue-700"
+            >
+              {isLoading
+                ? t("expense.processing")
+                : t("expense.generateReport")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              asChild
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <a
+                target="_blank"
+                href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
+                  .getValues("expenses")
+                  .map((expense) => expense.description)
+                  .join(", ")}.
 
 Vedlagt er en PDF-fil med utleggene.
 
 Med vennlig hilsen,
 ${form.getValues("name")}`)}`}
-                >
-                  <Mail className="h-4 w-4" />
-                  {t("expense.sendEmail")}
-                </a>
-              </Button>
-            </div>
-          </form>
-        </Form>
-        <Toaster />
+              >
+                <Mail className="h-4 w-4" />
+                {t("expense.sendEmail")}
+              </a>
+            </Button>
+          </div>
+        </form>
+      </Form>
+      <Toaster />
     </div>
   )
 }
