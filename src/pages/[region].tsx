@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Users } from "lucide-react"
 
 export default function RegionPage({
   region,
@@ -73,9 +74,10 @@ export default function RegionPage({
 
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 ring-1 ring-gray-200/80">
-                      <span className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("region.members")}
-                      </span>
+                      <Users
+                        className="size-4 shrink-0 text-gray-500"
+                        aria-hidden
+                      />
                       <span className="text-sm font-semibold text-gray-900">
                         {t("region.memberCount", { count: region.memberCount })}
                       </span>
@@ -114,7 +116,7 @@ export default function RegionPage({
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         alt={region.organizer.name}
-                        className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white"
+                        className="size-10 rounded-full border border-solid border-red-400 object-cover shadow-sm"
                         src={region.organizer.photoUrl}
                       />
                       <div className="min-w-0">
