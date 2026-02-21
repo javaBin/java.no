@@ -12,9 +12,7 @@ const Policy = () => {
         <title>{t("title")}</title>
         <meta name="description" content={t("title")!} />
       </Head>
-      <div className="policy container">
-        <div style={{ padding: "60px" }}></div>
-
+      <div className="mx-auto max-w-3xl px-4 py-16 prose prose-headings:text-jz-salmon prose-p:text-justify prose-ul:list-[circle] prose-ul:pl-10 prose-ul:pb-4 prose-a:text-jz-salmon prose-a:no-underline hover:prose-a:underline">
         <h2 id="disclaimer-and-limitation-of-liability---terms-and-conditions">
           Disclaimer and Limitation of Liability - Terms and Conditions
         </h2>

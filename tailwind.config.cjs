@@ -2,9 +2,6 @@
 module.exports = {
   darkMode: ["class"],
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
-  corePlugins: {
-    visibility: false,
-  },
   theme: {
     extend: {
       borderRadius: {
@@ -12,8 +9,32 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      colors: {},
+      colors: {
+        muted: "#777777",
+        "muted-foreground": "var(--muted-foreground, #71717a)",
+        "jz-salmon": "#f05350",
+        "jz-yellow": "#fed136",
+      },
+      fontFamily: {
+        slab: ['"Roboto Slab"', "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        montserrat: ["Montserrat", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        serif: ['"Droid Serif"', "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+      },
+      backgroundImage: {
+        hero: "url(/img/banner/bg.jpg)",
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+    function ({ addBase }) {
+      addBase({
+        "::selection": { background: "#fed136", textShadow: "none" },
+        "::-moz-selection": { background: "#fed136", textShadow: "none" },
+        "img::selection": { background: "transparent" },
+        "img::-moz-selection": { background: "transparent" },
+      })
+    },
+  ],
 }

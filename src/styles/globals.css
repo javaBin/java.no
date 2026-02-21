@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+
+  body {
+    @apply overflow-x-hidden font-slab;
+  }
+
+  p {
+    @apply text-[14px] leading-[1.75];
+  }
+
+  a {
+    @apply text-jz-salmon outline-none hover:text-[#fec503] focus:text-[#fec503] active:text-[#fec503];
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-montserrat font-bold uppercase mb-5;
+  }
+  h1 { @apply text-3xl; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
+  h4 { @apply text-lg; }
+  h5 { @apply text-base; }
+  h6 { @apply text-sm; }
+}

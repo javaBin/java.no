@@ -1,4 +1,4 @@
-import "../styles/style.scss"
+import "../styles/globals.css"
 import { appWithTranslation } from "next-i18next"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { AppType } from "next/app"

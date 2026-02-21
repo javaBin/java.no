@@ -12,7 +12,7 @@ const iconClass = "h-5 w-5"
 
 export const Socials = () => {
   return (
-    <div className="socials w-full">
+    <div className="w-full bg-black p-5">
       <ul
         id="socialMedia"
         className="flex flex-wrap justify-center gap-2 py-5"

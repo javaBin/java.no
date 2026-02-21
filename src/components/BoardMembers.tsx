@@ -32,7 +32,7 @@ const BoardMembers = (props: Props) => {
   return (
     <div className="mx-auto max-w-[1200px] px-4">
       <div className="text-center">
-        <h1 className="section-heading">{t("theBoard")}</h1>
+        <h1 className="text-[40px] mt-0 mb-4">{t("theBoard")}</h1>
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-8">
         {props.boardMembers.map((boardMember) => (

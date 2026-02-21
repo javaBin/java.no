@@ -111,7 +111,7 @@ const Events = ({ region, events }: EventProps) => {
                     {event.eventPhoto && (
                       <Image
                         alt="event photo"
-                        className="tw-hidden aspect-video rounded-lg object-cover shadow-lg sm:block"
+                        className="hidden aspect-video rounded-lg object-cover shadow-lg sm:block"
                         height={101}
                         width={180}
                         src={event.eventPhoto}
