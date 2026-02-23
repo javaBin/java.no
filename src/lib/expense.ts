@@ -1,177 +1,40 @@
 import { z } from "zod"
-
-/** ISO2 codes of countries that use IBAN (SEPA / international IBAN zone) */
-export const IBAN_COUNTRY_ISO2 = new Set([
-  "AD",
-  "AT",
-  "BE",
-  "BA",
-  "BG",
-  "HR",
-  "CY",
-  "CZ",
-  "DK",
-  "EE",
-  "FO",
-  "FI",
-  "FR",
-  "DE",
-  "GI",
-  "GR",
-  "GL",
-  "HU",
-  "IS",
-  "IE",
-  "IT",
-  "LV",
-  "LI",
-  "LT",
-  "LU",
-  "MK",
-  "MT",
-  "MC",
-  "ME",
-  "NL",
-  "NO",
-  "PL",
-  "PT",
-  "RO",
-  "SM",
-  "RS",
-  "SK",
-  "SI",
-  "ES",
-  "SE",
-  "CH",
-  "GB",
-  "VA",
-  "AL",
-  "AZ",
-  "BH",
-  "BR",
-  "CR",
-  "DO",
-  "EG",
-  "GE",
-  "GT",
-  "IL",
-  "JO",
-  "KZ",
-  "KW",
-  "LB",
-  "MR",
-  "MU",
-  "MD",
-  "PK",
-  "PS",
-  "QA",
-  "LC",
-  "SA",
-  "SC",
-  "TL",
-  "TN",
-  "TR",
-  "UA",
-  "AE",
-  "VG",
-  "IQ",
-  "BY",
-  "SV",
-  "LY",
-  "SD",
-  "BI",
-  "DJ",
-  "RU",
-  "SO",
-  "NI",
-  "MN",
-  "FK",
-  "OM",
-  "HN",
-  "AO",
-  "BF",
-  "BJ",
-  "CF",
-  "CG",
-  "CI",
-  "CM",
-  "CV",
-  "DZ",
-  "GA",
-  "GQ",
-  "GW",
-  "IR",
-  "MA",
-  "MG",
-  "ML",
-  "MZ",
-  "NE",
-  "SN",
-  "TD",
-  "TG",
-  "KM",
-])
+import {
+  composeIBAN,
+  countrySpecs,
+  isValidIBAN,
+  isValidBIC,
+  electronicFormatIBAN,
+} from "ibantools"
 
 /**
  * Classify bank country for form flow: SEPA (IBAN), US (ABA + SWIFT etc.), or Other.
+ * Uses ibantools country specs to determine IBAN support.
  */
 export function getBankCountryType(iso2: string): "sepa" | "us" | "other" {
   if (iso2 === "US") return "us"
-  if (IBAN_COUNTRY_ISO2.has(iso2)) return "sepa"
+  const spec = countrySpecs[iso2.toUpperCase()]
+  if (spec?.IBANRegistry) return "sepa"
   return "other"
 }
 
-/** IBAN total length per country (ISO 13616). Used for validation and building IBAN from BBAN. */
-export const IBAN_COUNTRY_LENGTHS: Record<string, number> = {
-  AD: 24, AT: 20, BE: 16, BA: 20, BG: 22, HR: 21, CY: 28, CZ: 24, DK: 18,
-  EE: 20, FO: 18, FI: 18, FR: 27, DE: 22, GI: 23, GR: 27, GL: 18, HU: 28,
-  IS: 26, IE: 22, IT: 27, LV: 21, LI: 21, LT: 20, LU: 20, MK: 19, MT: 31,
-  MC: 27, ME: 22, NL: 18, NO: 15, PL: 28, PT: 25, RO: 24, SM: 27, RS: 22,
-  SK: 24, SI: 19, ES: 24, SE: 24, CH: 21, GB: 22, VA: 22, AL: 28, AZ: 28,
-  BH: 22, BR: 29, CR: 22, DO: 28, EG: 29, GE: 22, GT: 28, IL: 23, JO: 30,
-  KZ: 20, KW: 30, LB: 28, MR: 27, MU: 30, MD: 24, PK: 24, PS: 29, QA: 29,
-  LC: 32, SA: 24, SC: 31, TL: 23, TN: 24, TR: 26, UA: 29, AE: 23, VG: 24,
-  IQ: 23, BY: 28, SV: 28, LY: 25, SD: 18, BI: 27, DJ: 27, RU: 33, SO: 23,
-  NI: 28, MN: 20, FK: 18, OM: 23, HN: 28, AO: 25, BF: 28, BJ: 28, CF: 27,
-  CG: 27, CI: 28, CM: 27, CV: 25, DZ: 26, GA: 27, GQ: 27, GW: 25, IR: 26,
-  MA: 28, MG: 27, ML: 28, MZ: 25, NE: 28, SN: 28, TD: 27, TG: 28, KM: 27,
-}
-
-/** SEPA countries where the BBAN is digits-only (no letters). Use for country+digits IBAN input. */
-export const IBAN_NUMERIC_BBAN_ISO2 = new Set([
-  "NO", "SE", "DK", "FI", "DE", "ES", "AT", "BE", "PL", "PT", "RO", "SK", "SI",
-  "EE", "LV", "LT", "LU", "HR", "CY", "CZ", "BG", "RS", "ME", "MK", "SM", "VA",
-])
-
 /** Length of the BBAN part (IBAN without country code and check digits) for a country. */
 export function getIBANBbanLength(iso2: string): number | null {
-  const total = IBAN_COUNTRY_LENGTHS[iso2.toUpperCase()]
-  return total != null ? total - 4 : null
+  const spec = countrySpecs[iso2.toUpperCase()]
+  return spec?.chars != null ? spec.chars - 4 : null
 }
 
 /**
- * Build full IBAN from country code and BBAN (digits only).
- * Computes check digits per ISO 13616 (mod 97).
+ * Build full IBAN from country code and BBAN.
+ * Computes check digits per ISO 13616 via ibantools.
+ * For partial BBANs (during typing), uses placeholder check digits
+ * so the value remains extractable; real check digits are computed on blur.
  */
 export function buildIBAN(countryCode: string, bban: string): string {
   const cc = countryCode.toUpperCase().replace(/\s/g, "")
-  const cleanBban = bban.replace(/\s/g, "").replace(/\D/g, "")
+  const cleanBban = bban.replace(/\s/g, "")
   if (cc.length !== 2 || !/^[A-Z]{2}$/.test(cc) || !cleanBban) return ""
-  const rearranged = cleanBban + cc + "00"
-  const expanded = rearranged
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0)
-      return code >= 65 && code <= 90 ? (code - 55).toString() : char
-    })
-    .join("")
-  let remainder = 0
-  for (let i = 0; i < expanded.length; i += 7) {
-    const chunk = remainder + expanded.substring(i, i + 7)
-    remainder = parseInt(chunk, 10) % 97
-  }
-  const check = String(98 - remainder).padStart(2, "0")
-  return (cc + check + cleanBban).toUpperCase()
+  return composeIBAN({ countryCode: cc, bban: cleanBban }) ?? cc + "00" + cleanBban
 }
 
 // Create schemas with localized error messages
@@ -316,10 +179,17 @@ export const createExpenseSchemas = (
             path: ["bankIban"],
           })
         }
-        if (!(data.bankSwiftBic || "").trim()) {
+        const swiftBic = (data.bankSwiftBic || "").trim()
+        if (!swiftBic) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.bankSwiftRequired"),
+            path: ["bankSwiftBic"],
+          })
+        } else if (!validateBIC(swiftBic)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.invalidSwift"),
             path: ["bankSwiftBic"],
           })
         }
@@ -333,24 +203,51 @@ export const createExpenseSchemas = (
         return
       }
       if (type === "us") {
-        if (!(data.bankRoutingNumber || "").trim())
+        const routing = (data.bankRoutingNumber || "").trim()
+        if (!routing) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.bankRoutingRequired"),
             path: ["bankRoutingNumber"],
           })
-        if (!(data.bankAccountNumber || "").trim())
+        } else if (!validateABARoutingNumber(routing)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.invalidRoutingNumber"),
+            path: ["bankRoutingNumber"],
+          })
+        }
+        const accountNum = (data.bankAccountNumber || "").trim()
+        if (!accountNum) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.bankAccountNumberRequired"),
             path: ["bankAccountNumber"],
           })
-        if (!(data.bankSwiftBic || "").trim())
+        } else {
+          const digitsOnly = accountNum.replace(/\D/g, "")
+          if (digitsOnly.length < 4 || digitsOnly.length > 17) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("expense.errors.invalidUsAccountNumber"),
+              path: ["bankAccountNumber"],
+            })
+          }
+        }
+        const usSwift = (data.bankSwiftBic || "").trim()
+        if (!usSwift) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.bankSwiftRequired"),
             path: ["bankSwiftBic"],
           })
+        } else if (!validateBIC(usSwift)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.invalidSwift"),
+            path: ["bankSwiftBic"],
+          })
+        }
         if (!(data.bankName || "").trim())
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -410,30 +307,22 @@ export const createExpenseSchemas = (
 /**
  * Validates a bank account number, supporting both Norwegian BBAN and international IBAN formats.
  * Automatically detects the format based on the input.
- *
- * @param accountNumber The account number to validate
- * @returns boolean indicating if the account number is valid
  */
 export const validateBankAccount = (accountNumber: string): boolean => {
-  // Remove all non-alphanumeric characters
   const cleanAccountNumber = accountNumber
     .replace(/[^a-zA-Z0-9]/g, "")
     .toUpperCase()
 
-  // If it starts with 2 letters, it's likely an IBAN
   if (/^[A-Z]{2}/.test(cleanAccountNumber)) {
     return validateIBAN(cleanAccountNumber)
   }
 
-  // Otherwise, treat it as a Norwegian account number (BBAN)
   return validateNorwegianBBAN(cleanAccountNumber)
 }
 
 /**
- * Validates a Norwegian bank account number (BBAN)
- *
- * @param accountNumber The account number to validate (cleaned, digits only)
- * @returns boolean indicating if the account number is valid
+ * Validates a Norwegian bank account number (BBAN).
+ * Uses modulo-11 check digit validation.
  */
 export const validateNorwegianBBAN = (accountNumber: string): boolean => {
   if (accountNumber.length !== 11) return false
@@ -449,78 +338,34 @@ export const validateNorwegianBBAN = (accountNumber: string): boolean => {
   return checkDigit === parseInt(accountNumber.charAt(10))
 }
 
-/**
- * Validates an International Bank Account Number (IBAN)
- *
- * @param iban The IBAN to validate (cleaned, uppercase, no spaces)
- * @returns boolean indicating if the IBAN is valid
- */
+/** Validates an IBAN (format, length, check digits) via ibantools. */
 export const validateIBAN = (iban: string): boolean => {
-  // Basic format check: country code (2 letters) + check digits (2 digits) + BBAN (up to 30 chars)
-  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/.test(iban)) {
-    return false
-  }
-
-  const countryCode = iban.substring(0, 2)
-  const expectedLength = IBAN_COUNTRY_LENGTHS[countryCode]
-
-  // If we know the expected length for this country and it doesn't match, reject it
-  if (expectedLength && iban.length !== expectedLength) {
-    return false
-  }
-
-  // Structure validation for specific countries
-  // This validates the format of the BBAN part (after the country code and check digits)
-  const bban = iban.substring(4)
-
-  // Define structure patterns for common countries
-  const countryPatterns: Record<string, RegExp> = {
-    NO: /^\d{11}$/, // Norway: 11 digits
-    SE: /^\d{20}$/, // Sweden: 20 digits
-    DK: /^\d{14}$/, // Denmark: 14 digits
-    FI: /^\d{14}$/, // Finland: 14 digits
-    NL: /^[A-Z]{4}\d{10}$/, // Netherlands: 4 letters + 10 digits
-    GB: /^[A-Z]{4}\d{14}$/, // UK: 4 letters + 14 digits
-    DE: /^\d{18}$/, // Germany: 18 digits
-    FR: /^\d{10}[A-Z0-9]{11}\d{2}$/, // France: 10 digits + 11 alphanumeric + 2 digits
-    ES: /^\d{20}$/, // Spain: 20 digits
-    IT: /^[A-Z]\d{10}[A-Z0-9]{12}$/, // Italy: 1 letter + 10 digits + 12 alphanumeric
-  }
-
-  // Check structure if we have a pattern for this country
-  if (
-    countryPatterns[countryCode] &&
-    !countryPatterns[countryCode].test(bban)
-  ) {
-    return false
-  }
-
-  // Move the first 4 characters to the end
-  const rearranged = iban.substring(4) + iban.substring(0, 4)
-
-  // Replace each letter with two digits (A=10, B=11, ..., Z=35)
-  const expanded = rearranged
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0)
-      // If it's a letter, convert to number (A=10, B=11, etc.)
-      return code >= 65 && code <= 90 ? (code - 55).toString() : char
-    })
-    .join("")
-
-  // Perform mod-97 operation
-  // Since JavaScript can't handle numbers this large, we need to do it in chunks
-  let remainder = 0
-  for (let i = 0; i < expanded.length; i += 7) {
-    const chunk = remainder + expanded.substring(i, i + 7)
-    remainder = parseInt(chunk, 10) % 97
-  }
-
-  // If the remainder is 1, the IBAN is valid
-  return remainder === 1
+  const electronic = electronicFormatIBAN(iban)
+  if (!electronic) return false
+  return isValidIBAN(electronic)
 }
 
-// For backward compatibility
+/** Validates a SWIFT/BIC code (8 or 11 characters) via ibantools. */
+export const validateBIC = (bic: string): boolean => {
+  return isValidBIC(bic.replace(/\s/g, "").toUpperCase())
+}
+
+/**
+ * Validates a US ABA routing number (9 digits, checksum with 3-7-1 weights).
+ * See https://en.wikipedia.org/wiki/ABA_routing_transit_number#Check_digit
+ */
+export const validateABARoutingNumber = (routing: string): boolean => {
+  const digits = routing.replace(/\D/g, "")
+  if (digits.length !== 9) return false
+
+  const weights = [3, 7, 1, 3, 7, 1, 3, 7, 1]
+  const sum = digits
+    .split("")
+    .reduce((acc, d, i) => acc + parseInt(d) * weights[i]!, 0)
+
+  return sum % 10 === 0
+}
+
 export const validateAccountNumber = validateBankAccount
 
 /**

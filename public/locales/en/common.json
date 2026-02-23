@@ -198,7 +198,10 @@
       "bankNameRequired": "Bank name is required",
       "bankAddressRequired": "Bank address is required",
       "bankHolderRequired": "Account holder name is required",
-      "invalidNorwegianAccount": "Invalid Norwegian account number"
+      "invalidNorwegianAccount": "Invalid Norwegian account number",
+      "invalidRoutingNumber": "Invalid routing number (ABA). Must be 9 digits.",
+      "invalidUsAccountNumber": "Invalid account number. Must be between 4 and 17 digits.",
+      "invalidSwift": "Invalid SWIFT/BIC code"
     }
   }
 }

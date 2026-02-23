@@ -199,7 +199,10 @@
       "bankNameRequired": "Banknavn er påkrevd",
       "bankAddressRequired": "Bankadresse er påkrevd",
       "bankHolderRequired": "Kontoinnehaverens navn er påkrevd",
-      "invalidNorwegianAccount": "Ugyldig norsk kontonummer"
+      "invalidNorwegianAccount": "Ugyldig norsk kontonummer",
+      "invalidRoutingNumber": "Ugyldig routing number (ABA). Må være 9 siffer.",
+      "invalidUsAccountNumber": "Ugyldig kontonummer. Må være mellom 4 og 17 siffer.",
+      "invalidSwift": "Ugyldig SWIFT/BIC-kode"
     }
   }
 }

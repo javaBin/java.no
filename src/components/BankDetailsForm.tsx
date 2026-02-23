@@ -14,8 +14,12 @@ import {
   IbanAccountInput,
   NorwegianAccountInput,
   type AccountValidationResult,
-} from "@/components/AccountInput"
-import { getBankCountryType } from "@/lib/expense"
+} from "@/components/account-input"
+import {
+  getBankCountryType,
+  validateABARoutingNumber,
+  validateBIC,
+} from "@/lib/expense"
 import {
   Select,
   SelectContent,
@@ -159,6 +163,20 @@ export function BankDetailsForm({
                     {...field}
                     placeholder="e.g. DNBANOKK"
                     className="uppercase"
+                    onBlur={() => {
+                      field.onBlur()
+                      const cleaned = field.value
+                        .replace(/\s/g, "")
+                        .toUpperCase()
+                      if (cleaned !== field.value) field.onChange(cleaned)
+                      if (cleaned && !validateBIC(cleaned)) {
+                        form.setError("bankSwiftBic", {
+                          message: t("expense.errors.invalidSwift"),
+                        })
+                      } else {
+                        form.clearErrors("bankSwiftBic")
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -182,6 +200,20 @@ export function BankDetailsForm({
                       {...field}
                       placeholder="e.g. 021000021"
                       inputMode="numeric"
+                      onBlur={() => {
+                        field.onBlur()
+                        const digits = field.value.replace(/\D/g, "")
+                        if (digits !== field.value) field.onChange(digits)
+                        if (digits && !validateABARoutingNumber(digits)) {
+                          form.setError("bankRoutingNumber", {
+                            message: t(
+                              "expense.errors.invalidRoutingNumber",
+                            ),
+                          })
+                        } else {
+                          form.clearErrors("bankRoutingNumber")
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -195,7 +227,15 @@ export function BankDetailsForm({
                 <FormItem>
                   <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g. 1234567890" />
+                    <Input
+                      {...field}
+                      placeholder="e.g. 1234567890"
+                      onBlur={() => {
+                        field.onBlur()
+                        const trimmed = field.value.trim()
+                        if (trimmed !== field.value) field.onChange(trimmed)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -238,6 +278,20 @@ export function BankDetailsForm({
                     {...field}
                     placeholder="e.g. CHASUS33"
                     className="uppercase"
+                    onBlur={() => {
+                      field.onBlur()
+                      const cleaned = field.value
+                        .replace(/\s/g, "")
+                        .toUpperCase()
+                      if (cleaned !== field.value) field.onChange(cleaned)
+                      if (cleaned && !validateBIC(cleaned)) {
+                        form.setError("bankSwiftBic", {
+                          message: t("expense.errors.invalidSwift"),
+                        })
+                      } else {
+                        form.clearErrors("bankSwiftBic")
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -301,7 +355,15 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Account or IBAN" />
+                  <Input
+                    {...field}
+                    placeholder="Account or IBAN"
+                    onBlur={() => {
+                      field.onBlur()
+                      const trimmed = field.value.trim()
+                      if (trimmed !== field.value) field.onChange(trimmed)
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -318,6 +380,20 @@ export function BankDetailsForm({
                     {...field}
                     placeholder="e.g. DEUTDEFF"
                     className="uppercase"
+                    onBlur={() => {
+                      field.onBlur()
+                      const cleaned = field.value
+                        .replace(/\s/g, "")
+                        .toUpperCase()
+                      if (cleaned !== field.value) field.onChange(cleaned)
+                      if (cleaned && !validateBIC(cleaned)) {
+                        form.setError("bankSwiftBic", {
+                          message: t("expense.errors.invalidSwift"),
+                        })
+                      } else {
+                        form.clearErrors("bankSwiftBic")
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
