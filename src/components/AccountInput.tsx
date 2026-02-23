@@ -280,6 +280,8 @@ const NorwegianAccountInputBase = React.forwardRef<
     [],
   )
 
+  const [imageError, setImageError] = React.useState(false)
+
   const bank = React.useMemo(() => {
     const cleanValue = value?.replace(/\D/g, "")
     return (
@@ -288,6 +290,10 @@ const NorwegianAccountInputBase = React.forwardRef<
     )
   }, [value])
 
+  React.useEffect(() => {
+    setImageError(false)
+  }, [bank?.identifier])
+
   return (
     <Input
       {...props}
@@ -295,13 +301,16 @@ const NorwegianAccountInputBase = React.forwardRef<
       type="text"
       inputMode="numeric"
       startIcon={
-        bank ? (
+        bank && !imageError ? (
           <Image
             src={`/bank/${bank.identifier}.png`}
             alt={`${bank.name} logo`}
             width={30}
             height={30}
             className="object-contain"
+            onError={() => {
+              setImageError(true)
+            }}
           />
         ) : (
           <PiggyBank

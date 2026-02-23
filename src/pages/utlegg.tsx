@@ -220,11 +220,7 @@ function ExpenseAmountInput({
 
 export default function ExpensePage() {
   const [initialFormValues] = useState<InitialFormValues>(() =>
-    parseFormQueryParams(
-      searchToQueryRecord(
-        typeof window !== "undefined" ? window.location.search : "",
-      ),
-    ),
+    parseFormQueryParams({}),
   )
 
   const { t, i18n } = useTranslation("common")
@@ -275,6 +271,20 @@ export default function ExpensePage() {
       ],
     },
   })
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const queryRecord = searchToQueryRecord(window.location.search)
+    if (!Object.keys(queryRecord).length) return
+
+    const parsed = parseFormQueryParams(queryRecord)
+
+    form.reset({
+      ...form.getValues(),
+      ...parsed,
+    })
+  }, [form])
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
