@@ -34,6 +34,7 @@ export const currencies: Currency[] = [
   { code: "DKK", name: "Danish Krone" },
   { code: "CZK", name: "Czech Koruna" },
   { code: "PLN", name: "Polish Zloty" },
+  { code: "CHF", name: "Swiss Franc" },
   { code: "CAD", name: "Canadian Dollar" },
 
   // Other supported currencies (alphabetically)
@@ -42,7 +43,6 @@ export const currencies: Currency[] = [
   { code: "BGN", name: "Bulgarian Lev" },
   { code: "BRL", name: "Brazilian Real" },
   { code: "BYN", name: "Belarusian Ruble" },
-  { code: "CHF", name: "Swiss Franc" },
   { code: "CNY", name: "Chinese Yuan" },
   { code: "HKD", name: "Hong Kong Dollar" },
   { code: "HUF", name: "Hungarian Forint" },

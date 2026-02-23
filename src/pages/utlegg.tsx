@@ -34,7 +34,6 @@ import {
 import { cn } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
-import type { GetServerSideProps } from "next"
 import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
 import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
 import { getSymbolFromCurrency, countries } from "country-data-list"
@@ -92,8 +91,12 @@ function parseFormQueryParams(
 
 type InitialFormValues = ReturnType<typeof parseFormQueryParams>
 
-type ExpensePageProps = {
-  initialFormValues: InitialFormValues
+/** Build query record from client-side search string (e.g. window.location.search). */
+function searchToQueryRecord(
+  search: string,
+): Record<string, string | string[] | undefined> {
+  if (!search || search === "?") return {}
+  return Object.fromEntries(new URLSearchParams(search).entries())
 }
 
 type ExpenseAmountInputProps = {
@@ -215,7 +218,15 @@ function ExpenseAmountInput({
   )
 }
 
-export default function ExpensePage({ initialFormValues }: ExpensePageProps) {
+export default function ExpensePage() {
+  const [initialFormValues] = useState<InitialFormValues>(() =>
+    parseFormQueryParams(
+      searchToQueryRecord(
+        typeof window !== "undefined" ? window.location.search : "",
+      ),
+    ),
+  )
+
   const { t, i18n } = useTranslation("common")
 
   const { formSchema } = createExpenseSchemas(t, i18n.language)
@@ -932,13 +943,9 @@ ${form.getValues("name")}`)}`}
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { query, locale } = context
-  const initialFormValues = parseFormQueryParams(query)
-
+export const getStaticProps = async ({ locale }: { locale: string }) => {
   return {
     props: {
-      initialFormValues,
       ...(await serverSideTranslations(
         locale ?? "no",
         ["common"],

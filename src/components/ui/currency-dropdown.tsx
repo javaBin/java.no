@@ -90,22 +90,13 @@ const CurrencyDropdownComponent = (
         currency.symbol &&
         !norgesBankCodes.includes(currency.code)
       ) {
-        const entry: Currency =
-          currency.code === "EUR"
-            ? {
-                code: currency.code,
-                name: "Euro",
-                symbol: currency.symbol,
-                decimals: currency.decimals,
-                number: currency.number,
-              }
-            : {
-                code: currency.code,
-                name: currency.name,
-                symbol: currency.symbol,
-                decimals: currency.decimals,
-                number: currency.number,
-              }
+        const entry: Currency = {
+          code: currency.code,
+          name: currency.name,
+          symbol: currency.symbol,
+          decimals: currency.decimals,
+          number: currency.number,
+        }
         currencyMap.set(currency.code, entry)
       }
     })
