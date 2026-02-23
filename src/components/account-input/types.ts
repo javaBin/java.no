@@ -3,7 +3,7 @@ import type React from "react"
 
 export type AccountValidationResult = {
   isValid: boolean
-  errorType?: "country" | "length" | "format" | "unknown"
+  errorType?: "country" | "length" | "format" | "checksum" | "unknown"
   expectedLength?: number
   actualLength?: number
   countryName?: string

@@ -31,7 +31,7 @@ import { Country, CountryDropdown } from "./ui/country-dropdown"
 
 type BankDetailsFormProps = {
   form: UseFormReturn<any>
-  t: (key: string) => string
+  t: (key: string, options?: Record<string, unknown>) => string
   language: string
   onValidationChange?: (result: AccountValidationResult) => void
   isInternational: boolean
@@ -66,6 +66,17 @@ export function BankDetailsForm({
       form.setValue("bankIban", "")
     }
   }, [type, form])
+
+  const bankCountryName = React.useMemo(() => {
+    if (!bankCountryIso2) return undefined
+    try {
+      return new Intl.DisplayNames([language], { type: "region" }).of(
+        bankCountryIso2.toUpperCase(),
+      )
+    } catch {
+      return bankCountryIso2.toUpperCase()
+    }
+  }, [bankCountryIso2, language])
 
   const prevBankCountryIso2Ref = React.useRef(bankCountryIso2)
   useEffect(() => {
@@ -144,7 +155,34 @@ export function BankDetailsForm({
                     placeholder={t("expense.bankIbanPlaceholder")}
                     onValidationChange={(result) => {
                       onValidationChange?.(result)
-                      if (result.isValid) form.clearErrors("bankIban")
+                      if (result.isValid) {
+                        form.clearErrors("bankIban")
+                      } else if (result.errorType === "length") {
+                        form.setError("bankIban", {
+                          message: bankCountryName
+                            ? t("expense.invalidIbanLength", {
+                                expectedLength: result.expectedLength,
+                                actualLength: result.actualLength,
+                                countryName: bankCountryName,
+                              })
+                            : t("expense.invalidIbanLengthGeneric", {
+                                expectedLength: result.expectedLength,
+                                actualLength: result.actualLength,
+                              }),
+                        })
+                      } else if (result.errorType === "checksum") {
+                        form.setError("bankIban", {
+                          message: t("expense.invalidAccountGeneric"),
+                        })
+                      } else {
+                        form.setError("bankIban", {
+                          message: bankCountryName
+                            ? t("expense.invalidIbanFormat", {
+                                countryName: bankCountryName,
+                              })
+                            : t("expense.invalidIbanFormatGeneric"),
+                        })
+                      }
                     }}
                   />
                 </FormControl>

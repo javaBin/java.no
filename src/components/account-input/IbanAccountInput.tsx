@@ -1,7 +1,6 @@
 import React from "react"
-import { countries } from "country-data-list"
-import { Input } from "@/components/ui/input"
-import { buildIBAN, getIBANBbanLength, validateIBAN } from "@/lib/expense"
+import { NumberFormatBase } from "react-number-format"
+import { getIBANBbanLength, validateIBAN } from "@/lib/expense"
 import type { AccountInputBaseProps, AccountValidationResult } from "./types"
 
 type IbanAccountInputProps = AccountInputBaseProps & {
@@ -12,6 +11,19 @@ type IbanAccountInputProps = AccountInputBaseProps & {
   countryIso2: string
 }
 
+function ibanFormat(value: string) {
+  const clean = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  return clean.replace(/(.{4})/g, "$1 ").trim()
+}
+
+function ibanRemoveFormatting(value: string) {
+  return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+}
+
+function ibanIsValidInputCharacter(char: string) {
+  return /^[a-zA-Z0-9]$/.test(char)
+}
+
 export const IbanAccountInput = React.forwardRef<
   HTMLInputElement,
   IbanAccountInputProps
@@ -19,88 +31,69 @@ export const IbanAccountInput = React.forwardRef<
   { value, onChange, onBlur, onValidationChange, countryIso2, ...props },
   ref,
 ) {
-  const bbanLength = getIBANBbanLength(countryIso2) ?? 18
-  const bbanFromValue = React.useMemo(() => {
-    const clean = (value || "").replace(/\s/g, "")
-    if (clean.length > 4 && /^[A-Z]{2}[0-9]{2}/.test(clean)) {
-      return clean.slice(4).replace(/\D/g, "")
-    }
-    return ""
-  }, [value])
-
-  const sanitize = React.useCallback(
-    (input: string) => {
-      const digits = input.replace(/\D/g, "")
-      return digits.slice(0, bbanLength)
-    },
-    [bbanLength],
-  )
-
-  const countryName = React.useMemo(() => {
-    const c = countries.all.find(
-      (c: { alpha2: string }) =>
-        c.alpha2 === countryIso2.toUpperCase(),
-    )
-    return (c?.name as string) ?? countryIso2.toUpperCase()
+  const expectedLength = React.useMemo(() => {
+    const bbanLen = getIBANBbanLength(countryIso2)
+    return bbanLen != null ? bbanLen + 4 : null
   }, [countryIso2])
 
   const validate = React.useCallback(
-    (fullIban: string): AccountValidationResult => {
-      const clean = fullIban.replace(/\s/g, "")
+    (iban: string): AccountValidationResult => {
+      const clean = iban.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
       if (!clean) return { isValid: true }
       if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(clean)) {
-        return { isValid: false, errorType: "format", countryName }
+        return { isValid: false, errorType: "format" }
       }
-      const expected = bbanLength + 4
-      if (clean.length !== expected) {
+      if (expectedLength && clean.length !== expectedLength) {
         return {
           isValid: false,
           errorType: "length",
-          expectedLength: expected,
+          expectedLength,
           actualLength: clean.length,
-          countryName,
         }
       }
       if (!validateIBAN(clean)) {
-        return { isValid: false, errorType: "format", countryName }
+        return { isValid: false, errorType: "checksum" }
       }
       return { isValid: true }
     },
-    [bbanLength, countryName],
+    [expectedLength],
   )
 
-  const displayValue = bbanFromValue.replace(/(.{4})/g, "$1 ").trim()
+  const rawValue = (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
 
   return (
-    <div className="flex w-full items-center gap-2">
-      <span
-        className="flex h-9 shrink-0 items-center rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-sm font-medium text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
-        aria-hidden
-      >
-        {countryIso2.toUpperCase()}
-      </span>
-      <Input
-        {...props}
-        ref={ref}
-        type="text"
-        inputMode="numeric"
-        value={displayValue}
-        placeholder={props.placeholder ?? "e.g. 8601 11 17947"}
-        description={props.description}
-        onChange={(e) => {
-          const digits = sanitize(e.target.value)
-          const fullIban = buildIBAN(countryIso2, digits)
-          onChange(fullIban || "")
-        }}
-        onBlur={() => {
-          onBlur()
-          if (!bbanFromValue) return
-          const composed = buildIBAN(countryIso2, bbanFromValue)
-          if (composed) onChange(composed)
-          const result = validate(composed || (value || "").replace(/\s/g, ""))
-          onValidationChange?.(result)
-        }}
-      />
-    </div>
+    <NumberFormatBase
+      getInputRef={ref}
+      value={rawValue}
+      format={ibanFormat}
+      removeFormatting={ibanRemoveFormatting}
+      isValidInputCharacter={ibanIsValidInputCharacter}
+      getCaretBoundary={(formattedValue) => {
+        const boundary = Array(formattedValue.length + 1)
+        for (let i = 0; i <= formattedValue.length; i++) {
+          boundary[i] = i === formattedValue.length || formattedValue[i] !== " "
+        }
+        return boundary
+      }}
+      isAllowed={(values) => {
+        const maxLen = expectedLength ?? 34
+        return values.value.length <= maxLen
+      }}
+      onValueChange={(values) => {
+        onChange(values.value.toUpperCase())
+      }}
+      onBlur={() => {
+        onBlur()
+        if (rawValue) {
+          onValidationChange?.(validate(rawValue))
+        }
+      }}
+      type="text"
+      placeholder={
+        (props.placeholder as string | undefined) ??
+        "e.g. NO93 8601 1117 947"
+      }
+      className="flex h-9 w-full rounded-md border border-neutral-200 bg-transparent px-3 py-1 text-sm uppercase shadow-sm transition-colors placeholder:text-neutral-500 placeholder:normal-case focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:placeholder:text-neutral-400 dark:focus-visible:ring-neutral-300"
+    />
   )
 })
