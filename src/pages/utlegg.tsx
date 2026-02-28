@@ -10,7 +10,6 @@ import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Mail, Plus } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
-import { getBankCountryType } from "@/lib/expense"
 import { FileUploader } from "@/components/FileUploader"
 import { Toaster } from "sonner"
 import { format } from "date-fns"
@@ -229,14 +228,6 @@ export default function ExpensePage() {
   type FormValues = z.infer<typeof formSchema>
 
   const [isLoading, setIsLoading] = useState(false)
-  const [skipAccountValidation, setSkipAccountValidation] = useState(false)
-  const [accountValidationFailed, setAccountValidationFailed] = useState(false)
-  const [accountValidationResult, setAccountValidationResult] = useState<{
-    errorType?: "country" | "length" | "format" | "unknown"
-    expectedLength?: number
-    actualLength?: number
-    countryName?: string
-  } | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -259,6 +250,7 @@ export default function ExpensePage() {
       bankName: initialFormValues.bankName,
       bankAddress: initialFormValues.bankAddress,
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
+      skipBankValidation: false,
       email: initialFormValues.email,
       expenses: [
         {
@@ -312,13 +304,8 @@ export default function ExpensePage() {
       form.setValue("bankAccountNumber", "")
     }
 
-    setAccountValidationFailed(false)
-    setSkipAccountValidation(false)
-    setAccountValidationResult(null)
   }
 
-  const watchedBankIban = form.watch("bankIban")
-  const watchedBankCountryIso2 = form.watch("bankCountryIso2")
   const watchedCountry = form.watch("country")
   const amountDisplayLocale = React.useMemo(() => {
     if (watchedCountry) {
@@ -336,26 +323,6 @@ export default function ExpensePage() {
     }
     return typeof navigator !== "undefined" ? navigator.language : "en-GB"
   }, [watchedCountry])
-  const bankCountryType = getBankCountryType(watchedBankCountryIso2 || "")
-
-  React.useEffect(() => {
-    if (accountValidationFailed && watchedBankIban) {
-      const hasSpaces = watchedBankIban.includes(" ")
-      if (!hasSpaces) {
-        setAccountValidationFailed(false)
-        setSkipAccountValidation(false)
-      }
-    }
-  }, [watchedBankIban, accountValidationFailed])
-
-  const prevBankIbanRef = React.useRef(watchedBankIban)
-  React.useEffect(() => {
-    if (prevBankIbanRef.current !== watchedBankIban) {
-      prevBankIbanRef.current = watchedBankIban
-      setSkipAccountValidation(false)
-    }
-  }, [watchedBankIban])
-
   const isDirty = form.formState.isDirty
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -366,10 +333,6 @@ export default function ExpensePage() {
   }, [isDirty])
 
   const onSubmit = async (data: FormValues) => {
-    if (skipAccountValidation) {
-      form.clearErrors("bankIban")
-    }
-
     setIsLoading(true)
     try {
       const expenseReport = await generatePDF({
@@ -391,7 +354,7 @@ export default function ExpensePage() {
         bankAccountHolderName: data.bankAccountHolderName,
         email: data.email,
         expenses: data.expenses,
-        validationSkipped: skipAccountValidation,
+        validationSkipped: data.skipBankValidation ?? false,
       })
 
       const blob = new Blob([expenseReport as BlobPart], {
@@ -465,41 +428,6 @@ export default function ExpensePage() {
     })
   }
 
-  const getValidationErrorMessage = () => {
-    if (residesInNorway) {
-      return t("expense.invalidNorwegianAccountDetail")
-    }
-
-    if (bankCountryType === "sepa") {
-      if (accountValidationResult?.errorType === "format") {
-        return accountValidationResult.countryName
-          ? t("expense.invalidIbanFormat", {
-              countryName: accountValidationResult.countryName,
-            })
-          : t("expense.invalidIbanFormatGeneric")
-      }
-      if (accountValidationResult?.errorType === "length") {
-        return accountValidationResult.countryName
-          ? t("expense.invalidIbanLength", {
-              expectedLength: accountValidationResult.expectedLength,
-              actualLength: accountValidationResult.actualLength,
-              countryName: accountValidationResult.countryName,
-            })
-          : t("expense.invalidIbanLengthGeneric", {
-              expectedLength: accountValidationResult.expectedLength,
-              actualLength: accountValidationResult.actualLength,
-            })
-      }
-      return (
-        t("expense.invalidAccountGeneric") +
-        " " +
-        t("expense.validationOverridePrompt")
-      )
-    }
-
-    return null
-  }
-
   return (
     <div className="mx-auto max-w-2xl px-4 pb-16 pt-24">
       <div className="mb-8">
@@ -543,47 +471,7 @@ export default function ExpensePage() {
               t={t}
               language={i18n.language}
               isInternational={!residesInNorway}
-              onValidationChange={(result) => {
-                setAccountValidationFailed(!result.isValid)
-                setAccountValidationResult(
-                  result.isValid
-                    ? null
-                    : {
-                        errorType: result.errorType,
-                        expectedLength: result.expectedLength,
-                        actualLength: result.actualLength,
-                        countryName: result.countryName,
-                      },
-                )
-              }}
             />
-
-            {accountValidationFailed && !skipAccountValidation && (
-              <p className="mt-3 text-sm text-red-600">
-                {getValidationErrorMessage()}
-              </p>
-            )}
-
-            {accountValidationFailed && (
-              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
-                <input
-                  type="checkbox"
-                  checked={skipAccountValidation}
-                  onChange={(e) => {
-                    setSkipAccountValidation(e.target.checked)
-                    if (e.target.checked) {
-                      if (!residesInNorway) {
-                        form.clearErrors("bankIban")
-                      } else {
-                        form.clearErrors("bankAccountNumber")
-                      }
-                    }
-                  }}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                {t("expense.skipValidationLabel")}
-              </label>
-            )}
           </section>
 
           {/* Personal information */}

@@ -172,8 +172,8 @@
     "invalidIbanFormatGeneric": "Invalid format. Expected IBAN format (XXkk BBBB...).",
     "invalidIbanLength": "Wrong length. Expected {{expectedLength}} characters for {{countryName}} IBAN, got {{actualLength}}.",
     "invalidIbanLengthGeneric": "Wrong length. Expected {{expectedLength}} characters, got {{actualLength}}.",
-    "invalidAccountGeneric": "We couldn't validate the account number. It's highly likely that the account number is incorrect.",
-    "validationOverridePrompt": "If you insist it is correct, you can disable the validation.",
+    "invalidAccountGeneric": "Bank account information could not be validated. Something is likely wrong.",
+    "validationOverridePrompt": "You can disable validation if you're sure the details are correct.",
     "skipValidationLabel": "I accept that validation failed, and that reimbursement might be delayed if the account number is incorrect",
     "errors": {
       "descriptionRequired": "Description is required",

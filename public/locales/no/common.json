@@ -173,8 +173,8 @@
     "invalidIbanFormatGeneric": "Ugyldig format. Forventet IBAN-format (XXkk BBBB...).",
     "invalidIbanLength": "Feil lengde. Forventet {{expectedLength}} tegn for {{countryName}} IBAN, fikk {{actualLength}}.",
     "invalidIbanLengthGeneric": "Feil lengde. Forventet {{expectedLength}} tegn, fikk {{actualLength}}.",
-    "invalidAccountGeneric": "Vi kunne ikke validere kontonummeret. Det er svært sannsynlig at kontonummeret er feil.",
-    "validationOverridePrompt": "Hvis du insisterer på at det er riktig, kan du deaktivere valideringen.",
+    "invalidAccountGeneric": "Bankkontoinformasjon kunne ikke valideres. Sannsynligvis er noe feil.",
+    "validationOverridePrompt": "Du kan deaktivere valideringen hvis du er sikker på at opplysningene er riktige.",
     "skipValidationLabel": "Jeg godtar at valideringen feilet, og at utbetaling kan bli forsinket hvis nummeret er feil",
     "errors": {
       "descriptionRequired": "Beskrivelse er påkrevd",

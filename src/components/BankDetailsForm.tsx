@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { UseFormReturn, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import {
@@ -33,7 +33,6 @@ type BankDetailsFormProps = {
   form: UseFormReturn<any>
   t: (key: string, options?: Record<string, unknown>) => string
   language: string
-  onValidationChange?: (result: AccountValidationResult) => void
   isInternational: boolean
 }
 
@@ -41,15 +40,57 @@ export function BankDetailsForm({
   form,
   t,
   language,
-  onValidationChange,
   isInternational,
 }: BankDetailsFormProps) {
+  const [skipValidation, setSkipValidation] = useState(false)
+  const [accountValidationFailed, setAccountValidationFailed] = useState(false)
+  const [otherValidationFailed, setOtherValidationFailed] = useState(false)
+  const [validationResult, setValidationResult] =
+    useState<AccountValidationResult | null>(null)
+
+  const validationFailed = accountValidationFailed || otherValidationFailed
+
   const bankCountryIso2 = useWatch({
     control: form.control,
     name: "bankCountryIso2",
   })
+  const watchedBankIban = useWatch({
+    control: form.control,
+    name: "bankIban",
+  })
+  const watchedBankAccountNumber = useWatch({
+    control: form.control,
+    name: "bankAccountNumber",
+  })
+
   const type = getBankCountryType(bankCountryIso2 || "")
   const previousTypeRef = React.useRef(type)
+
+  useEffect(() => {
+    setSkipValidation(false)
+    setAccountValidationFailed(false)
+    setOtherValidationFailed(false)
+    setValidationResult(null)
+    form.setValue("skipBankValidation", false)
+  }, [isInternational, form])
+
+  const prevBankIbanRef = React.useRef(watchedBankIban)
+  useEffect(() => {
+    if (prevBankIbanRef.current !== watchedBankIban) {
+      prevBankIbanRef.current = watchedBankIban
+      setSkipValidation(false)
+      form.setValue("skipBankValidation", false)
+    }
+  }, [watchedBankIban, form])
+
+  const prevAccountNumberRef = React.useRef(watchedBankAccountNumber)
+  useEffect(() => {
+    if (prevAccountNumberRef.current !== watchedBankAccountNumber) {
+      prevAccountNumberRef.current = watchedBankAccountNumber
+      setSkipValidation(false)
+      form.setValue("skipBankValidation", false)
+    }
+  }, [watchedBankAccountNumber, form])
 
   useEffect(() => {
     if (previousTypeRef.current === type) return
@@ -65,6 +106,12 @@ export function BankDetailsForm({
     } else if (type === "us") {
       form.setValue("bankIban", "")
     }
+
+    setSkipValidation(false)
+    setAccountValidationFailed(false)
+    setOtherValidationFailed(false)
+    setValidationResult(null)
+    form.setValue("skipBankValidation", false)
   }, [type, form])
 
   const bankCountryName = React.useMemo(() => {
@@ -93,28 +140,148 @@ export function BankDetailsForm({
     }
   }, [type, bankCountryIso2, form])
 
+  const clearBankErrors = React.useCallback(() => {
+    form.clearErrors("bankAccountNumber")
+    form.clearErrors("bankIban")
+    form.clearErrors("bankSwiftBic")
+    form.clearErrors("bankRoutingNumber")
+  }, [form])
+
+  const getIbanErrorMessage = React.useCallback(
+    (result: AccountValidationResult) => {
+      if (result.errorType === "length" && result.expectedLength != null && result.actualLength != null) {
+        return bankCountryName
+          ? t("expense.invalidIbanLength", {
+              expectedLength: result.expectedLength,
+              actualLength: result.actualLength,
+              countryName: bankCountryName,
+            })
+          : t("expense.invalidIbanLengthGeneric", {
+              expectedLength: result.expectedLength,
+              actualLength: result.actualLength,
+            })
+      }
+      if (result.errorType === "checksum") {
+        return (
+          t("expense.invalidAccountGeneric") +
+          " " +
+          t("expense.validationOverridePrompt")
+        )
+      }
+      return bankCountryName
+        ? t("expense.invalidIbanFormat", { countryName: bankCountryName })
+        : t("expense.invalidIbanFormatGeneric")
+    },
+    [bankCountryName, t],
+  )
+
+  const handleSkipToggle = React.useCallback(
+    (checked: boolean) => {
+      setSkipValidation(checked)
+      form.setValue("skipBankValidation", checked)
+      if (checked) {
+        clearBankErrors()
+      } else {
+        if (accountValidationFailed && validationResult) {
+          if (!isInternational) {
+            form.setError("bankAccountNumber", {
+              message: t("expense.invalidNorwegianAccountDetail"),
+            })
+          } else if (type === "sepa") {
+            form.setError("bankIban", {
+              message: getIbanErrorMessage(validationResult),
+            })
+          }
+        }
+        if (otherValidationFailed) {
+          if (type === "sepa" || type === "us" || type === "other") {
+            const swift = (form.getValues("bankSwiftBic") || "")
+              .replace(/\s/g, "")
+              .toUpperCase()
+            if (swift && !validateBIC(swift)) {
+              form.setError("bankSwiftBic", {
+                message: t("expense.errors.invalidSwift"),
+              })
+            }
+          }
+          if (type === "us") {
+            const routing = (form.getValues("bankRoutingNumber") || "").replace(
+              /\D/g,
+              "",
+            )
+            if (routing && !validateABARoutingNumber(routing)) {
+              form.setError("bankRoutingNumber", {
+                message: t("expense.errors.invalidRoutingNumber"),
+              })
+            }
+          }
+        }
+      }
+    },
+    [
+      form,
+      clearBankErrors,
+      accountValidationFailed,
+      validationResult,
+      isInternational,
+      type,
+      otherValidationFailed,
+      getIbanErrorMessage,
+      t,
+    ],
+  )
+
+  const handleAccountValidationChange = React.useCallback(
+    (result: AccountValidationResult) => {
+      setAccountValidationFailed(!result.isValid)
+      setValidationResult(result.isValid ? null : result)
+    },
+    [],
+  )
+
+  const skipValidationUi = validationFailed ? (
+    <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
+        <input
+          type="checkbox"
+          checked={skipValidation}
+          onChange={(e) => handleSkipToggle(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        {t("expense.skipValidationLabel")}
+    </label>
+  ) : null
+
   if (!isInternational) {
     return (
-      <FormField
-        control={form.control}
-        name="bankAccountNumber"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
-            <FormControl>
-              <NorwegianAccountInput
-                {...field}
-                placeholder={t("expense.bankAccountNumberPlaceholder")}
-                onValidationChange={(result) => {
-                  onValidationChange?.(result)
-                  if (result.isValid) form.clearErrors("bankAccountNumber")
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <>
+        <FormField
+          control={form.control}
+          name="bankAccountNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("expense.bankAccountNumber")}</FormLabel>
+              <FormControl>
+                <NorwegianAccountInput
+                  {...field}
+                  placeholder={t("expense.bankAccountNumberPlaceholder")}
+                  onValidationChange={(result) => {
+                    handleAccountValidationChange(result)
+                    if (result.isValid) {
+                      form.clearErrors("bankAccountNumber")
+                    } else {
+                      form.setError("bankAccountNumber", {
+                        message: t("expense.invalidNorwegianAccountDetail"),
+                      })
+                    }
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {skipValidationUi}
+      </>
     )
   }
 
@@ -154,33 +321,13 @@ export function BankDetailsForm({
                     countryIso2={bankCountryIso2 || ""}
                     placeholder={t("expense.bankIbanPlaceholder")}
                     onValidationChange={(result) => {
-                      onValidationChange?.(result)
+                      handleAccountValidationChange(result)
+                      if (skipValidation) return
                       if (result.isValid) {
                         form.clearErrors("bankIban")
-                      } else if (result.errorType === "length") {
-                        form.setError("bankIban", {
-                          message: bankCountryName
-                            ? t("expense.invalidIbanLength", {
-                                expectedLength: result.expectedLength,
-                                actualLength: result.actualLength,
-                                countryName: bankCountryName,
-                              })
-                            : t("expense.invalidIbanLengthGeneric", {
-                                expectedLength: result.expectedLength,
-                                actualLength: result.actualLength,
-                              }),
-                        })
-                      } else if (result.errorType === "checksum") {
-                        form.setError("bankIban", {
-                          message: t("expense.invalidAccountGeneric"),
-                        })
                       } else {
                         form.setError("bankIban", {
-                          message: bankCountryName
-                            ? t("expense.invalidIbanFormat", {
-                                countryName: bankCountryName,
-                              })
-                            : t("expense.invalidIbanFormatGeneric"),
+                          message: getIbanErrorMessage(result),
                         })
                       }
                     }}
@@ -207,12 +354,15 @@ export function BankDetailsForm({
                         .replace(/\s/g, "")
                         .toUpperCase()
                       if (cleaned !== field.value) field.onChange(cleaned)
+                      if (skipValidation) return
                       if (cleaned && !validateBIC(cleaned)) {
                         form.setError("bankSwiftBic", {
                           message: t("expense.errors.invalidSwift"),
                         })
+                        setOtherValidationFailed(true)
                       } else {
                         form.clearErrors("bankSwiftBic")
+                        setOtherValidationFailed(false)
                       }
                     }}
                   />
@@ -242,14 +392,17 @@ export function BankDetailsForm({
                         field.onBlur()
                         const digits = field.value.replace(/\D/g, "")
                         if (digits !== field.value) field.onChange(digits)
+                        if (skipValidation) return
                         if (digits && !validateABARoutingNumber(digits)) {
                           form.setError("bankRoutingNumber", {
                             message: t(
                               "expense.errors.invalidRoutingNumber",
                             ),
                           })
+                          setOtherValidationFailed(true)
                         } else {
                           form.clearErrors("bankRoutingNumber")
+                          setOtherValidationFailed(false)
                         }
                       }}
                     />
@@ -322,12 +475,15 @@ export function BankDetailsForm({
                         .replace(/\s/g, "")
                         .toUpperCase()
                       if (cleaned !== field.value) field.onChange(cleaned)
+                      if (skipValidation) return
                       if (cleaned && !validateBIC(cleaned)) {
                         form.setError("bankSwiftBic", {
                           message: t("expense.errors.invalidSwift"),
                         })
+                        setOtherValidationFailed(true)
                       } else {
                         form.clearErrors("bankSwiftBic")
+                        setOtherValidationFailed(false)
                       }
                     }}
                   />
@@ -424,12 +580,15 @@ export function BankDetailsForm({
                         .replace(/\s/g, "")
                         .toUpperCase()
                       if (cleaned !== field.value) field.onChange(cleaned)
+                      if (skipValidation) return
                       if (cleaned && !validateBIC(cleaned)) {
                         form.setError("bankSwiftBic", {
                           message: t("expense.errors.invalidSwift"),
                         })
+                        setOtherValidationFailed(true)
                       } else {
                         form.clearErrors("bankSwiftBic")
+                        setOtherValidationFailed(false)
                       }
                     }}
                   />
@@ -482,6 +641,8 @@ export function BankDetailsForm({
           />
         </>
       )}
+
+      {skipValidationUi}
     </div>
   )
 }

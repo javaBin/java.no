@@ -124,6 +124,7 @@ export const createExpenseSchemas = (
       bankName: z.string().optional().default(""),
       bankAddress: z.string().optional().default(""),
       bankAccountHolderName: z.string().optional().default(""),
+      skipBankValidation: z.boolean().optional().default(false),
       email: z
         .string({
           required_error: t("expense.errors.invalidEmail"),
@@ -138,6 +139,8 @@ export const createExpenseSchemas = (
         .min(1, t("expense.errors.expenseRequired")),
     })
     .superRefine((data, ctx) => {
+      const skip = data.skipBankValidation === true
+
       if (data.residesInNorway) {
         const accountNumber = (data.bankAccountNumber || "").replace(/\s/g, "")
         if (!accountNumber) {
@@ -148,8 +151,7 @@ export const createExpenseSchemas = (
           })
           return
         }
-        // Validate Norwegian BBAN (11 digits with modulo-11)
-        if (!validateNorwegianBBAN(accountNumber)) {
+        if (!skip && !validateNorwegianBBAN(accountNumber)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidNorwegianAccount"),
@@ -159,7 +161,6 @@ export const createExpenseSchemas = (
         return
       }
 
-      // International: require country
       if (!data.bankCountryIso2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -186,14 +187,14 @@ export const createExpenseSchemas = (
             message: t("expense.errors.bankSwiftRequired"),
             path: ["bankSwiftBic"],
           })
-        } else if (!validateBIC(swiftBic)) {
+        } else if (!skip && !validateBIC(swiftBic)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidSwift"),
             path: ["bankSwiftBic"],
           })
         }
-        if (iban && !validateIBAN(iban.toUpperCase())) {
+        if (!skip && iban && !validateIBAN(iban.toUpperCase())) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidAccount"),
@@ -210,7 +211,7 @@ export const createExpenseSchemas = (
             message: t("expense.errors.bankRoutingRequired"),
             path: ["bankRoutingNumber"],
           })
-        } else if (!validateABARoutingNumber(routing)) {
+        } else if (!skip && !validateABARoutingNumber(routing)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidRoutingNumber"),
@@ -224,7 +225,7 @@ export const createExpenseSchemas = (
             message: t("expense.errors.bankAccountNumberRequired"),
             path: ["bankAccountNumber"],
           })
-        } else {
+        } else if (!skip) {
           const digitsOnly = accountNum.replace(/\D/g, "")
           if (digitsOnly.length < 4 || digitsOnly.length > 17) {
             ctx.addIssue({
@@ -241,7 +242,7 @@ export const createExpenseSchemas = (
             message: t("expense.errors.bankSwiftRequired"),
             path: ["bankSwiftBic"],
           })
-        } else if (!validateBIC(usSwift)) {
+        } else if (!skip && !validateBIC(usSwift)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidSwift"),

@@ -11,24 +11,41 @@ type IbanAccountInputProps = AccountInputBaseProps & {
   countryIso2: string
 }
 
+// Match react-number-format IBAN example: quartets, uppercase, allow caret anywhere
 function ibanFormat(value: string) {
-  const clean = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
-  return clean.replace(/(.{4})/g, "$1 ").trim()
+  return value
+    .replace(/\s+/g, "")
+    .replace(/([a-z0-9]{4})/gi, "$1 ")
+    .trim()
+    .toUpperCase()
 }
 
 function ibanRemoveFormatting(value: string) {
-  return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  return value.replace(/\s+/gi, "").replace(/[^a-z0-9]/gi, "").toUpperCase()
 }
 
 function ibanIsValidInputCharacter(char: string) {
-  return /^[a-zA-Z0-9]$/.test(char)
+  return /^[a-z0-9]$/i.test(char)
+}
+
+// Allow caret at every position (like docs) for better typing
+function ibanGetCaretBoundary(value: string) {
+  return Array.from({ length: value.length + 1 }, () => true)
 }
 
 export const IbanAccountInput = React.forwardRef<
   HTMLInputElement,
   IbanAccountInputProps
 >(function IbanAccountInput(
-  { value, onChange, onBlur, onValidationChange, countryIso2, ...props },
+  {
+    value,
+    onChange,
+    onBlur,
+    onValidationChange,
+    countryIso2,
+    defaultValue: _defaultValue,
+    ...props
+  },
   ref,
 ) {
   const expectedLength = React.useMemo(() => {
@@ -63,22 +80,13 @@ export const IbanAccountInput = React.forwardRef<
 
   return (
     <NumberFormatBase
+      {...props}
       getInputRef={ref}
       value={rawValue}
       format={ibanFormat}
       removeFormatting={ibanRemoveFormatting}
       isValidInputCharacter={ibanIsValidInputCharacter}
-      getCaretBoundary={(formattedValue) => {
-        const boundary = Array(formattedValue.length + 1)
-        for (let i = 0; i <= formattedValue.length; i++) {
-          boundary[i] = i === formattedValue.length || formattedValue[i] !== " "
-        }
-        return boundary
-      }}
-      isAllowed={(values) => {
-        const maxLen = expectedLength ?? 34
-        return values.value.length <= maxLen
-      }}
+      getCaretBoundary={ibanGetCaretBoundary}
       onValueChange={(values) => {
         onChange(values.value.toUpperCase())
       }}
