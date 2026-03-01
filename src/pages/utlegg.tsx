@@ -335,6 +335,14 @@ export default function ExpensePage() {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true)
     try {
+      let logoPngBytes: ArrayBuffer | undefined
+      try {
+        const logoRes = await fetch("/img/logos/javaBin-logo-horizontal-WHITE.png")
+        if (logoRes.ok) logoPngBytes = await logoRes.arrayBuffer()
+      } catch {
+        // PDF still generated without logo if fetch fails
+      }
+
       const expenseReport = await generatePDF({
         name: data.name,
         streetAddress: data.streetAddress,
@@ -355,6 +363,7 @@ export default function ExpensePage() {
         email: data.email,
         expenses: data.expenses,
         validationSkipped: data.skipBankValidation ?? false,
+        logoPngBytes,
       })
 
       const blob = new Blob([expenseReport as BlobPart], {
