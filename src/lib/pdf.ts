@@ -1,4 +1,9 @@
-import { createExpenseSchemas, getBankCountryType } from "@/lib/expense"
+import {
+  createExpenseSchemas,
+  formatIBANForDisplay,
+  formatNorwegianBBANForDisplay,
+  getBankCountryType,
+} from "@/lib/expense"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 import { formatCurrency } from "./utils"
@@ -21,7 +26,7 @@ function bankDetailsLines(
     return [
       {
         label: "Kontonummer:",
-        value: (bankAccountNumber || "").replace(/\s/g, ""),
+        value: formatNorwegianBBANForDisplay(bankAccountNumber || ""),
       },
     ]
   }
@@ -32,7 +37,7 @@ function bankDetailsLines(
       { label: "Land:", value: bankCountryDisplayName || "" },
       {
         label: "IBAN:",
-        value: (bankIban || "").replace(/\s/g, ""),
+        value: formatIBANForDisplay(bankIban || ""),
       },
       ...(bankSwiftBic
         ? [{ label: "SWIFT/BIC:", value: bankSwiftBic }]
@@ -63,7 +68,7 @@ function bankDetailsLines(
     { label: "Land:", value: bankCountryDisplayName || "" },
     { label: "Kontonummer:", value: bankAccountNumber || "" },
     ...(bankIban
-      ? [{ label: "IBAN:", value: bankIban.replace(/\s/g, "") }]
+      ? [{ label: "IBAN:", value: formatIBANForDisplay(bankIban) }]
       : []),
     { label: "SWIFT/BIC:", value: bankSwiftBic || "" },
     { label: "Bank:", value: bankName || "" },

@@ -1,6 +1,10 @@
 import React from "react"
 import { NumberFormatBase } from "react-number-format"
-import { getIBANBbanLength, validateIBAN } from "@/lib/expense"
+import {
+  formatIBANForDisplay,
+  getIBANBbanLength,
+  validateIBAN,
+} from "@/lib/expense"
 import type { AccountInputBaseProps, AccountValidationResult } from "./types"
 
 type IbanAccountInputProps = AccountInputBaseProps & {
@@ -9,15 +13,6 @@ type IbanAccountInputProps = AccountInputBaseProps & {
   onBlur: () => void
   onValidationChange?: (result: AccountValidationResult) => void
   countryIso2: string
-}
-
-// Match react-number-format IBAN example: quartets, uppercase, allow caret anywhere
-function ibanFormat(value: string) {
-  return value
-    .replace(/\s+/g, "")
-    .replace(/([a-z0-9]{4})/gi, "$1 ")
-    .trim()
-    .toUpperCase()
 }
 
 function ibanRemoveFormatting(value: string) {
@@ -83,7 +78,7 @@ export const IbanAccountInput = React.forwardRef<
       {...props}
       getInputRef={ref}
       value={rawValue}
-      format={ibanFormat}
+      format={formatIBANForDisplay}
       removeFormatting={ibanRemoveFormatting}
       isValidInputCharacter={ibanIsValidInputCharacter}
       getCaretBoundary={ibanGetCaretBoundary}

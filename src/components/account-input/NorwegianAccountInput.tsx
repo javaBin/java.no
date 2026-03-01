@@ -1,18 +1,14 @@
 import React from "react"
 import { NumberFormatBase } from "react-number-format"
 import { banks } from "@/data/NorwegianBanks"
-import { validateNorwegianBBAN } from "@/lib/expense"
+import {
+  formatNorwegianBBANForDisplay,
+  validateNorwegianBBAN,
+} from "@/lib/expense"
 import { BankLogo } from "./BankLogo"
 import type { AccountInputBaseProps, AccountValidationResult } from "./types"
 
 const NORWEGIAN_BBAN_LENGTH = 11
-// Format: XXXX XX XXXXX (4 + 2 + 5 digits)
-function bbanFormat(value: string) {
-  const digits = value.replace(/\D/g, "")
-  if (digits.length <= 4) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 4)} ${digits.slice(4)}`
-  return `${digits.slice(0, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`
-}
 
 function bbanRemoveFormatting(value: string) {
   return value.replace(/\s+/g, "").replace(/\D/g, "")
@@ -84,7 +80,7 @@ export const NorwegianAccountInput = React.forwardRef<
           {...props}
           getInputRef={ref}
           value={rawDigits}
-          format={bbanFormat}
+          format={formatNorwegianBBANForDisplay}
           removeFormatting={bbanRemoveFormatting}
           isValidInputCharacter={bbanIsValidInputCharacter}
           getCaretBoundary={bbanGetCaretBoundary}

@@ -37,6 +37,23 @@ export function buildIBAN(countryCode: string, bban: string): string {
   return composeIBAN({ countryCode: cc, bban: cleanBban }) ?? cc + "00" + cleanBban
 }
 
+/** IBAN display format: groups of 4 characters, uppercase (same as IbanAccountInput). */
+export function formatIBANForDisplay(iban: string): string {
+  return (iban || "")
+    .replace(/\s+/g, "")
+    .replace(/([a-z0-9]{4})/gi, "$1 ")
+    .trim()
+    .toUpperCase()
+}
+
+/** Norwegian BBAN display format: XXXX XX XXXXX (4 + 2 + 5 digits, same as NorwegianAccountInput). */
+export function formatNorwegianBBANForDisplay(bban: string): string {
+  const digits = (bban || "").replace(/\D/g, "")
+  if (digits.length <= 4) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 4)} ${digits.slice(4)}`
+  return `${digits.slice(0, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`
+}
+
 // Create schemas with localized error messages
 export const createExpenseSchemas = (
   t: (key: string) => string,
