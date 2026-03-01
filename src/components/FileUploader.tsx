@@ -223,7 +223,7 @@ function CropDialog({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Crop Image</DialogTitle>
         </DialogHeader>
-        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+        <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden">
           <TransformWrapper
             initialScale={1}
             minScale={1}
@@ -572,7 +572,7 @@ function ImageSelectionDialog({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Select Area for OCR</DialogTitle>
         </DialogHeader>
-        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+        <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden">
           <TransformWrapper
             initialScale={1}
             minScale={1}
@@ -758,7 +758,7 @@ function FilePreview({ file }: FilePreviewProps) {
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
             </DialogHeader>
-            <div className="relative flex-1 min-h-0 w-full overflow-hidden flex items-center justify-center">
+            <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden flex items-center justify-center">
               <TransformWrapper
                 initialScale={1}
                 minScale={1}
