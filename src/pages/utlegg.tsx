@@ -343,27 +343,33 @@ export default function ExpensePage() {
         // PDF still generated without logo if fetch fails
       }
 
+      // PDF country names are always in Norwegian
+      const regionNames = new Intl.DisplayNames(["nb"], { type: "region" })
+      const countryDisplayName =
+        data.country.length === 2
+          ? (regionNames.of(data.country.toUpperCase()) ?? data.country)
+          : data.country.length === 3
+            ? (() => {
+                const c = countries.all.find(
+                  (x: { alpha3?: string }) => x.alpha3 === data.country,
+                )
+                return c?.alpha2
+                  ? (regionNames.of(c.alpha2) ?? data.country)
+                  : data.country
+              })()
+            : data.country
+      const bankCountryDisplayName = data.bankCountryIso2
+        ? (regionNames.of(data.bankCountryIso2.toUpperCase()) ??
+          data.bankCountry ??
+          "")
+        : data.bankCountry ?? ""
+
       const expenseReport = await generatePDF({
-        name: data.name,
-        streetAddress: data.streetAddress,
-        postalCode: data.postalCode,
-        city: data.city,
-        country: data.country,
-        residesInNorway: data.residesInNorway,
-        bankCountry: data.bankCountry,
-        bankCountryIso2: data.bankCountryIso2,
-        bankIban: data.bankIban,
-        bankRoutingNumber: data.bankRoutingNumber,
-        bankAccountNumber: data.bankAccountNumber,
-        bankAccountType: data.bankAccountType,
-        bankSwiftBic: data.bankSwiftBic,
-        bankName: data.bankName,
-        bankAddress: data.bankAddress,
-        bankAccountHolderName: data.bankAccountHolderName,
-        email: data.email,
-        expenses: data.expenses,
+        ...data,
         validationSkipped: data.skipBankValidation ?? false,
         logoPngBytes,
+        countryDisplayName,
+        bankCountryDisplayName,
       })
 
       const blob = new Blob([expenseReport as BlobPart], {

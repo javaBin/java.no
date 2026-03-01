@@ -7,6 +7,7 @@ import { convertToNOK, getExchangeRate } from "./expense"
 function bankDetailsLines(
   residesInNorway: boolean,
   bankCountryIso2: string,
+  bankCountryDisplayName: string,
   bankIban: string,
   bankRoutingNumber: string,
   bankAccountNumber: string,
@@ -28,14 +29,24 @@ function bankDetailsLines(
   const type = getBankCountryType(bankCountryIso2 || "")
   if (type === "sepa") {
     return [
+      { label: "Land:", value: bankCountryDisplayName || "" },
       {
-        label: "Kontonummer (IBAN):",
+        label: "IBAN:",
         value: (bankIban || "").replace(/\s/g, ""),
       },
+      ...(bankSwiftBic
+        ? [{ label: "SWIFT/BIC:", value: bankSwiftBic }]
+        : []),
+      ...(bankName ? [{ label: "Bank:", value: bankName }] : []),
+      ...(bankAddress ? [{ label: "Bankadresse:", value: bankAddress }] : []),
+      ...(bankAccountHolderName
+        ? [{ label: "Kontoinnehaver:", value: bankAccountHolderName }]
+        : []),
     ]
   }
   if (type === "us") {
     return [
+      { label: "Land:", value: bankCountryDisplayName || "" },
       { label: "Routing (ABA):", value: bankRoutingNumber || "" },
       { label: "Kontonummer:", value: bankAccountNumber || "" },
       {
@@ -49,6 +60,7 @@ function bankDetailsLines(
     ]
   }
   return [
+    { label: "Land:", value: bankCountryDisplayName || "" },
     { label: "Kontonummer:", value: bankAccountNumber || "" },
     ...(bankIban
       ? [{ label: "IBAN:", value: bankIban.replace(/\s/g, "") }]
@@ -68,6 +80,7 @@ export async function generatePDF({
   country,
   residesInNorway,
   bankCountryIso2,
+  bankCountryDisplayName = "",
   bankIban,
   bankRoutingNumber,
   bankAccountNumber,
@@ -79,27 +92,83 @@ export async function generatePDF({
   email,
   expenses,
   validationSkipped = false,
+  logoPngBytes,
+  countryDisplayName,
 }: z.infer<ReturnType<typeof createExpenseSchemas>["formSchema"]> & {
   validationSkipped?: boolean
+  logoPngBytes?: ArrayBuffer
+  /** Full country name for address (e.g. "Norge"). When not set, `country` is used. */
+  countryDisplayName?: string
+  /** Full bank country name for report (e.g. "Tyskland"). */
+  bankCountryDisplayName?: string
 }) {
   const pdfDoc = await PDFDocument.create()
+  const now = new Date()
+  pdfDoc.setTitle("Utleggsrapport – javaBin")
+  pdfDoc.setAuthor("javaBin")
+  pdfDoc.setCreationDate(now)
+  pdfDoc.setModificationDate(now)
+
   const coverPage = pdfDoc.addPage()
-  const { height } = coverPage.getSize()
+  const { height, width: pageWidth } = coverPage.getSize()
   const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-  // Title
-  coverPage.drawText("Utleggsrapport", {
-    x: 50,
-    y: height - 50,
-    size: 24,
-    font,
-    color: rgb(0, 0, 0),
+  // javaBin brand colors (rgb 0–1)
+  const jzDark = rgb(0x22 / 255, 0x22 / 255, 0x22 / 255)
+  const jzYellow = rgb(0xfe / 255, 0xd1 / 255, 0x36 / 255)
+  const jzGray = rgb(0.92, 0.92, 0.92)
+  const borderGray = rgb(0.5, 0.5, 0.5)
+
+  const hasLogo = logoPngBytes != null && logoPngBytes.byteLength > 0
+  const headerBarHeight = hasLogo ? 36 : 8
+  const headerTop = height - headerBarHeight
+
+  coverPage.drawRectangle({
+    x: 0,
+    y: headerTop,
+    width: pageWidth,
+    height: headerBarHeight,
+    color: jzDark,
   })
 
+  if (hasLogo) {
+    const logoImage = await pdfDoc.embedPng(new Uint8Array(logoPngBytes))
+    const logoDrawHeight = 26
+    const scaled = logoImage.scaleToFit(9999, logoDrawHeight)
+    const logoX = 50
+    const logoY = headerTop + (headerBarHeight - scaled.height) / 2
+    coverPage.drawImage(logoImage, {
+      x: logoX,
+      y: logoY,
+      width: scaled.width,
+      height: scaled.height,
+    })
+  }
+
+  const titleY = headerTop - 28
+  coverPage.drawText("Utleggsrapport", {
+    x: 50,
+    y: titleY,
+    size: 24,
+    font,
+    color: jzDark,
+  })
+  if (!hasLogo) {
+    coverPage.drawText("javaBin", {
+      x: 50,
+      y: titleY - 23,
+      size: 11,
+      font: regularFont,
+      color: jzYellow,
+    })
+  }
+
+  const bankCountryDisplay = bankCountryDisplayName ?? ""
   const bankLines = bankDetailsLines(
     residesInNorway ?? true,
     bankCountryIso2 ?? "",
+    bankCountryDisplay,
     bankIban ?? "",
     bankRoutingNumber ?? "",
     bankAccountNumber ?? "",
@@ -110,19 +179,41 @@ export async function generatePDF({
     bankAccountHolderName ?? "",
   )
 
-  // Personal information
-  const infoLines = [
-    { label: "Navn:", value: name },
-    {
-      label: "Adresse:",
-      value: `${streetAddress}, ${postalCode} ${city}, ${country}`,
-    },
-    ...bankLines,
+  const addressCountry = (countryDisplayName ?? country ?? "").trim()
+  const addressParts = [
+    streetAddress?.trim(),
+    [postalCode?.trim(), city?.trim()].filter(Boolean).join(" "),
+    addressCountry,
+  ].filter(Boolean)
+  const addressLine = addressParts
+    .map((s) => s?.trim())
+    .filter(Boolean)
+    .join(", ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  type InfoLine =
+    | { label: string; value: string }
+    | { label: string; value: string; sectionHeader: true }
+  const infoLines: InfoLine[] = [
+    { label: "Navn:", value: name?.trim() ?? "" },
+    { label: "Adresse:", value: addressLine },
     { label: "E-post:", value: email },
+    { label: "", value: "Bankinformasjon", sectionHeader: true },
+    ...bankLines,
   ]
 
-  // Add validation warning if skipped
-  let infoStartY = height - 120
+  // Section: Rapportinfo
+  let infoStartY = height - 118
+  coverPage.drawText("Rapportinfo", {
+    x: 50,
+    y: infoStartY,
+    size: 10,
+    font,
+    color: borderGray,
+  })
+  infoStartY -= 22
+
   if (validationSkipped) {
     coverPage.drawText("ADVARSEL: Kontonummer validering ble hoppet over!", {
       x: 50,
@@ -142,183 +233,363 @@ export async function generatePDF({
     infoStartY -= 20
   }
 
-  // Expand long values (e.g. IBAN) into multiple rows so they don't overlap the next line
-  const maxValueCharsPerLine = 28
-  const expandedInfoLines: { label: string; value: string }[] = []
-  for (const line of infoLines) {
-    const value = line.value
-    if (value.length <= maxValueCharsPerLine) {
-      expandedInfoLines.push({ label: line.label, value })
-    } else {
-      for (let i = 0; i < value.length; i += maxValueCharsPerLine) {
-        const chunk = value.slice(i, i + maxValueCharsPerLine)
-        expandedInfoLines.push({
-          label: i === 0 ? line.label : "",
-          value: chunk,
-        })
+  const labelFontSize = 12
+  const margin = 50
+  const maxLabelWidth = Math.max(
+    ...infoLines.map((line) =>
+      font.widthOfTextAtSize(line.label, labelFontSize),
+    ),
+  )
+  const valueX = 50 + maxLabelWidth + 15
+  const valueMaxWidth = pageWidth - margin - valueX
+
+  function wrapToWidth(
+    text: string,
+    maxWidth: number,
+    measureFont = regularFont,
+    measureSize = labelFontSize,
+  ): string[] {
+    const lines: string[] = []
+    let remaining = text
+    while (remaining.length > 0) {
+      if (measureFont.widthOfTextAtSize(remaining, measureSize) <= maxWidth) {
+        lines.push(remaining)
+        break
       }
+      let low = 1
+      let high = remaining.length
+      while (low < high) {
+        const mid = Math.ceil((low + high) / 2)
+        const candidate = remaining.slice(0, mid)
+        if (measureFont.widthOfTextAtSize(candidate, measureSize) <= maxWidth)
+          low = mid
+        else high = mid - 1
+      }
+      const chunk = remaining.slice(0, low)
+      const lastSpace = chunk.lastIndexOf(" ")
+      const splitAt =
+        lastSpace > 0 && lastSpace > chunk.length * 0.5 ? lastSpace + 1 : low
+      lines.push(remaining.slice(0, splitAt).trimEnd())
+      remaining = remaining.slice(splitAt).trimStart()
     }
+    return lines
   }
 
-  const lineHeight = 22
+  type InfoLineRow = { label: string; value: string; sectionHeader?: boolean }
+  const expandedInfoLines: InfoLineRow[] = []
+  for (const line of infoLines) {
+    if ("sectionHeader" in line && line.sectionHeader) {
+      expandedInfoLines.push({
+        label: "",
+        value: line.value,
+        sectionHeader: true,
+      })
+      continue
+    }
+    const value = line.value
+    const wrapped = wrapToWidth(value, valueMaxWidth)
+    wrapped.forEach((chunk, i) => {
+      expandedInfoLines.push({
+        label: i === 0 ? line.label : "",
+        value: chunk,
+      })
+    })
+  }
+
+  const lineHeight = 24
   expandedInfoLines.forEach((line, index) => {
     const y = infoStartY - index * lineHeight
+    if (line.sectionHeader) {
+      coverPage.drawText(line.value, {
+        x: 50,
+        y,
+        size: 10,
+        font,
+        color: borderGray,
+      })
+      return
+    }
     if (line.label) {
       coverPage.drawText(line.label, {
         x: 50,
         y,
-        size: 12,
+        size: labelFontSize,
         font,
-        color: rgb(0, 0, 0),
+        color: jzDark,
       })
     }
     coverPage.drawText(line.value, {
-      x: 150,
+      x: valueX,
       y,
-      size: 12,
+      size: labelFontSize,
       font: regularFont,
       color: rgb(0, 0, 0),
     })
   })
 
   // Add expense items table (position below variable-length bank details)
-  const tableTop = infoStartY - expandedInfoLines.length * lineHeight - 25
-  const rowHeight = 30
-  const pageWidth = coverPage.getWidth()
-  const margin = 50 // Left and right page margins
+  const gapAboveTable = 36
+  const tableTopY = infoStartY - expandedInfoLines.length * lineHeight - gapAboveTable
   const usableWidth = pageWidth - 2 * margin
 
-  // Adjust column widths to ensure amounts fit
-  const columns = {
+  // Separator line above table
+  coverPage.drawLine({
+    start: { x: margin, y: tableTopY + 18 },
+    end: { x: pageWidth - margin, y: tableTopY + 18 },
+    thickness: 0.5,
+    color: borderGray,
+  })
+
+  const tableTop = tableTopY
+  const headerHeight = 22
+
+  const headerTextY = tableTop - 14
+  const headerBottomY = tableTop - headerHeight
+  const gapHeaderToFirstRow = 6
+  const firstRowTopY = headerBottomY - gapHeaderToFirstRow
+
+  // Rebalance columns: keep NOK amount clean and move FX details into its own column.
+  const rebalancedColumns = {
     attachment: { x: margin, width: usableWidth * 0.05 },
-    description: { x: margin + usableWidth * 0.05, width: usableWidth * 0.3 },
-    date: { x: margin + usableWidth * 0.35, width: usableWidth * 0.15 },
-    amount: { x: margin + usableWidth * 0.7, width: usableWidth * 0.3 },
+    description: { x: margin + usableWidth * 0.05, width: usableWidth * 0.33 },
+    date: { x: margin + usableWidth * 0.38, width: usableWidth * 0.14 },
+    exchange: { x: margin + usableWidth * 0.52, width: usableWidth * 0.22 },
+    amount: { x: margin + usableWidth * 0.74, width: usableWidth * 0.26 },
   }
 
-  // Table headers
-  Object.entries(columns).forEach(([key, { x }]) => {
-    const headerTexts = {
-      attachment: "#",
-      description: "Beskrivelse",
-      date: "Dato",
-      amount: "Beløp (NOK)",
-    }
-
-    coverPage.drawText(headerTexts[key as keyof typeof headerTexts], {
-      x,
-      y: tableTop,
-      size: 12,
+  // Table header background and headers
+  coverPage.drawRectangle({
+    x: margin,
+    y: tableTop - headerHeight,
+    width: usableWidth,
+    height: headerHeight,
+    color: jzGray,
+  })
+  const headerTexts = {
+    attachment: "#",
+    description: "Beskrivelse",
+    date: "Dato",
+    exchange: "Valuta / kurs",
+    amount: "Beløp (NOK)",
+  }
+  ;(
+    Object.keys(rebalancedColumns) as Array<keyof typeof rebalancedColumns>
+  ).forEach((key) => {
+    coverPage.drawText(headerTexts[key], {
+      x: rebalancedColumns[key].x,
+      y: headerTextY,
+      size: 11,
       font,
-      color: rgb(0, 0, 0),
+      color: jzDark,
     })
   })
 
-  // Table rows
+  const dataFontSize = 10
+  const dataLineHeight = 12
+  const rowPaddingTop = 8
+  const rowPaddingBottom = 8
+  const baseRowHeight = dataLineHeight + rowPaddingTop + rowPaddingBottom
+
+  const preparedRows: Array<{
+    index: number
+    hasAttachment: boolean
+    descriptionLines: string[]
+    dateText: string
+    exchangeLines: string[]
+    amountText: string
+    rowHeight: number
+  }> = []
+
   let totalAmount = 0
-
   for (const [index, expense] of expenses.entries()) {
-    const y = tableTop - (index + 1) * rowHeight
-
-    // Draw description
-    coverPage.drawText(expense.description, {
-      x: columns.description.x,
-      y,
-      size: 10,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-      maxWidth: columns.description.width,
-    })
-
-    // Draw date
     const expenseDate = new Date(expense.date)
-    const formattedDate = expenseDate.toLocaleDateString("no-NO", {
+    const dateText = expenseDate.toLocaleDateString("no-NO", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     })
-    coverPage.drawText(formattedDate, {
-      x: columns.date.x,
-      y,
-      size: 10,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-      maxWidth: columns.date.width,
-    })
 
-    // Convert amount to NOK if needed
     const amountInNOK = await convertToNOK(
       expense.amount,
       expense.currency,
       expenseDate,
     )
+    totalAmount += amountInNOK
 
-    // Format amount using our utility function
-    let amountText = formatCurrency(amountInNOK)
+    const amountText = formatCurrency(amountInNOK)
 
-    // Add original currency info and exchange rate if not NOK
+    let exchangeText = "-"
     if (expense.currency !== "NOK") {
       const exchangeRate = await getExchangeRate(expense.currency, expenseDate)
-      if (exchangeRate !== null) {
-        amountText += ` (${formatCurrency(expense.amount)} ${expense.currency} @ ${exchangeRate.toFixed(4)})`
-      } else {
-        amountText += ` (${formatCurrency(expense.amount)} ${expense.currency})`
-      }
+      const base = `${formatCurrency(expense.amount)} ${expense.currency}`
+      exchangeText =
+        exchangeRate !== null ? `${base} @ ${exchangeRate.toFixed(4)}` : base
     }
 
-    // Right-align the amount within its column
-    coverPage.drawText(amountText, {
-      x:
-        columns.amount.x +
-        columns.amount.width -
-        regularFont.widthOfTextAtSize(amountText, 10),
-      y,
-      size: 10,
+    const descriptionLines = wrapToWidth(
+      expense.description,
+      rebalancedColumns.description.width,
+    )
+    const exchangeLines = wrapToWidth(
+      exchangeText,
+      rebalancedColumns.exchange.width,
+    )
+
+    const normalizedDescriptionLines =
+      descriptionLines.length > 0 ? descriptionLines : [""]
+    const normalizedExchangeLines = exchangeLines.length > 0 ? exchangeLines : [""]
+    const lineCount = Math.max(
+      normalizedDescriptionLines.length,
+      normalizedExchangeLines.length,
+      1,
+    )
+    const dynamicRowHeight = Math.max(
+      baseRowHeight,
+      rowPaddingTop + rowPaddingBottom + lineCount * dataLineHeight,
+    )
+
+    preparedRows.push({
+      index,
+      hasAttachment: Boolean(expense.attachment),
+      descriptionLines: normalizedDescriptionLines,
+      dateText,
+      exchangeLines: normalizedExchangeLines,
+      amountText,
+      rowHeight: dynamicRowHeight,
+    })
+  }
+
+  let currentRowTopY = firstRowTopY
+  for (const row of preparedRows) {
+    const rowBottomY = currentRowTopY - row.rowHeight
+    const baselineY = currentRowTopY - rowPaddingTop - dataFontSize
+
+    if (row.index % 2 === 1) {
+      coverPage.drawRectangle({
+        x: margin,
+        y: rowBottomY,
+        width: usableWidth,
+        height: row.rowHeight,
+        color: jzGray,
+      })
+    }
+
+    row.descriptionLines.forEach((line, lineIndex) => {
+      coverPage.drawText(line, {
+        x: rebalancedColumns.description.x,
+        y: baselineY - lineIndex * dataLineHeight,
+        size: dataFontSize,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      })
+    })
+
+    coverPage.drawText(row.dateText, {
+      x: rebalancedColumns.date.x,
+      y: baselineY,
+      size: dataFontSize,
       font: regularFont,
       color: rgb(0, 0, 0),
     })
 
-    if (expense.attachment) {
-      coverPage.drawText(`${index + 1}`, {
-        x: columns.attachment.x,
-        y,
-        size: 10,
+    row.exchangeLines.forEach((line, lineIndex) => {
+      coverPage.drawText(line, {
+        x: rebalancedColumns.exchange.x,
+        y: baselineY - lineIndex * dataLineHeight,
+        size: dataFontSize,
         font: regularFont,
         color: rgb(0, 0, 0),
-        maxWidth: columns.attachment.width,
+      })
+    })
+
+    coverPage.drawText(row.amountText, {
+      x:
+        rebalancedColumns.amount.x +
+        rebalancedColumns.amount.width -
+        regularFont.widthOfTextAtSize(row.amountText, dataFontSize),
+      y: baselineY,
+      size: dataFontSize,
+      font: regularFont,
+      color: rgb(0, 0, 0),
+    })
+
+    if (row.hasAttachment) {
+      coverPage.drawText(`${row.index + 1}`, {
+        x: rebalancedColumns.attachment.x,
+        y: baselineY,
+        size: dataFontSize,
+        font: regularFont,
+        color: rgb(0, 0, 0),
       })
     }
 
-    totalAmount += amountInNOK
+    currentRowTopY = rowBottomY
   }
 
-  // Format total amount using our utility function
+  const gapBeforeTotalRow = 12
+  const totalRowHeight = 30
+  const totalRowTopY = currentRowTopY - gapBeforeTotalRow
+
+  coverPage.drawLine({
+    start: { x: margin, y: totalRowTopY + 2 },
+    end: { x: pageWidth - margin, y: totalRowTopY + 2 },
+    thickness: 0.5,
+    color: borderGray,
+  })
+  coverPage.drawRectangle({
+    x: margin,
+    y: totalRowTopY - totalRowHeight,
+    width: usableWidth,
+    height: totalRowHeight,
+    color: jzGray,
+  })
+
   const formattedTotalAmount = formatCurrency(totalAmount)
   const totalAmountWidth = font.widthOfTextAtSize(formattedTotalAmount, 12)
   const totalLabelWidth = font.widthOfTextAtSize("Total:", 12)
-  const totalLabelSpacing = 10 // Space between label and amount
+  const totalLabelSpacing = 10
+  const totalBaselineY = totalRowTopY - 21
 
-  // Position the total label to the left of the amount, ensuring no overlap
   coverPage.drawText("Total:", {
     x:
-      columns.amount.x +
-      columns.amount.width -
+      rebalancedColumns.amount.x +
+      rebalancedColumns.amount.width -
       totalAmountWidth -
       totalLabelWidth -
       totalLabelSpacing,
-    y: tableTop - (expenses.length + 1) * rowHeight,
+    y: totalBaselineY,
     size: 12,
     font,
-    color: rgb(0, 0, 0),
+    color: jzDark,
+  })
+  coverPage.drawText(formattedTotalAmount, {
+    x: rebalancedColumns.amount.x + rebalancedColumns.amount.width - totalAmountWidth,
+    y: totalBaselineY,
+    size: 12,
+    font,
+    color: jzDark,
   })
 
-  // Position the total amount right-aligned in its column
-  coverPage.drawText(formattedTotalAmount, {
-    x: columns.amount.x + columns.amount.width - totalAmountWidth,
-    y: tableTop - (expenses.length + 1) * rowHeight,
-    size: 12,
-    font,
-    color: rgb(0, 0, 0),
+  // Footer on cover page
+  const footerY = 36
+  const generatedStr = now.toLocaleDateString("no-NO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+  coverPage.drawText(`Generert: ${generatedStr}`, {
+    x: margin,
+    y: footerY,
+    size: 9,
+    font: regularFont,
+    color: borderGray,
+  })
+  coverPage.drawText("javaBin · Utleggsrapport", {
+    x: pageWidth - margin - regularFont.widthOfTextAtSize("javaBin · Utleggsrapport", 9),
+    y: footerY,
+    size: 9,
+    font: regularFont,
+    color: borderGray,
   })
 
   // Add attachments with labels
@@ -340,7 +611,6 @@ export async function generatePDF({
     )
 
     for (const page of receiptPages) {
-      // Add a header to identify which expense this attachment belongs to
       const attachmentPage = pdfDoc.addPage(page)
       const expenseDate = new Date(expense.date)
       const formattedDate = expenseDate.toLocaleDateString("no-NO", {
@@ -348,16 +618,21 @@ export async function generatePDF({
         month: "long",
         day: "numeric",
       })
-      attachmentPage.drawText(
-        `Vedlegg for utlegg #${index + 1}: ${expense.description} (${formattedDate})`,
-        {
-          x: 50,
-          y: attachmentPage.getHeight() - (regularFont.heightAtSize(12) + 5),
+      const headerText = `Vedlegg for utlegg #${index + 1}: ${expense.description} (${formattedDate})`
+      const attachmentHeaderWidth = attachmentPage.getWidth() - 2 * margin
+      const headerLines = wrapToWidth(headerText, attachmentHeaderWidth, font, 12)
+      const headerLineHeight = 14
+      const headerTopY =
+        attachmentPage.getHeight() - (regularFont.heightAtSize(12) + 5)
+      headerLines.forEach((line, lineIndex) => {
+        attachmentPage.drawText(line, {
+          x: margin,
+          y: headerTopY - lineIndex * headerLineHeight,
           size: 12,
           font,
-          color: rgb(0, 0, 0),
-        },
-      )
+          color: jzDark,
+        })
+      })
     }
   }
 
