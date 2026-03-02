@@ -1,4 +1,3 @@
-export { AccountInput } from "./AccountInput"
 export { NorwegianAccountInput } from "./NorwegianAccountInput"
 export { IbanAccountInput } from "./IbanAccountInput"
 export { BankLogo } from "./BankLogo"

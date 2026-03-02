@@ -410,7 +410,7 @@ async function fetchExchangeRateData(
     const startDateStr = startDate.toISOString().split("T")[0]
 
     const url = `https://data.norges-bank.no/api/data/EXR/B.${currency}.NOK.SP?format=sdmx-json&startPeriod=${startDateStr}&endPeriod=${dateStr}&locale=no`
-    console.log(url)
+
     const response = await fetch(url)
     if (!response.ok) {
       console.error(`Failed to fetch exchange rate: ${response.statusText}`)
@@ -436,10 +436,7 @@ async function fetchExchangeRateData(
           }
         }
       } catch (e) {
-        console.log(
-          "Could not parse UNIT_MULT from API response, assuming 1",
-          e,
-        )
+        // Could not parse UNIT_MULT from API response; fall back to default 1
       }
 
       const observations =
@@ -450,13 +447,13 @@ async function fetchExchangeRateData(
       )
 
       if (observationKeys.length === 0) {
-        console.log("No observations found in dataset")
+        // No observations found in dataset
         return null
       }
 
       const lastKey = observationKeys[observationKeys.length - 1]
       if (!lastKey) {
-        console.log("No valid observation key found")
+        // No valid observation key found
         return null
       }
 
@@ -464,13 +461,13 @@ async function fetchExchangeRateData(
       const rate = Number(rateStr)
 
       if (isNaN(rate) || !isFinite(rate)) {
-        console.log("Invalid exchange rate value")
+        // Invalid exchange rate value
         return null
       }
 
       return { rate, unitMultiplier }
     } catch (e) {
-      console.log("Cannot find rate in dataset", e)
+      // Could not extract rate from dataset
     }
 
     return null

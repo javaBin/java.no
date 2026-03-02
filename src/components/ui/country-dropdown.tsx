@@ -107,7 +107,6 @@ const CountryDropdownComponent = (
 
   const handleSelect = useCallback(
     (country: Country) => {
-      console.log("🌍 CountryDropdown value: ", country)
       setSelectedCountry(country)
       onChange?.(country)
       setOpen(false)
@@ -144,11 +143,7 @@ const CountryDropdownComponent = (
           </div>
         ) : (
           <span>
-            {slim === false ? (
-              resolvedPlaceholder
-            ) : (
-              <Globe size={20} />
-            )}
+            {slim === false ? resolvedPlaceholder : <Globe size={20} />}
           </span>
         )}
         <ChevronDown size={16} />
@@ -165,8 +160,11 @@ const CountryDropdownComponent = (
             </div>
             <CommandEmpty>{t("noCountryFound")}</CommandEmpty>
             <CommandGroup>
-              {options
+              {[...options]
                 .filter((x) => x.name)
+                .sort((a, b) =>
+                  getRegionName(a).localeCompare(getRegionName(b), "nb"),
+                )
                 .map((option, key: number) => (
                   <CommandItem
                     className="flex w-full items-center gap-2"

@@ -140,6 +140,7 @@
     "bankRoutingNumber": "Routing number (ABA)",
     "bankAccountNumber": "Kontonummer",
     "bankAccountNumberPlaceholder": "F.eks. 8601 11 17947",
+    "bankAccountOrIbanPlaceholder": "Kontonummer eller IBAN",
     "bankAccountType": "Kontotype",
     "bankAccountTypeChecking": "Checking",
     "bankAccountTypeSavings": "Savings",

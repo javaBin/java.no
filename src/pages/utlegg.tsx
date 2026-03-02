@@ -37,6 +37,22 @@ import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
 import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
 import { getSymbolFromCurrency, countries } from "country-data-list"
 
+const LOGO_URL = "/img/logos/javaBin-logo-horizontal-WHITE.png"
+let cachedLogoBytes: ArrayBuffer | undefined | null = null
+
+/** Fetches logo once per session for PDF generation; pdf-lib needs raw bytes, not a URL. */
+async function getCachedLogoBytes(): Promise<ArrayBuffer | undefined> {
+  if (cachedLogoBytes !== null) return cachedLogoBytes ?? undefined
+  try {
+    const res = await fetch(LOGO_URL)
+    if (res.ok) cachedLogoBytes = await res.arrayBuffer()
+    else cachedLogoBytes = undefined
+  } catch {
+    cachedLogoBytes = undefined
+  }
+  return cachedLogoBytes ?? undefined
+}
+
 function getString(
   query: Record<string, string | string[] | undefined>,
   key: string,
@@ -335,13 +351,7 @@ export default function ExpensePage() {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true)
     try {
-      let logoPngBytes: ArrayBuffer | undefined
-      try {
-        const logoRes = await fetch("/img/logos/javaBin-logo-horizontal-WHITE.png")
-        if (logoRes.ok) logoPngBytes = await logoRes.arrayBuffer()
-      } catch {
-        // PDF still generated without logo if fetch fails
-      }
+      const logoPngBytes = await getCachedLogoBytes()
 
       // PDF country names are always in Norwegian
       const regionNames = new Intl.DisplayNames(["nb"], { type: "region" })

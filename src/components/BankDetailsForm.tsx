@@ -551,7 +551,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Account or IBAN"
+                    placeholder={t("expense.bankAccountOrIbanPlaceholder")}
                     onBlur={() => {
                       field.onBlur()
                       const trimmed = field.value.trim()
