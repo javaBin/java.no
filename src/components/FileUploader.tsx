@@ -889,9 +889,11 @@ function FilePreview({ file }: FilePreviewProps) {
           onClick={() => setIsPdfOpen(true)}
           className="bg-muted relative aspect-square size-14 shrink-0 overflow-hidden rounded-md border transition-opacity hover:opacity-90"
         >
-          <FileText
-            className="text-muted-foreground absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2"
-            aria-hidden="true"
+          <iframe
+            src={preview}
+            title={file.name}
+            className="h-full w-full"
+            style={{ border: "none", pointerEvents: "none" }}
           />
         </button>
 
