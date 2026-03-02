@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { generatePDF } from "@/lib/pdf"
-import { CalendarIcon, Trash2, Mail, Plus, Copy } from "lucide-react"
+import { CalendarIcon, Trash2, Mail, Plus, Copy, Check } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
@@ -863,7 +863,7 @@ ${form.getValues("name")}`)}`}
             </Button>
             <Button
               type="button"
-              variant={hasCopiedEmail ? "secondary" : "outline"}
+              variant="outline"
               className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
               onClick={() => {
                 if (navigator?.clipboard?.writeText) {
@@ -874,7 +874,11 @@ ${form.getValues("name")}`)}`}
                 }
               }}
             >
-              <Copy className="h-4 w-4" />
+              {hasCopiedEmail ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
               {hasCopiedEmail
                 ? t("expense.emailCopied")
                 : t("expense.copyEmail")}
