@@ -225,14 +225,14 @@
   },
   "fileUploader": {
     "crop": {
-      "title": "Beskjær bilde",
+      "title": "Crop bilde",
       "imageAlt": "Forhåndsvisning av bilde",
       "zoomOut": "Zoom ut",
       "resetZoom": "Nullstill zoom",
       "resetZoomAlt": "Nullstill zoom",
       "zoomIn": "Zoom inn",
       "cancel": "Avbryt",
-      "confirm": "Beskjær og fortsett"
+      "confirm": "Crop og fortsett"
     },
     "dropHere": "Slipp filene her",
     "clickOrDrag": "Klikk for å laste opp eller dra og slipp",
