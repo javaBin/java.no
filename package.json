@@ -53,7 +53,6 @@
     "react-zoom-pan-pinch": "^3.6.1",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
-    "sonner": "^1.7.0",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"

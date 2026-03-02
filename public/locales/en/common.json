@@ -117,7 +117,7 @@
   },
   "expense": {
     "title": "Expense Report",
-    "subtitle": "Fill out the form to generate a PDF report you can send to faktura@java.no.",
+    "subtitle": "Fill out the form to generate a PDF report.",
     "personalInfo": "Personal Information",
     "name": "Name",
     "namePlaceholder": "Ola Nordmann",
@@ -167,6 +167,8 @@
     "processing": "Processing...",
     "generateReport": "Generate Report",
     "sendEmail": "Send Email",
+    "copyEmail": "Copy email address",
+    "emailCopied": "Copied",
     "selectDate": "Select a date",
     "invalidNorwegianAccountDetail": "Invalid Norwegian account number. Please check that the number is correct (11 digits with valid checksum).",
     "invalidIbanFormat": "Invalid format. Expected {{countryName}} IBAN format.",

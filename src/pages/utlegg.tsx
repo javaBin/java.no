@@ -7,11 +7,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { generatePDF } from "@/lib/pdf"
-import { CalendarIcon, Trash2, Mail, Plus } from "lucide-react"
+import { CalendarIcon, Trash2, Mail, Plus, Copy } from "lucide-react"
 import { createExpenseSchemas } from "@/lib/expense"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
-import { Toaster } from "sonner"
 import { format } from "date-fns"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -300,6 +299,10 @@ export default function ExpensePage() {
   })
 
   const residesInNorway = form.watch("residesInNorway")
+  const targetEmail = residesInNorway
+    ? "faktura@java.no"
+    : "faktura-javazone@java.no"
+  const [hasCopiedEmail, setHasCopiedEmail] = useState(false)
 
   const handleResidenceChange = (value: string) => {
     const isNorway = value === "norway"
@@ -830,7 +833,7 @@ export default function ExpensePage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-600 px-6 text-white hover:bg-blue-700"
+              className="px-6"
             >
               {isLoading
                 ? t("expense.processing")
@@ -844,7 +847,7 @@ export default function ExpensePage() {
             >
               <a
                 target="_blank"
-                href={`mailto:faktura@java.no?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
+                href={`mailto:${targetEmail}?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
                   .getValues("expenses")
                   .map((expense) => expense.description)
                   .join(", ")}.
@@ -858,10 +861,27 @@ ${form.getValues("name")}`)}`}
                 {t("expense.sendEmail")}
               </a>
             </Button>
+            <Button
+              type="button"
+              variant={hasCopiedEmail ? "secondary" : "outline"}
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+              onClick={() => {
+                if (navigator?.clipboard?.writeText) {
+                  navigator.clipboard.writeText(targetEmail).then(() => {
+                    setHasCopiedEmail(true)
+                    window.setTimeout(() => setHasCopiedEmail(false), 2000)
+                  })
+                }
+              }}
+            >
+              <Copy className="h-4 w-4" />
+              {hasCopiedEmail
+                ? t("expense.emailCopied")
+                : t("expense.copyEmail")}
+            </Button>
           </div>
         </form>
       </Form>
-      <Toaster />
     </div>
   )
 }

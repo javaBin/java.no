@@ -7,7 +7,6 @@ import Dropzone, {
   type DropzoneProps,
   type FileRejection,
 } from "react-dropzone"
-import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -326,17 +325,21 @@ export function FileUploader(props: FileUploaderProps) {
     onChange: onValueChange,
   })
 
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+
   const [cropDialogFile, setCropDialogFile] = React.useState<File | null>(null)
 
   const onDrop = React.useCallback(
     async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+      setErrorMessage(null)
+
       if (!multiple && maxFileCount === 1 && acceptedFiles.length > 1) {
-        toast.error("Cannot upload more than 1 file at a time")
+        setErrorMessage("Cannot upload more than 1 file at a time")
         return
       }
 
       if ((files?.length ?? 0) + acceptedFiles.length > maxFileCount) {
-        toast.error(`Cannot upload more than ${maxFileCount} files`)
+        setErrorMessage(`Cannot upload more than ${maxFileCount} files`)
         return
       }
 
@@ -358,7 +361,7 @@ export function FileUploader(props: FileUploaderProps) {
 
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach(({ file }) => {
-          toast.error(`File ${file.name} was rejected`)
+          setErrorMessage(`File ${file.name} was rejected`)
         })
       }
 
@@ -367,15 +370,8 @@ export function FileUploader(props: FileUploaderProps) {
         updatedFiles.length > 0 &&
         updatedFiles.length <= maxFileCount
       ) {
-        const target =
-          updatedFiles.length > 1 ? `${updatedFiles.length} files` : `file`
-
         try {
-          await toast.promise(onUpload(updatedFiles), {
-            loading: `Uploading ${target}...`,
-            success: `${target} uploaded`,
-            error: `Failed to upload ${target}`,
-          })
+          await onUpload(updatedFiles)
         } catch (error) {
           console.error("Upload failed:", error)
         }
@@ -467,6 +463,9 @@ export function FileUploader(props: FileUploaderProps) {
           )}
         </Dropzone>
       )}
+      {errorMessage ? (
+        <p className="text-xs text-destructive">{errorMessage}</p>
+      ) : null}
       {files?.length ? (
         <div className="flex flex-col gap-2.5">
           {files?.map((file, index) => (

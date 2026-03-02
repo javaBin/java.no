@@ -117,7 +117,7 @@
   },
   "expense": {
     "title": "Utleggsrapport",
-    "subtitle": "Fyll ut skjemaet for å generere en PDF-rapport som du kan sende til faktura@java.no.",
+    "subtitle": "Fyll ut skjemaet for å generere en PDF-rapport.",
     "personalInfo": "Personlige opplysninger",
     "name": "Navn",
     "namePlaceholder": "Ola Nordmann",
@@ -168,6 +168,8 @@
     "processing": "Behandler...",
     "generateReport": "Generer rapport",
     "sendEmail": "Send e-post",
+    "copyEmail": "Kopier e-postadresse",
+    "emailCopied": "Kopiert",
     "selectDate": "Velg en dato",
     "invalidNorwegianAccountDetail": "Ugyldig norsk kontonummer. Sjekk at nummeret er korrekt (11 siffer med gyldig kontrollsiffer).",
     "invalidIbanFormat": "Ugyldig format. Forventet {{countryName}} IBAN-format.",
