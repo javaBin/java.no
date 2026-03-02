@@ -896,7 +896,7 @@ function FilePreview({ file }: FilePreviewProps) {
         </button>
 
         <Dialog open={isPdfOpen} onOpenChange={setIsPdfOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogContent className="max-w-4xl h-[80vh] flex flex-col overflow-hidden">
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
             </DialogHeader>
