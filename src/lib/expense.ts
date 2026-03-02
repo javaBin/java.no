@@ -148,6 +148,10 @@ export const createExpenseSchemas = (
           invalid_type_error: t("expense.errors.invalidEmail"),
         })
         .email(t("expense.errors.invalidEmail")),
+      reimbursementTarget: z.enum(["javaBin", "javaZone"], {
+        required_error: t("expense.errors.reimbursementTargetRequired"),
+        invalid_type_error: t("expense.errors.reimbursementTargetRequired"),
+      }),
       expenses: z
         .array(expenseItemSchema, {
           required_error: t("expense.errors.expenseRequired"),

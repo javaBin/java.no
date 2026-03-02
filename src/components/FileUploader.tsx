@@ -27,6 +27,7 @@ import ReactCrop, {
   makeAspectCrop,
 } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
+import { useTranslation } from "next-i18next"
 
 interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -118,6 +119,7 @@ function CropDialog({
   onOpenChange,
   onCropComplete,
 }: CropDialogProps) {
+  const { t } = useTranslation("common")
   const [crop, setCrop] = React.useState<Crop>()
   const [imgSrc, setImgSrc] = React.useState("")
   const imgRef = React.useRef<HTMLImageElement>(null)
@@ -220,7 +222,7 @@ function CropDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Crop Image</DialogTitle>
+          <DialogTitle>{t("fileUploader.crop.title")}</DialogTitle>
         </DialogHeader>
         <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden">
           <TransformWrapper
@@ -238,13 +240,15 @@ function CropDialog({
                 >
                   <ReactCrop
                     crop={crop}
-                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onChange={(_crop: Crop, percentCrop: Crop) =>
+                      setCrop(percentCrop)
+                    }
                     className="flex max-h-full max-w-full items-center justify-center"
                   >
                     <img
                       ref={imgRef}
                       src={imgSrc}
-                      alt="Crop me"
+                      alt={t("fileUploader.crop.imageAlt")}
                       onLoad={onImageLoad}
                       className="max-h-full max-w-full w-auto h-auto object-contain"
                     />
@@ -259,7 +263,9 @@ function CropDialog({
                     onClick={() => zoomOut()}
                   >
                     <ZoomOut className="size-4" />
-                    <span className="sr-only">Zoom out</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.zoomOut")}
+                    </span>
                   </Button>
                   <Button
                     type="button"
@@ -270,12 +276,14 @@ function CropDialog({
                   >
                     <NextImage
                       src={imgSrc}
-                      alt="Reset zoom"
+                      alt={t("fileUploader.crop.resetZoomAlt")}
                       width={16}
                       height={16}
                       className="size-4 object-cover"
                     />
-                    <span className="sr-only">Reset zoom</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.resetZoom")}
+                    </span>
                   </Button>
                   <Button
                     type="button"
@@ -285,7 +293,9 @@ function CropDialog({
                     onClick={() => zoomIn()}
                   >
                     <ZoomIn className="size-4" />
-                    <span className="sr-only">Zoom in</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.zoomIn")}
+                    </span>
                   </Button>
                 </div>
               </>
@@ -294,9 +304,11 @@ function CropDialog({
         </div>
         <div className="flex justify-end gap-2 flex-shrink-0 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("fileUploader.crop.cancel")}
           </Button>
-          <Button onClick={cropImage}>Crop & Continue</Button>
+          <Button onClick={cropImage}>
+            {t("fileUploader.crop.confirm")}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -320,6 +332,8 @@ export function FileUploader(props: FileUploaderProps) {
     ...dropzoneProps
   } = props
 
+  const { t } = useTranslation("common")
+
   const [files, setFiles] = useControllableState({
     prop: valueProp,
     onChange: onValueChange,
@@ -334,12 +348,14 @@ export function FileUploader(props: FileUploaderProps) {
       setErrorMessage(null)
 
       if (!multiple && maxFileCount === 1 && acceptedFiles.length > 1) {
-        setErrorMessage("Cannot upload more than 1 file at a time")
+        setErrorMessage(t("fileUploader.errors.singleFile"))
         return
       }
 
       if ((files?.length ?? 0) + acceptedFiles.length > maxFileCount) {
-        setErrorMessage(`Cannot upload more than ${maxFileCount} files`)
+        setErrorMessage(
+          t("fileUploader.errors.maxFiles", { count: maxFileCount }),
+        )
         return
       }
 
@@ -361,7 +377,9 @@ export function FileUploader(props: FileUploaderProps) {
 
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach(({ file }) => {
-          setErrorMessage(`File ${file.name} was rejected`)
+          setErrorMessage(
+            t("fileUploader.errors.fileRejected", { fileName: file.name }),
+          )
         })
       }
 
@@ -377,7 +395,7 @@ export function FileUploader(props: FileUploaderProps) {
         }
       }
     },
-    [files, maxFileCount, multiple, onUpload, setFiles],
+    [files, maxFileCount, multiple, onUpload, setFiles, t],
   )
 
   function onRemove(index: number) {
@@ -440,7 +458,7 @@ export function FileUploader(props: FileUploaderProps) {
                     aria-hidden="true"
                   />
                   <p className="text-muted-foreground text-sm font-medium">
-                    Drop the files here
+                    {t("fileUploader.dropHere")}
                   </p>
                 </div>
               ) : (
@@ -450,12 +468,24 @@ export function FileUploader(props: FileUploaderProps) {
                     aria-hidden="true"
                   />
                   <p className="text-muted-foreground text-sm font-medium">
-                    Click to upload or drag and drop
+                    {t("fileUploader.clickOrDrag")}
                   </p>
                   <p className="text-muted-foreground/70 text-xs">
-                    {maxFileCount > 1
-                      ? `Up to ${maxFileCount === Infinity ? "multiple" : maxFileCount} files, ${formatBytes(maxSize)} max each`
-                      : `${formatBytes(maxSize)} max`}
+                    {(() => {
+                      const size = formatBytes(maxSize)
+                      const countLabel =
+                        maxFileCount === Infinity
+                          ? t("fileUploader.multiple")
+                          : maxFileCount
+
+                      return maxFileCount > 1
+                        ? t("fileUploader.limitMany", {
+                            count:
+                              typeof countLabel === "number" ? countLabel : 0,
+                            size,
+                          })
+                        : t("fileUploader.limitSingle", { size })
+                    })()}
                   </p>
                 </div>
               )}
@@ -508,6 +538,7 @@ function ImageSelectionDialog({
   onOpenChange,
   onSelectionComplete,
 }: ImageSelectionDialogProps) {
+  const { t } = useTranslation("common")
   const [crop, setCrop] = React.useState<Crop>()
   const [imgSrc, setImgSrc] = React.useState("")
   const imgRef = React.useRef<HTMLImageElement>(null)
@@ -569,7 +600,7 @@ function ImageSelectionDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Select Area for OCR</DialogTitle>
+          <DialogTitle>{t("fileUploader.ocr.title")}</DialogTitle>
         </DialogHeader>
         <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden">
           <TransformWrapper
@@ -591,14 +622,16 @@ function ImageSelectionDialog({
                 >
                   <ReactCrop
                     crop={crop}
-                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onChange={(_crop: Crop, percentCrop: Crop) =>
+                      setCrop(percentCrop)
+                    }
                     aspect={undefined}
                     className="flex max-h-full max-w-full items-center justify-center"
                   >
                     <img
                       ref={imgRef}
                       src={imgSrc}
-                      alt="Select area"
+                      alt={t("fileUploader.ocr.imageAlt")}
                       className="max-h-full max-w-full w-auto h-auto object-contain"
                     />
                   </ReactCrop>
@@ -612,7 +645,9 @@ function ImageSelectionDialog({
                     onClick={() => zoomOut()}
                   >
                     <ZoomOut className="size-4" />
-                    <span className="sr-only">Zoom out</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.zoomOut")}
+                    </span>
                   </Button>
                   <Button
                     type="button"
@@ -623,12 +658,14 @@ function ImageSelectionDialog({
                   >
                     <NextImage
                       src={imgSrc}
-                      alt="Reset zoom"
+                      alt={t("fileUploader.crop.resetZoomAlt")}
                       width={16}
                       height={16}
                       className="size-4 object-cover"
                     />
-                    <span className="sr-only">Reset zoom</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.resetZoom")}
+                    </span>
                   </Button>
                   <Button
                     type="button"
@@ -638,7 +675,9 @@ function ImageSelectionDialog({
                     onClick={() => zoomIn()}
                   >
                     <ZoomIn className="size-4" />
-                    <span className="sr-only">Zoom in</span>
+                    <span className="sr-only">
+                      {t("fileUploader.crop.zoomIn")}
+                    </span>
                   </Button>
                 </div>
               </>
@@ -653,13 +692,12 @@ function ImageSelectionDialog({
               onSelectionComplete(null)
             }}
           >
-            Clear Selection
+            {t("fileUploader.ocr.clearSelection")}
           </Button>
           <Button onClick={handleConfirm}>
-            Process{" "}
             {crop && crop.width > 0 && crop.height > 0
-              ? "Selection"
-              : "Entire Image"}
+              ? t("fileUploader.ocr.processSelection")
+              : t("fileUploader.ocr.processEntireImage")}
           </Button>
         </div>
       </DialogContent>
@@ -669,6 +707,7 @@ function ImageSelectionDialog({
 
 function FileCard({ file, progress, onRemove }: FileCardProps) {
   const [isSelectionOpen, setIsSelectionOpen] = React.useState(false)
+  const { t } = useTranslation("common")
 
   return (
     <div className="group relative flex items-center gap-2.5 rounded-md border bg-card p-2 transition-colors hover:bg-accent/50">
@@ -691,7 +730,9 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
           }}
         >
           <X className="size-2.5" aria-hidden="true" />
-          <span className="sr-only">Remove file</span>
+          <span className="sr-only">
+            {t("fileUploader.card.removeFile")}
+          </span>
         </Button>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -724,6 +765,7 @@ function FilePreview({ file }: FilePreviewProps) {
   const [preview, setPreview] = React.useState<string>("")
   const [isPdfOpen, setIsPdfOpen] = React.useState(false)
   const [isImageOpen, setIsImageOpen] = React.useState(false)
+  const { t } = useTranslation("common")
 
   React.useEffect(() => {
     // Create preview URL when component mounts
@@ -794,7 +836,9 @@ function FilePreview({ file }: FilePreviewProps) {
                         onClick={() => zoomOut()}
                       >
                         <ZoomOut className="size-4" />
-                        <span className="sr-only">Zoom out</span>
+                        <span className="sr-only">
+                          {t("fileUploader.crop.zoomOut")}
+                        </span>
                       </Button>
                       <Button
                         type="button"
@@ -810,7 +854,9 @@ function FilePreview({ file }: FilePreviewProps) {
                           height={16}
                           className="size-4 object-cover"
                         />
-                        <span className="sr-only">Reset zoom</span>
+                        <span className="sr-only">
+                          {t("fileUploader.crop.resetZoom")}
+                        </span>
                       </Button>
                       <Button
                         type="button"
@@ -820,7 +866,9 @@ function FilePreview({ file }: FilePreviewProps) {
                         onClick={() => zoomIn()}
                       >
                         <ZoomIn className="size-4" />
-                        <span className="sr-only">Zoom in</span>
+                        <span className="sr-only">
+                          {t("fileUploader.crop.zoomIn")}
+                        </span>
                       </Button>
                     </div>
                   </>

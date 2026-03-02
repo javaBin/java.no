@@ -267,6 +267,9 @@ export default function ExpensePage() {
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
       skipBankValidation: false,
       email: initialFormValues.email,
+      reimbursementTarget: initialFormValues.residesInNorway
+        ? "javaBin"
+        : "javaZone",
       expenses: [
         {
           description: "",
@@ -290,6 +293,9 @@ export default function ExpensePage() {
     form.reset({
       ...form.getValues(),
       ...parsed,
+      bankAccountType:
+        (parsed.bankAccountType as "checking" | "savings") || "checking",
+      reimbursementTarget: parsed.residesInNorway ? "javaBin" : "javaZone",
     })
   }, [form])
 
@@ -299,9 +305,11 @@ export default function ExpensePage() {
   })
 
   const residesInNorway = form.watch("residesInNorway")
-  const targetEmail = residesInNorway
-    ? "faktura@java.no"
-    : "faktura-javazone@java.no"
+  const reimbursementTarget = form.watch("reimbursementTarget")
+  const targetEmail =
+    reimbursementTarget === "javaBin"
+      ? "faktura-javabin@java.no"
+      : "faktura-javazone@java.no"
   const [hasCopiedEmail, setHasCopiedEmail] = useState(false)
 
   const handleResidenceChange = (value: string) => {
@@ -318,9 +326,11 @@ export default function ExpensePage() {
       form.setValue("bankName", "")
       form.setValue("bankAddress", "")
       form.setValue("bankAccountHolderName", "")
+      form.setValue("reimbursementTarget", "javaBin")
     } else {
       form.setValue("country", "")
       form.setValue("bankAccountNumber", "")
+      form.setValue("reimbursementTarget", "javaZone")
     }
 
   }
@@ -826,6 +836,75 @@ export default function ExpensePage() {
                 </Button>
               </div>
             )}
+          </section>
+
+          {/* Reimbursement target */}
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">
+              {t("expense.reimbursementTargetLabel")}
+            </h2>
+            <p className="mb-4 text-sm text-gray-500">
+              {t("expense.reimbursementTargetDescription")}
+            </p>
+            <FormField
+              control={form.control}
+              name="reimbursementTarget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 text-sm">
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex-1 rounded px-3 py-1.5 text-center transition-colors",
+                          field.value === "javaBin"
+                            ? "bg-gray-900 text-white shadow-sm"
+                            : "bg-transparent text-gray-800 hover:bg-white",
+                        )}
+                        onClick={() => field.onChange("javaBin")}
+                      >
+                        {t("expense.reimbursementTarget.javaBin")}
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex-1 rounded px-3 py-1.5 text-center transition-colors",
+                          field.value === "javaZone"
+                            ? "bg-gray-900 text-white shadow-sm"
+                            : "bg-transparent text-gray-800 hover:bg-white",
+                        )}
+                        onClick={() => field.onChange("javaZone")}
+                      >
+                        {t("expense.reimbursementTarget.javaZone")}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-2">
+              <div>
+                <p className="font-medium">
+                  {t("expense.reimbursementTarget.javaBinHeading")}
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>{t("expense.reimbursementTarget.javaBinExample1")}</li>
+                  <li>{t("expense.reimbursementTarget.javaBinExample2")}</li>
+                  <li>{t("expense.reimbursementTarget.javaBinExample3")}</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium">
+                  {t("expense.reimbursementTarget.javaZoneHeading")}
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>{t("expense.reimbursementTarget.javaZoneExample1")}</li>
+                  <li>{t("expense.reimbursementTarget.javaZoneExample2")}</li>
+                  <li>{t("expense.reimbursementTarget.javaZoneExample3")}</li>
+                </ul>
+              </div>
+            </div>
           </section>
 
           {/* Actions */}

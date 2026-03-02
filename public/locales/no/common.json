@@ -150,6 +150,20 @@
     "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
     "emailPlaceholder": "ola@nordmann.no",
+      "reimbursementTargetLabel": "Hvilken del av javaBin gjelder kostnaden?",
+      "reimbursementTargetDescription": "Velg hvilken del av organisasjonen kostnaden hører hjemme i.",
+      "reimbursementTarget": {
+        "javaBin": "javaBin",
+        "javaZone": "JavaZone",
+        "javaBinHeading": "Typiske kostnader for javaBin",
+        "javaZoneHeading": "Typiske kostnader for JavaZone",
+        "javaBinExample1": "Reise til og fra javaBin‑meetup, styremøte eller regionssamling.",
+        "javaBinExample2": "Mat, drikke eller annet utstyr til lokale javaBin‑arrangementer.",
+        "javaBinExample3": "Andre faglige eller sosiale tiltak som arrangeres av javaBin.",
+        "javaZoneExample1": "Reise og opphold som foredragsholder eller frivillig på JavaZone.",
+        "javaZoneExample2": "Utstyr, mat eller andre kostnader tilknyttet JavaZone‑aktiviteter og workshopper.",
+        "javaZoneExample3": "Andre kostnader som er direkte relatert til JavaZone‑konferansen."
+      },
     "descriptionPlaceholder": "Taxi – fra flyplassen til konferansen – JavaZone 2026",
     "descriptionDescription": "Hva ble kjøpt, hvor og til hvilken anledning?",
     "date": "Dato",
@@ -205,7 +219,40 @@
       "invalidNorwegianAccount": "Ugyldig norsk kontonummer",
       "invalidRoutingNumber": "Ugyldig routing number (ABA). Må være 9 siffer.",
       "invalidUsAccountNumber": "Ugyldig kontonummer. Må være mellom 4 og 17 siffer.",
-      "invalidSwift": "Ugyldig SWIFT/BIC-kode"
+        "invalidSwift": "Ugyldig SWIFT/BIC-kode",
+        "reimbursementTargetRequired": "Velg hvem som skal refundere utlegget (javaBin eller JavaZone)."
+    }
+  },
+  "fileUploader": {
+    "crop": {
+      "title": "Beskjær bilde",
+      "imageAlt": "Forhåndsvisning av bilde",
+      "zoomOut": "Zoom ut",
+      "resetZoom": "Nullstill zoom",
+      "resetZoomAlt": "Nullstill zoom",
+      "zoomIn": "Zoom inn",
+      "cancel": "Avbryt",
+      "confirm": "Beskjær og fortsett"
+    },
+    "dropHere": "Slipp filene her",
+    "clickOrDrag": "Klikk for å laste opp eller dra og slipp",
+    "multiple": "flere",
+    "limitMany": "Opptil {{count}} filer, {{size}} maks per fil",
+    "limitSingle": "{{size}} maks",
+    "errors": {
+      "singleFile": "Kan ikke laste opp mer enn 1 fil om gangen",
+      "maxFiles": "Kan ikke laste opp mer enn {{count}} filer",
+      "fileRejected": "Filen {{fileName}} ble avvist"
+    },
+    "ocr": {
+      "title": "Velg område for OCR",
+      "imageAlt": "Velg område i bildet",
+      "clearSelection": "Tøm markering",
+      "processSelection": "Behandle markering",
+      "processEntireImage": "Behandle hele bildet"
+    },
+    "card": {
+      "removeFile": "Fjern fil"
     }
   }
 }

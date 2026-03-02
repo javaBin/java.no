@@ -150,6 +150,20 @@
     "bankAccountHolderName": "Account holder name",
     "email": "Email",
     "emailPlaceholder": "ola@nordmann.no",
+      "reimbursementTargetLabel": "Which part of javaBin is this cost for?",
+      "reimbursementTargetDescription": "Choose which part of the organisation this cost belongs to.",
+      "reimbursementTarget": {
+        "javaBin": "javaBin",
+        "javaZone": "JavaZone",
+        "javaBinHeading": "Typical costs for javaBin",
+        "javaZoneHeading": "Typical costs for JavaZone",
+        "javaBinExample1": "Travel to and from a local javaBin meetup, board meeting or regional gathering.",
+        "javaBinExample2": "Food, drinks or other supplies for local javaBin events.",
+        "javaBinExample3": "Other professional or social initiatives organised by javaBin.",
+        "javaZoneExample1": "Travel and accommodation for JavaZone.",
+        "javaZoneExample2": "Equipment, food or other costs for JavaZone activities and workshops.",
+        "javaZoneExample3": "Other costs that are directly related to the JavaZone conference."
+      },
     "descriptionPlaceholder": "Taxi – from airport to venue – JavaZone 2026",
     "descriptionDescription": "What was purchased, where, and for what occasion?",
     "date": "Date",
@@ -204,7 +218,40 @@
       "invalidNorwegianAccount": "Invalid Norwegian account number",
       "invalidRoutingNumber": "Invalid routing number (ABA). Must be 9 digits.",
       "invalidUsAccountNumber": "Invalid account number. Must be between 4 and 17 digits.",
-      "invalidSwift": "Invalid SWIFT/BIC code"
+        "invalidSwift": "Invalid SWIFT/BIC code",
+        "reimbursementTargetRequired": "Please choose who should reimburse this expense (javaBin or JavaZone)."
+    }
+  },
+  "fileUploader": {
+    "crop": {
+      "title": "Crop Image",
+      "imageAlt": "Image preview",
+      "zoomOut": "Zoom out",
+      "resetZoom": "Reset zoom",
+      "resetZoomAlt": "Reset zoom",
+      "zoomIn": "Zoom in",
+      "cancel": "Cancel",
+      "confirm": "Crop & Continue"
+    },
+    "dropHere": "Drop the files here",
+    "clickOrDrag": "Click to upload or drag and drop",
+    "multiple": "multiple",
+    "limitMany": "Up to {{count}} files, {{size}} max each",
+    "limitSingle": "{{size}} max",
+    "errors": {
+      "singleFile": "Cannot upload more than 1 file at a time",
+      "maxFiles": "Cannot upload more than {{count}} files",
+      "fileRejected": "File {{fileName}} was rejected"
+    },
+    "ocr": {
+      "title": "Select Area for OCR",
+      "imageAlt": "Select area in the image",
+      "clearSelection": "Clear Selection",
+      "processSelection": "Process Selection",
+      "processEntireImage": "Process Entire Image"
+    },
+    "card": {
+      "removeFile": "Remove file"
     }
   }
 }
