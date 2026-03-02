@@ -843,9 +843,6 @@ export default function ExpensePage() {
             <h2 className="mb-2 text-lg font-semibold text-gray-900">
               {t("expense.reimbursementTargetLabel")}
             </h2>
-            <p className="mb-4 text-sm text-gray-500">
-              {t("expense.reimbursementTargetDescription")}
-            </p>
             <FormField
               control={form.control}
               name="reimbursementTarget"

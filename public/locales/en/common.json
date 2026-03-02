@@ -150,8 +150,8 @@
     "bankAccountHolderName": "Account holder name",
     "email": "Email",
     "emailPlaceholder": "ola@nordmann.no",
-      "reimbursementTargetLabel": "Which part of javaBin is this cost for?",
-      "reimbursementTargetDescription": "Choose which part of the organisation this cost belongs to.",
+      "reimbursementTargetLabel": "Where does this cost belong?",
+      "reimbursementTargetDescription": "Choose which part of the organisation it belongs to.",
       "reimbursementTarget": {
         "javaBin": "javaBin",
         "javaZone": "JavaZone",

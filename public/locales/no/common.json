@@ -150,7 +150,7 @@
     "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
     "emailPlaceholder": "ola@nordmann.no",
-      "reimbursementTargetLabel": "Hvilken del av javaBin gjelder kostnaden?",
+      "reimbursementTargetLabel": "Hvor hører kostnaden hjemme?",
       "reimbursementTargetDescription": "Velg hvilken del av organisasjonen kostnaden hører hjemme i.",
       "reimbursementTarget": {
         "javaBin": "javaBin",
@@ -160,7 +160,7 @@
         "javaBinExample1": "Reise til og fra javaBin‑meetup, styremøte eller regionssamling.",
         "javaBinExample2": "Mat, drikke eller annet utstyr til lokale javaBin‑arrangementer.",
         "javaBinExample3": "Andre faglige eller sosiale tiltak som arrangeres av javaBin.",
-        "javaZoneExample1": "Reise og opphold som foredragsholder eller frivillig på JavaZone.",
+        "javaZoneExample1": "Reise og opphold til JavaZone.",
         "javaZoneExample2": "Utstyr, mat eller andre kostnader tilknyttet JavaZone‑aktiviteter og workshopper.",
         "javaZoneExample3": "Andre kostnader som er direkte relatert til JavaZone‑konferansen."
       },
