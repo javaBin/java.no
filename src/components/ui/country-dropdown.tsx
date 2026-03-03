@@ -48,6 +48,9 @@ interface CountryDropdownProps {
   disabled?: boolean
   placeholder?: string
   slim?: boolean
+  name?: string
+  autoComplete?: string
+  enableAutofill?: boolean
 }
 
 const CountryDropdownComponent = (
@@ -61,6 +64,9 @@ const CountryDropdownComponent = (
     disabled = false,
     placeholder,
     slim = false,
+    name,
+    autoComplete,
+    enableAutofill = true,
     ...props
   }: CountryDropdownProps,
   ref: React.ForwardedRef<HTMLButtonElement>,
@@ -86,6 +92,34 @@ const CountryDropdownComponent = (
   const [open, setOpen] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
     undefined,
+  )
+
+  const resolvedAutoComplete =
+    autoComplete ?? name ?? "country-name"
+
+  const handleHiddenInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!enableAutofill) return
+
+      const value = event.target.value.trim()
+      if (!value) return
+
+      const match = options.find((country) => {
+        const localized = getRegionName(country)
+        const lowerValue = value.toLowerCase()
+
+        return (
+          localized.toLowerCase() === lowerValue ||
+          country.name.toLowerCase() === lowerValue
+        )
+      })
+
+      if (match) {
+        setSelectedCountry(match)
+        onChange?.(match)
+      }
+    },
+    [enableAutofill, getRegionName, onChange, options],
   )
 
   useEffect(() => {
@@ -121,6 +155,17 @@ const CountryDropdownComponent = (
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
+      {enableAutofill && (
+        <input
+          type="text"
+          name={name}
+          autoComplete={resolvedAutoComplete}
+          value={selectedCountry ? getRegionName(selectedCountry) : ""}
+          onChange={handleHiddenInputChange}
+          className="absolute h-0 w-px opacity-0 pointer-events-none"
+          tabIndex={-1}
+        />
+      )}
       <PopoverTrigger
         ref={ref}
         className={triggerClasses}

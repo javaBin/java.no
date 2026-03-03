@@ -42,11 +42,6 @@ function bankDetailsLines(
       ...(bankSwiftBic
         ? [{ label: "SWIFT/BIC:", value: bankSwiftBic }]
         : []),
-      ...(bankName ? [{ label: "Bank:", value: bankName }] : []),
-      ...(bankAddress ? [{ label: "Bankadresse:", value: bankAddress }] : []),
-      ...(bankAccountHolderName
-        ? [{ label: "Kontoinnehaver:", value: bankAccountHolderName }]
-        : []),
     ]
   }
   if (type === "us") {

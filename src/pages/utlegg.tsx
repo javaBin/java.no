@@ -66,13 +66,93 @@ function getString(
 function parseFormQueryParams(
   query: Record<string, string | string[] | undefined>,
 ) {
-  const isInternationalBank =
-    getString(query, "isInternationalBank", "false") === "true"
-  const country = getString(query, "country", "Norway")
-  const residesInNorway =
-    getString(query, "residesInNorway", "") === ""
-      ? !isInternationalBank && country === "Norway"
-      : getString(query, "residesInNorway", "true") === "true"
+  const reimbursementTargetParamRaw = getString(
+    query,
+    "reimbursementTarget",
+    "",
+  )
+  const reimbursementTargetParam = reimbursementTargetParamRaw.toLowerCase()
+  const rawCountry = getString(query, "country", "")
+  let country = rawCountry
+  let countryIso2ForHeuristic: string | undefined
+  if (rawCountry) {
+    const lower = rawCountry.toLowerCase()
+    const byAlpha2 = countries.all.find(
+      (c: any) => c.alpha2?.toLowerCase() === lower,
+    )
+    const byAlpha3 = byAlpha2
+      ? undefined
+      : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
+    const byName = byAlpha2 || byAlpha3
+      ? undefined
+      : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
+    const match = (byAlpha2 || byAlpha3 || byName) as
+      | { alpha2?: string; alpha3?: string }
+      | undefined
+    if (match?.alpha3) {
+      country = match.alpha3
+    }
+    if (match?.alpha2) {
+      countryIso2ForHeuristic = match.alpha2
+    }
+  } else {
+    // No explicit country; leave blank so dropdown has no default selection
+    country = ""
+    countryIso2ForHeuristic = undefined
+  }
+
+  const internationalParamRaw = getString(query, "international", "")
+  const internationalParam =
+    internationalParamRaw === ""
+      ? ""
+      : internationalParamRaw.toLowerCase()
+
+  const residesInNorway: boolean =
+    internationalParam === ""
+      ? countryIso2ForHeuristic
+        ? countryIso2ForHeuristic.toUpperCase() === "NO"
+        : true
+      : internationalParam !== "true"
+
+  const reimbursementTargetFromQuery =
+    reimbursementTargetParam === "javabin" ||
+    reimbursementTargetParam === "javazone"
+
+  const rawBankCountry = getString(query, "bankCountry", "")
+  const rawBankCountryIso2 = getString(query, "bankCountryIso2", "")
+  let bankCountry = ""
+  let bankCountryIso2 = ""
+
+  if (rawBankCountry || rawBankCountryIso2) {
+    const source = rawBankCountry || rawBankCountryIso2
+    const lower = source.toLowerCase()
+    const byAlpha2 = countries.all.find(
+      (c: any) => c.alpha2?.toLowerCase() === lower,
+    )
+    const byAlpha3 = byAlpha2
+      ? undefined
+      : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
+    const byName = byAlpha2 || byAlpha3
+      ? undefined
+      : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
+    const match = (byAlpha2 || byAlpha3 || byName) as
+      | { alpha2?: string; alpha3?: string }
+      | undefined
+
+    if (match?.alpha3) {
+      bankCountry = match.alpha3
+    } else if (rawBankCountry) {
+      bankCountry = rawBankCountry
+    }
+
+    if (match?.alpha2) {
+      bankCountryIso2 = match.alpha2
+    }
+  }
+
+  if (!bankCountryIso2 && rawBankCountryIso2) {
+    bankCountryIso2 = rawBankCountryIso2.toUpperCase()
+  }
 
   return {
     name: getString(query, "name", ""),
@@ -82,16 +162,16 @@ function parseFormQueryParams(
     city: getString(query, "city", ""),
     country,
     residesInNorway,
-    bankCountry: getString(
-      query,
-      "bankCountry",
-      residesInNorway ? "Norway" : "",
-    ),
-    bankCountryIso2: getString(
-      query,
-      "bankCountryIso2",
-      residesInNorway ? "NO" : "",
-    ),
+    reimbursementTarget: reimbursementTargetFromQuery
+      ? reimbursementTargetParam === "javabin"
+        ? "javaBin"
+        : "javaZone"
+      : residesInNorway
+        ? "javaBin"
+        : "javaZone",
+    reimbursementTargetFromQuery,
+    bankCountry,
+    bankCountryIso2,
     bankIban: getString(query, "bankIban", getString(query, "bankAccount", "")),
     bankRoutingNumber: getString(query, "bankRoutingNumber", ""),
     bankAccountNumber: getString(query, "bankAccountNumber", ""),
@@ -243,9 +323,12 @@ export default function ExpensePage() {
   type FormValues = z.infer<typeof formSchema>
 
   const [isLoading, setIsLoading] = useState(false)
+  const [reimbursementTargetIsLocked, setReimbursementTargetIsLocked] =
+    useState<boolean>(() => initialFormValues.reimbursementTargetFromQuery)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    shouldUnregister: false,
     defaultValues: {
       name: initialFormValues.name,
       streetAddress: initialFormValues.streetAddress,
@@ -267,9 +350,7 @@ export default function ExpensePage() {
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
       skipBankValidation: false,
       email: initialFormValues.email,
-      reimbursementTarget: initialFormValues.residesInNorway
-        ? "javaBin"
-        : "javaZone",
+      reimbursementTarget: initialFormValues.reimbursementTarget,
       expenses: [
         {
           description: "",
@@ -289,13 +370,14 @@ export default function ExpensePage() {
     if (!Object.keys(queryRecord).length) return
 
     const parsed = parseFormQueryParams(queryRecord)
+    setReimbursementTargetIsLocked(parsed.reimbursementTargetFromQuery)
 
     form.reset({
       ...form.getValues(),
       ...parsed,
       bankAccountType:
         (parsed.bankAccountType as "checking" | "savings") || "checking",
-      reimbursementTarget: parsed.residesInNorway ? "javaBin" : "javaZone",
+      reimbursementTarget: parsed.reimbursementTarget,
     })
   }, [form])
 
@@ -316,23 +398,9 @@ export default function ExpensePage() {
     const isNorway = value === "norway"
     form.setValue("residesInNorway", isNorway)
 
-    if (isNorway) {
-      form.setValue("country", "Norway")
-      form.setValue("bankCountry", "")
-      form.setValue("bankCountryIso2", "")
-      form.setValue("bankIban", "")
-      form.setValue("bankRoutingNumber", "")
-      form.setValue("bankSwiftBic", "")
-      form.setValue("bankName", "")
-      form.setValue("bankAddress", "")
-      form.setValue("bankAccountHolderName", "")
-      form.setValue("reimbursementTarget", "javaBin")
-    } else {
-      form.setValue("country", "")
-      form.setValue("bankAccountNumber", "")
-      form.setValue("reimbursementTarget", "javaZone")
+    if (!reimbursementTargetIsLocked) {
+      form.setValue("reimbursementTarget", isNorway ? "javaBin" : "javaZone")
     }
-
   }
 
   const watchedCountry = form.watch("country")
@@ -385,7 +453,7 @@ export default function ExpensePage() {
         ? (regionNames.of(data.bankCountryIso2.toUpperCase()) ??
           data.bankCountry ??
           "")
-        : data.bankCountry ?? ""
+        : (data.bankCountry ?? "")
 
       const expenseReport = await generatePDF({
         ...data,
@@ -858,7 +926,10 @@ export default function ExpensePage() {
                             ? "bg-gray-900 text-white shadow-sm"
                             : "bg-transparent text-gray-800 hover:bg-white",
                         )}
-                        onClick={() => field.onChange("javaBin")}
+                        onClick={() => {
+                          setReimbursementTargetIsLocked(true)
+                          field.onChange("javaBin")
+                        }}
                       >
                         {t("expense.reimbursementTarget.javaBin")}
                       </button>
@@ -870,7 +941,10 @@ export default function ExpensePage() {
                             ? "bg-gray-900 text-white shadow-sm"
                             : "bg-transparent text-gray-800 hover:bg-white",
                         )}
-                        onClick={() => field.onChange("javaZone")}
+                        onClick={() => {
+                          setReimbursementTargetIsLocked(true)
+                          field.onChange("javaZone")
+                        }}
                       >
                         {t("expense.reimbursementTarget.javaZone")}
                       </button>
@@ -906,11 +980,7 @@ export default function ExpensePage() {
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="px-6"
-            >
+            <Button type="submit" disabled={isLoading} className="px-6">
               {isLoading
                 ? t("expense.processing")
                 : t("expense.generateReport")}

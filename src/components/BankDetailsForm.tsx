@@ -63,7 +63,9 @@ export function BankDetailsForm({
     name: "bankAccountNumber",
   })
 
-  const type = getBankCountryType(bankCountryIso2 || "")
+  const type = bankCountryIso2
+    ? getBankCountryType(bankCountryIso2)
+    : "sepa"
   const previousTypeRef = React.useRef(type)
 
   useEffect(() => {
@@ -96,17 +98,6 @@ export function BankDetailsForm({
     if (previousTypeRef.current === type) return
     previousTypeRef.current = type
 
-    if (type === "sepa") {
-      form.setValue("bankRoutingNumber", "")
-      form.setValue("bankAccountNumber", "")
-      form.setValue("bankSwiftBic", "")
-      form.setValue("bankName", "")
-      form.setValue("bankAddress", "")
-      form.setValue("bankAccountHolderName", "")
-    } else if (type === "us") {
-      form.setValue("bankIban", "")
-    }
-
     setSkipValidation(false)
     setAccountValidationFailed(false)
     setOtherValidationFailed(false)
@@ -124,21 +115,6 @@ export function BankDetailsForm({
       return bankCountryIso2.toUpperCase()
     }
   }, [bankCountryIso2, language])
-
-  const prevBankCountryIso2Ref = React.useRef(bankCountryIso2)
-  useEffect(() => {
-    if (type !== "sepa") return
-    if (prevBankCountryIso2Ref.current === bankCountryIso2) return
-    prevBankCountryIso2Ref.current = bankCountryIso2 || ""
-    const iban = (form.getValues("bankIban") || "").replace(/\s/g, "")
-    const ibanCountry = iban.slice(0, 2).toUpperCase()
-    if (
-      iban.length >= 4 &&
-      ibanCountry !== (bankCountryIso2 || "").toUpperCase()
-    ) {
-      form.setValue("bankIban", "")
-    }
-  }, [type, bankCountryIso2, form])
 
   const clearBankErrors = React.useCallback(() => {
     form.clearErrors("bankAccountNumber")
@@ -297,9 +273,20 @@ export function BankDetailsForm({
               <CountryDropdown
                 defaultValue={field.value}
                 onChange={(country: Country) => {
-                  field.onChange(country?.alpha3 ?? "")
-                  form.setValue("bankCountryIso2", country?.alpha2 || "")
+                  const alpha3 = country?.alpha3 ?? ""
+                  const alpha2 = country?.alpha2 || ""
+                  field.onChange(alpha3)
+                  form.setValue("bankCountryIso2", alpha2)
+
+                  const countryState = form.getFieldState("country")
+                  const hasUserTouchedCountry =
+                    countryState.isTouched || countryState.isDirty
+                  if (!hasUserTouchedCountry) {
+                    form.setValue("country", alpha3)
+                  }
                 }}
+                name="bankCountry"
+                enableAutofill={false}
               />
             </FormControl>
             <FormMessage />
