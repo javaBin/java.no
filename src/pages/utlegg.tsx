@@ -68,14 +68,8 @@ function parseFormQueryParams(
 ) {
   const targetParamRaw = getString(query, "target", "")
   const fixedTargetParamRaw = getString(query, "fixedTarget", "")
-  const legacyReimbursementTargetParamRaw = getString(
-    query,
-    "reimbursementTarget",
-    "",
-  )
 
-  const targetSourceRaw =
-    targetParamRaw || fixedTargetParamRaw || legacyReimbursementTargetParamRaw
+  const targetSourceRaw = targetParamRaw || fixedTargetParamRaw
   const targetSource = targetSourceRaw.toLowerCase()
   const reimbursementTargetFromQuery =
     targetSource === "javabin" || targetSource === "javazone"
@@ -93,9 +87,10 @@ function parseFormQueryParams(
     const byAlpha3 = byAlpha2
       ? undefined
       : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
-    const byName = byAlpha2 || byAlpha3
-      ? undefined
-      : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
+    const byName =
+      byAlpha2 || byAlpha3
+        ? undefined
+        : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
     const match = (byAlpha2 || byAlpha3 || byName) as
       | { alpha2?: string; alpha3?: string }
       | undefined
@@ -113,9 +108,7 @@ function parseFormQueryParams(
 
   const internationalParamRaw = getString(query, "international", "")
   const internationalParam =
-    internationalParamRaw === ""
-      ? ""
-      : internationalParamRaw.toLowerCase()
+    internationalParamRaw === "" ? "" : internationalParamRaw.toLowerCase()
 
   const residesInNorway: boolean =
     internationalParam === ""
@@ -138,9 +131,10 @@ function parseFormQueryParams(
     const byAlpha3 = byAlpha2
       ? undefined
       : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
-    const byName = byAlpha2 || byAlpha3
-      ? undefined
-      : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
+    const byName =
+      byAlpha2 || byAlpha3
+        ? undefined
+        : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
     const match = (byAlpha2 || byAlpha3 || byName) as
       | { alpha2?: string; alpha3?: string }
       | undefined
@@ -363,8 +357,9 @@ export default function ExpensePage() {
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
       skipBankValidation: false,
       email: initialFormValues.email,
-      reimbursementTarget: initialFormValues
-        .reimbursementTarget as "javaBin" | "javaZone",
+      reimbursementTarget: initialFormValues.reimbursementTarget as
+        | "javaBin"
+        | "javaZone",
       expenses: [
         {
           description: "",
@@ -385,7 +380,9 @@ export default function ExpensePage() {
 
     const parsed = parseFormQueryParams(queryRecord)
     setReimbursementTargetIsLocked(parsed.reimbursementTargetIsFixedFromQuery)
-    setHideReimbursementTargetSection(parsed.reimbursementTargetIsFixedFromQuery)
+    setHideReimbursementTargetSection(
+      parsed.reimbursementTargetIsFixedFromQuery,
+    )
 
     form.reset({
       ...form.getValues(),

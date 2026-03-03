@@ -39,6 +39,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Meetup’s public API is deprecated; events are fetched via scraping. If it fails, events are hidden, but everything will keep working. Event pages use Next.js [ISR](https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration) with 1-hour revalidation.
 
+## Utleggsskjema / expenses
+
+For detaljer om hvordan utleggsskjemaet (`/utlegg`) fungerer, inkludert støtte for query‑parametere og deep‑links, se [`docs/utlegg-usage.md`](./docs/utlegg-usage.md).
+
 ## IBAN validation
 
 IBAN handling (validation, composition, country specs) uses [ibantools](https://github.com/Simplify/ibantools). As of February 2026, ibantools has not been updated to SWIFT IBAN Registry Release 101 (December 2025). Track upstream progress and update the dependency when a new version ships.
