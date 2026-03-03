@@ -57,7 +57,7 @@ function getString(
   key: string,
   defaultValue: string = "",
 ): string {
-  const value = query[key]
+  const value = query[key] ?? query[key.toLowerCase()]
   if (value === undefined || value === null) return defaultValue
   if (Array.isArray(value)) return value[0] ?? defaultValue
   return value ?? defaultValue
@@ -66,12 +66,22 @@ function getString(
 function parseFormQueryParams(
   query: Record<string, string | string[] | undefined>,
 ) {
-  const reimbursementTargetParamRaw = getString(
+  const targetParamRaw = getString(query, "target", "")
+  const fixedTargetParamRaw = getString(query, "fixedTarget", "")
+  const legacyReimbursementTargetParamRaw = getString(
     query,
     "reimbursementTarget",
     "",
   )
-  const reimbursementTargetParam = reimbursementTargetParamRaw.toLowerCase()
+
+  const targetSourceRaw =
+    targetParamRaw || fixedTargetParamRaw || legacyReimbursementTargetParamRaw
+  const targetSource = targetSourceRaw.toLowerCase()
+  const reimbursementTargetFromQuery =
+    targetSource === "javabin" || targetSource === "javazone"
+  const reimbursementTargetIsFixedFromQuery =
+    reimbursementTargetFromQuery && !!fixedTargetParamRaw
+
   const rawCountry = getString(query, "country", "")
   let country = rawCountry
   let countryIso2ForHeuristic: string | undefined
@@ -113,10 +123,6 @@ function parseFormQueryParams(
         ? countryIso2ForHeuristic.toUpperCase() === "NO"
         : true
       : internationalParam !== "true"
-
-  const reimbursementTargetFromQuery =
-    reimbursementTargetParam === "javabin" ||
-    reimbursementTargetParam === "javazone"
 
   const rawBankCountry = getString(query, "bankCountry", "")
   const rawBankCountryIso2 = getString(query, "bankCountryIso2", "")
@@ -163,13 +169,14 @@ function parseFormQueryParams(
     country,
     residesInNorway,
     reimbursementTarget: reimbursementTargetFromQuery
-      ? reimbursementTargetParam === "javabin"
+      ? targetSource === "javabin"
         ? "javaBin"
         : "javaZone"
       : residesInNorway
         ? "javaBin"
         : "javaZone",
     reimbursementTargetFromQuery,
+    reimbursementTargetIsFixedFromQuery,
     bankCountry,
     bankCountryIso2,
     bankIban: getString(query, "bankIban", getString(query, "bankAccount", "")),
@@ -324,7 +331,13 @@ export default function ExpensePage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [reimbursementTargetIsLocked, setReimbursementTargetIsLocked] =
-    useState<boolean>(() => initialFormValues.reimbursementTargetFromQuery)
+    useState<boolean>(
+      () => initialFormValues.reimbursementTargetIsFixedFromQuery,
+    )
+  const [hideReimbursementTargetSection, setHideReimbursementTargetSection] =
+    useState<boolean>(
+      () => initialFormValues.reimbursementTargetIsFixedFromQuery,
+    )
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -350,7 +363,8 @@ export default function ExpensePage() {
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
       skipBankValidation: false,
       email: initialFormValues.email,
-      reimbursementTarget: initialFormValues.reimbursementTarget,
+      reimbursementTarget: initialFormValues
+        .reimbursementTarget as "javaBin" | "javaZone",
       expenses: [
         {
           description: "",
@@ -370,14 +384,15 @@ export default function ExpensePage() {
     if (!Object.keys(queryRecord).length) return
 
     const parsed = parseFormQueryParams(queryRecord)
-    setReimbursementTargetIsLocked(parsed.reimbursementTargetFromQuery)
+    setReimbursementTargetIsLocked(parsed.reimbursementTargetIsFixedFromQuery)
+    setHideReimbursementTargetSection(parsed.reimbursementTargetIsFixedFromQuery)
 
     form.reset({
       ...form.getValues(),
       ...parsed,
       bankAccountType:
         (parsed.bankAccountType as "checking" | "savings") || "checking",
-      reimbursementTarget: parsed.reimbursementTarget,
+      reimbursementTarget: parsed.reimbursementTarget as "javaBin" | "javaZone",
     })
   }, [form])
 
@@ -907,76 +922,78 @@ export default function ExpensePage() {
           </section>
 
           {/* Reimbursement target */}
-          <section className="rounded-xl border border-gray-200 bg-white p-5">
-            <h2 className="mb-2 text-lg font-semibold text-gray-900">
-              {t("expense.reimbursementTargetLabel")}
-            </h2>
-            <FormField
-              control={form.control}
-              name="reimbursementTarget"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 text-sm">
-                      <button
-                        type="button"
-                        className={cn(
-                          "flex-1 rounded px-3 py-1.5 text-center transition-colors",
-                          field.value === "javaBin"
-                            ? "bg-gray-900 text-white shadow-sm"
-                            : "bg-transparent text-gray-800 hover:bg-white",
-                        )}
-                        onClick={() => {
-                          setReimbursementTargetIsLocked(true)
-                          field.onChange("javaBin")
-                        }}
-                      >
-                        {t("expense.reimbursementTarget.javaBin")}
-                      </button>
-                      <button
-                        type="button"
-                        className={cn(
-                          "flex-1 rounded px-3 py-1.5 text-center transition-colors",
-                          field.value === "javaZone"
-                            ? "bg-gray-900 text-white shadow-sm"
-                            : "bg-transparent text-gray-800 hover:bg-white",
-                        )}
-                        onClick={() => {
-                          setReimbursementTargetIsLocked(true)
-                          field.onChange("javaZone")
-                        }}
-                      >
-                        {t("expense.reimbursementTarget.javaZone")}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-2">
-              <div>
-                <p className="font-medium">
-                  {t("expense.reimbursementTarget.javaBinHeading")}
-                </p>
-                <ul className="mt-1 list-disc space-y-1 pl-5">
-                  <li>{t("expense.reimbursementTarget.javaBinExample1")}</li>
-                  <li>{t("expense.reimbursementTarget.javaBinExample2")}</li>
-                  <li>{t("expense.reimbursementTarget.javaBinExample3")}</li>
-                </ul>
+          {!hideReimbursementTargetSection && (
+            <section className="rounded-xl border border-gray-200 bg-white p-5">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900">
+                {t("expense.reimbursementTargetLabel")}
+              </h2>
+              <FormField
+                control={form.control}
+                name="reimbursementTarget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 text-sm">
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex-1 rounded px-3 py-1.5 text-center transition-colors",
+                            field.value === "javaBin"
+                              ? "bg-gray-900 text-white shadow-sm"
+                              : "bg-transparent text-gray-800 hover:bg-white",
+                          )}
+                          onClick={() => {
+                            setReimbursementTargetIsLocked(true)
+                            field.onChange("javaBin")
+                          }}
+                        >
+                          {t("expense.reimbursementTarget.javaBin")}
+                        </button>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex-1 rounded px-3 py-1.5 text-center transition-colors",
+                            field.value === "javaZone"
+                              ? "bg-gray-900 text-white shadow-sm"
+                              : "bg-transparent text-gray-800 hover:bg-white",
+                          )}
+                          onClick={() => {
+                            setReimbursementTargetIsLocked(true)
+                            field.onChange("javaZone")
+                          }}
+                        >
+                          {t("expense.reimbursementTarget.javaZone")}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-2">
+                <div>
+                  <p className="font-medium">
+                    {t("expense.reimbursementTarget.javaBinHeading")}
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    <li>{t("expense.reimbursementTarget.javaBinExample1")}</li>
+                    <li>{t("expense.reimbursementTarget.javaBinExample2")}</li>
+                    <li>{t("expense.reimbursementTarget.javaBinExample3")}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">
+                    {t("expense.reimbursementTarget.javaZoneHeading")}
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    <li>{t("expense.reimbursementTarget.javaZoneExample1")}</li>
+                    <li>{t("expense.reimbursementTarget.javaZoneExample2")}</li>
+                    <li>{t("expense.reimbursementTarget.javaZoneExample3")}</li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">
-                  {t("expense.reimbursementTarget.javaZoneHeading")}
-                </p>
-                <ul className="mt-1 list-disc space-y-1 pl-5">
-                  <li>{t("expense.reimbursementTarget.javaZoneExample1")}</li>
-                  <li>{t("expense.reimbursementTarget.javaZoneExample2")}</li>
-                  <li>{t("expense.reimbursementTarget.javaZoneExample3")}</li>
-                </ul>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row">
