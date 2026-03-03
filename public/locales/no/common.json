@@ -144,24 +144,25 @@
     "bankAccountTypeChecking": "Checking",
     "bankAccountTypeSavings": "Savings",
     "bankSwiftBic": "SWIFT/BIC",
+    "bankSwiftBicPlaceholder": "F.eks. DNBANOKK",
     "bankName": "Banknavn",
     "bankAddress": "Bankadresse",
     "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
     "emailPlaceholder": "ola@nordmann.no",
-      "reimbursementTargetLabel": "Hvor hører kostnaden hjemme?",
-      "reimbursementTarget": {
-        "javaBin": "javaBin",
-        "javaZone": "JavaZone",
-        "javaBinHeading": "Typiske kostnader for javaBin",
-        "javaZoneHeading": "Typiske kostnader for JavaZone",
-        "javaBinExample1": "Reise til og fra javaBin‑meetup, styremøte eller regionssamling.",
-        "javaBinExample2": "Mat, drikke eller annet utstyr til lokale javaBin‑arrangementer.",
-        "javaBinExample3": "Andre faglige eller sosiale tiltak som arrangeres av javaBin.",
-        "javaZoneExample1": "Reise og opphold til JavaZone.",
-        "javaZoneExample2": "Utstyr, mat eller andre kostnader tilknyttet JavaZone‑aktiviteter og workshopper.",
-        "javaZoneExample3": "Andre kostnader som er direkte relatert til JavaZone‑konferansen."
-      },
+    "reimbursementTargetLabel": "Hvor hører kostnaden hjemme?",
+    "reimbursementTarget": {
+      "javaBin": "javaBin",
+      "javaZone": "JavaZone",
+      "javaBinHeading": "Typiske kostnader for javaBin",
+      "javaZoneHeading": "Typiske kostnader for JavaZone",
+      "javaBinExample1": "Reise til og fra javaBin‑meetup, styremøte eller regionssamling.",
+      "javaBinExample2": "Mat, drikke eller annet utstyr til lokale javaBin‑arrangementer.",
+      "javaBinExample3": "Andre faglige eller sosiale tiltak som arrangeres av javaBin.",
+      "javaZoneExample1": "Reise og opphold til JavaZone.",
+      "javaZoneExample2": "Utstyr, mat eller andre kostnader tilknyttet JavaZone‑aktiviteter og workshopper.",
+      "javaZoneExample3": "Andre kostnader som er direkte relatert til JavaZone‑konferansen."
+    },
     "descriptionPlaceholder": "Taxi – fra flyplassen til konferansen – JavaZone 2026",
     "descriptionDescription": "Hva ble kjøpt, hvor og til hvilken anledning?",
     "date": "Dato",
@@ -211,8 +212,8 @@
       "invalidNorwegianAccount": "Ugyldig norsk kontonummer",
       "invalidRoutingNumber": "Ugyldig routing number (ABA). Må være 9 siffer.",
       "invalidUsAccountNumber": "Ugyldig kontonummer. Må være mellom 4 og 17 siffer.",
-        "invalidSwift": "Ugyldig SWIFT/BIC-kode",
-        "reimbursementTargetRequired": "Velg hvem som skal refundere utlegget (javaBin eller JavaZone)."
+      "invalidSwift": "Ugyldig SWIFT/BIC-kode",
+      "reimbursementTargetRequired": "Velg hvem som skal refundere utlegget (javaBin eller JavaZone)."
     }
   },
   "fileUploader": {

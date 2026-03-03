@@ -333,7 +333,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="e.g. DNBANOKK"
+                    placeholder={t("expense.bankSwiftBicPlaceholder")}
                     className="uppercase"
                     onBlur={() => {
                       field.onBlur()
@@ -373,7 +373,7 @@ export function BankDetailsForm({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g. 021000021"
+                    placeholder={t("expense.bankRoutingNumberPlaceholder")}
                       inputMode="numeric"
                       onBlur={() => {
                         field.onBlur()
@@ -407,7 +407,7 @@ export function BankDetailsForm({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g. 1234567890"
+                    placeholder={t("expense.bankAccountNumberUsPlaceholder")}
                       onBlur={() => {
                         field.onBlur()
                         const trimmed = field.value.trim()
@@ -454,7 +454,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="e.g. CHASUS33"
+                    placeholder={t("expense.bankSwiftBicPlaceholder")}
                     className="uppercase"
                     onBlur={() => {
                       field.onBlur()
@@ -501,7 +501,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="e.g. 123 Main St, New York, NY 10001"
+                    placeholder={t("expense.bankAddressPlaceholder")}
                   />
                 </FormControl>
                 <FormMessage />
@@ -559,7 +559,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="e.g. DEUTDEFF"
+                    placeholder={t("expense.bankSwiftBicPlaceholder")}
                     className="uppercase"
                     onBlur={() => {
                       field.onBlur()
