@@ -18,7 +18,6 @@ import { cn, formatBytes } from "@/lib/utils"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ZoomIn, ZoomOut } from "lucide-react"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
 import ReactCrop, {
