@@ -166,6 +166,9 @@ importers:
       '@types/react-dom':
         specifier: 18.3.1
         version: 18.3.1
+      '@types/react-image-crop':
+        specifier: ^9.0.2
+        version: 9.0.2(react@18.3.1)
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.12.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@9.39.2(jiti@1.21.6))(typescript@5.6.3))(eslint@9.39.2(jiti@1.21.6))(typescript@5.6.3)
@@ -1566,6 +1569,10 @@ packages:
 
   '@types/react-dom@18.3.1':
     resolution: {integrity: sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==}
+
+  '@types/react-image-crop@9.0.2':
+    resolution: {integrity: sha512-gOa5G6CuPuRuvEfQty7Ho4GxsKNwRTdk2jwS/XmI3agPFvsVEmtxR9y3tt5Y3UNp4NkRHbnH4U4YLR04YlSARw==}
+    deprecated: This is a stub types definition. react-image-crop provides its own type definitions, so you do not need this installed.
 
   '@types/react@18.3.12':
     resolution: {integrity: sha512-D2wOSq/d6Agt28q7rSI3jhU7G6aiuzljDGZ2hTZHIkrTLUI+AF3WMeKkEZ9nN2fkBAlcktT6vcZjDFiIhMYEQw==}
@@ -5085,6 +5092,12 @@ snapshots:
   '@types/react-dom@18.3.1':
     dependencies:
       '@types/react': 18.3.12
+
+  '@types/react-image-crop@9.0.2(react@18.3.1)':
+    dependencies:
+      react-image-crop: 11.0.7(react@18.3.1)
+    transitivePeerDependencies:
+      - react
 
   '@types/react@18.3.12':
     dependencies:
