@@ -75,7 +75,7 @@
     "typescript": "^5.3.2"
   },
   "engines": {
-    "node": ">=25"
+    "node": ">=23"
   },
   "pnpm": {
     "overrides": {
