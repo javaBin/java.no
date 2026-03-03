@@ -215,6 +215,42 @@ export function BankDetailsForm({
     [],
   )
 
+  const swiftBicField = (
+    <FormField
+      control={form.control}
+      name="bankSwiftBic"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{t("expense.bankSwiftBic")}</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              placeholder={t("expense.bankSwiftBicPlaceholder")}
+              onBlur={() => {
+                field.onBlur()
+                const cleaned = (field.value || "")
+                  .replace(/\s/g, "")
+                  .toUpperCase()
+                if (cleaned !== field.value) field.onChange(cleaned)
+                if (skipValidation) return
+                if (cleaned && !validateBIC(cleaned)) {
+                  form.setError("bankSwiftBic", {
+                    message: t("expense.errors.invalidSwift"),
+                  })
+                  setOtherValidationFailed(true)
+                } else {
+                  form.clearErrors("bankSwiftBic")
+                  setOtherValidationFailed(false)
+                }
+              }}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+
   const skipValidationUi = validationFailed ? (
     <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
         <input
@@ -324,40 +360,7 @@ export function BankDetailsForm({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="bankSwiftBic"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("expense.bankSwiftBic")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("expense.bankSwiftBicPlaceholder")}
-                    className="uppercase"
-                    onBlur={() => {
-                      field.onBlur()
-                      const cleaned = field.value
-                        .replace(/\s/g, "")
-                        .toUpperCase()
-                      if (cleaned !== field.value) field.onChange(cleaned)
-                      if (skipValidation) return
-                      if (cleaned && !validateBIC(cleaned)) {
-                        form.setError("bankSwiftBic", {
-                          message: t("expense.errors.invalidSwift"),
-                        })
-                        setOtherValidationFailed(true)
-                      } else {
-                        form.clearErrors("bankSwiftBic")
-                        setOtherValidationFailed(false)
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {swiftBicField}
         </>
       )}
 
@@ -445,40 +448,7 @@ export function BankDetailsForm({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="bankSwiftBic"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("expense.bankSwiftBic")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("expense.bankSwiftBicPlaceholder")}
-                    className="uppercase"
-                    onBlur={() => {
-                      field.onBlur()
-                      const cleaned = field.value
-                        .replace(/\s/g, "")
-                        .toUpperCase()
-                      if (cleaned !== field.value) field.onChange(cleaned)
-                      if (skipValidation) return
-                      if (cleaned && !validateBIC(cleaned)) {
-                        form.setError("bankSwiftBic", {
-                          message: t("expense.errors.invalidSwift"),
-                        })
-                        setOtherValidationFailed(true)
-                      } else {
-                        form.clearErrors("bankSwiftBic")
-                        setOtherValidationFailed(false)
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {swiftBicField}
           <FormField
             control={form.control}
             name="bankName"
@@ -550,40 +520,7 @@ export function BankDetailsForm({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="bankSwiftBic"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("expense.bankSwiftBic")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("expense.bankSwiftBicPlaceholder")}
-                    className="uppercase"
-                    onBlur={() => {
-                      field.onBlur()
-                      const cleaned = field.value
-                        .replace(/\s/g, "")
-                        .toUpperCase()
-                      if (cleaned !== field.value) field.onChange(cleaned)
-                      if (skipValidation) return
-                      if (cleaned && !validateBIC(cleaned)) {
-                        form.setError("bankSwiftBic", {
-                          message: t("expense.errors.invalidSwift"),
-                        })
-                        setOtherValidationFailed(true)
-                      } else {
-                        form.clearErrors("bankSwiftBic")
-                        setOtherValidationFailed(false)
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {swiftBicField}
           <FormField
             control={form.control}
             name="bankName"
