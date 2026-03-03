@@ -41,6 +41,14 @@ export const Footer = () => {
                 </li>
                 <li>
                   <Link
+                    href="/utlegg"
+                    className="text-white hover:text-jz-yellow"
+                  >
+                    {t("expenseForm")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="https://github.com/javaBin"
                     className="text-white hover:text-jz-yellow"
                   >
