@@ -34,7 +34,11 @@ import { useTranslation } from "next-i18next"
 import { nb } from "date-fns/locale"
 import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
 import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
-import { getSymbolFromCurrency, countries } from "country-data-list"
+import { getSymbolFromCurrency } from "country-data-list"
+import {
+  findCountryByCodeOrName,
+  getDisplayLocaleFromCountry,
+} from "@/lib/country"
 
 const LOGO_URL = "/img/logos/javaBin-logo-horizontal-WHITE.png"
 let cachedLogoBytes: ArrayBuffer | undefined | null = null
@@ -80,20 +84,7 @@ function parseFormQueryParams(
   let country = rawCountry
   let countryIso2ForHeuristic: string | undefined
   if (rawCountry) {
-    const lower = rawCountry.toLowerCase()
-    const byAlpha2 = countries.all.find(
-      (c: any) => c.alpha2?.toLowerCase() === lower,
-    )
-    const byAlpha3 = byAlpha2
-      ? undefined
-      : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
-    const byName =
-      byAlpha2 || byAlpha3
-        ? undefined
-        : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
-    const match = (byAlpha2 || byAlpha3 || byName) as
-      | { alpha2?: string; alpha3?: string }
-      | undefined
+    const match = findCountryByCodeOrName(rawCountry)
     if (match?.alpha3) {
       country = match.alpha3
     }
@@ -101,7 +92,6 @@ function parseFormQueryParams(
       countryIso2ForHeuristic = match.alpha2
     }
   } else {
-    // No explicit country from query; leave blank for now and decide below
     country = ""
     countryIso2ForHeuristic = undefined
   }
@@ -124,27 +114,12 @@ function parseFormQueryParams(
 
   if (rawBankCountry || rawBankCountryIso2) {
     const source = rawBankCountry || rawBankCountryIso2
-    const lower = source.toLowerCase()
-    const byAlpha2 = countries.all.find(
-      (c: any) => c.alpha2?.toLowerCase() === lower,
-    )
-    const byAlpha3 = byAlpha2
-      ? undefined
-      : countries.all.find((c: any) => c.alpha3?.toLowerCase() === lower)
-    const byName =
-      byAlpha2 || byAlpha3
-        ? undefined
-        : countries.all.find((c: any) => c.name?.toLowerCase() === lower)
-    const match = (byAlpha2 || byAlpha3 || byName) as
-      | { alpha2?: string; alpha3?: string }
-      | undefined
-
+    const match = findCountryByCodeOrName(source)
     if (match?.alpha3) {
       bankCountry = match.alpha3
     } else if (rawBankCountry) {
       bankCountry = rawBankCountry
     }
-
     if (match?.alpha2) {
       bankCountryIso2 = match.alpha2
     }
@@ -417,21 +392,13 @@ export default function ExpensePage() {
 
   const watchedCountry = form.watch("country")
   const amountDisplayLocale = React.useMemo(() => {
+    if (residesInNorway) return "nb-NO"
     if (watchedCountry) {
-      const countryData = countries.all.find(
-        (c: any) => c.name === watchedCountry,
-      )
-      if (
-        countryData &&
-        countryData.alpha2 &&
-        countryData.languages &&
-        countryData.languages.length > 0
-      ) {
-        return `${countryData.languages[0]}-${countryData.alpha2}`
-      }
+      const locale = getDisplayLocaleFromCountry(watchedCountry)
+      if (locale) return locale
     }
     return typeof navigator !== "undefined" ? navigator.language : "en-GB"
-  }, [watchedCountry])
+  }, [residesInNorway, watchedCountry])
   const isDirty = form.formState.isDirty
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -456,21 +423,12 @@ export default function ExpensePage() {
 
       // PDF country names are always in Norwegian
       const regionNames = new Intl.DisplayNames(["nb"], { type: "region" })
-      const countryDisplayName =
-        normalizedData.country.length === 2
-          ? (regionNames.of(normalizedData.country.toUpperCase()) ??
-            normalizedData.country)
-          : normalizedData.country.length === 3
-            ? (() => {
-                const c = countries.all.find(
-                  (x: { alpha3?: string }) =>
-                    x.alpha3 === normalizedData.country,
-                )
-                return c?.alpha2
-                  ? (regionNames.of(c.alpha2) ?? normalizedData.country)
-                  : normalizedData.country
-              })()
-            : normalizedData.country
+      const countryMatch = findCountryByCodeOrName(normalizedData.country)
+      const countryAlpha2 = countryMatch?.alpha2
+      const countryDisplayName = countryAlpha2
+        ? (regionNames.of(countryAlpha2.toUpperCase()) ??
+          normalizedData.country)
+        : normalizedData.country
       const bankCountryDisplayName = normalizedData.bankCountryIso2
         ? (regionNames.of(normalizedData.bankCountryIso2.toUpperCase()) ??
           normalizedData.bankCountry ??
