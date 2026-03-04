@@ -101,7 +101,7 @@ function parseFormQueryParams(
       countryIso2ForHeuristic = match.alpha2
     }
   } else {
-    // No explicit country; leave blank so dropdown has no default selection
+    // No explicit country from query; leave blank for now and decide below
     country = ""
     countryIso2ForHeuristic = undefined
   }
@@ -443,33 +443,43 @@ export default function ExpensePage() {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true)
+
+    const normalizedData: FormValues = {
+      ...data,
+      // Always ensure Norway is used when the user resides in Norway,
+      // regardless of any existing country value.
+      country: data.residesInNorway ? "Norway" : data.country,
+    }
+
     try {
       const logoPngBytes = await getCachedLogoBytes()
 
       // PDF country names are always in Norwegian
       const regionNames = new Intl.DisplayNames(["nb"], { type: "region" })
       const countryDisplayName =
-        data.country.length === 2
-          ? (regionNames.of(data.country.toUpperCase()) ?? data.country)
-          : data.country.length === 3
+        normalizedData.country.length === 2
+          ? (regionNames.of(normalizedData.country.toUpperCase()) ??
+            normalizedData.country)
+          : normalizedData.country.length === 3
             ? (() => {
                 const c = countries.all.find(
-                  (x: { alpha3?: string }) => x.alpha3 === data.country,
+                  (x: { alpha3?: string }) =>
+                    x.alpha3 === normalizedData.country,
                 )
                 return c?.alpha2
-                  ? (regionNames.of(c.alpha2) ?? data.country)
-                  : data.country
+                  ? (regionNames.of(c.alpha2) ?? normalizedData.country)
+                  : normalizedData.country
               })()
-            : data.country
-      const bankCountryDisplayName = data.bankCountryIso2
-        ? (regionNames.of(data.bankCountryIso2.toUpperCase()) ??
-          data.bankCountry ??
+            : normalizedData.country
+      const bankCountryDisplayName = normalizedData.bankCountryIso2
+        ? (regionNames.of(normalizedData.bankCountryIso2.toUpperCase()) ??
+          normalizedData.bankCountry ??
           "")
-        : (data.bankCountry ?? "")
+        : (normalizedData.bankCountry ?? "")
 
       const expenseReport = await generatePDF({
-        ...data,
-        validationSkipped: data.skipBankValidation ?? false,
+        ...normalizedData,
+        validationSkipped: normalizedData.skipBankValidation ?? false,
         logoPngBytes,
         countryDisplayName,
         bankCountryDisplayName,
@@ -484,7 +494,7 @@ export default function ExpensePage() {
 
       const today = new Date()
       const todayStr = today.toISOString().split("T")[0]
-      const sanitizedName = data.name
+      const sanitizedName = normalizedData.name
         .replace(/[^a-zA-Z0-9\s-]/g, "")
         .replace(/\s+/g, "-")
         .toLowerCase()

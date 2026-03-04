@@ -125,8 +125,10 @@ export const createExpenseSchemas = (
           required_error: t("expense.errors.countryRequired"),
           invalid_type_error: t("expense.errors.countryRequired"),
         })
-        .min(1, t("expense.errors.countryRequired"))
-        .default("Norway"),
+        // Allow empty by default; we enforce "required" only when not residing
+        // in Norway in the superRefine block below.
+        .optional()
+        .default(""),
       residesInNorway: z.boolean().default(true),
       bankCountry: z.string().optional().default(""),
       bankCountryIso2: z.string().optional().default(""),
@@ -161,6 +163,18 @@ export const createExpenseSchemas = (
     })
     .superRefine((data, ctx) => {
       const skip = data.skipBankValidation === true
+
+      // Country is required only when the user does NOT reside in Norway.
+      if (!data.residesInNorway) {
+        const country = (data.country || "").trim()
+        if (!country) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t("expense.errors.countryRequired"),
+            path: ["country"],
+          })
+        }
+      }
 
       if (data.residesInNorway) {
         const accountNumber = (data.bankAccountNumber || "").replace(/\s/g, "")
