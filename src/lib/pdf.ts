@@ -372,17 +372,17 @@ export async function generatePDF({
     exchange: "Valuta / kurs",
     amount: "Beløp (NOK)",
   }
-  ;(
-    Object.keys(rebalancedColumns) as Array<keyof typeof rebalancedColumns>
-  ).forEach((key) => {
-    coverPage.drawText(headerTexts[key], {
-      x: rebalancedColumns[key].x,
-      y: headerTextY,
-      size: 11,
-      font,
-      color: jzDark,
+    ; (
+      Object.keys(rebalancedColumns) as Array<keyof typeof rebalancedColumns>
+    ).forEach((key) => {
+      coverPage.drawText(headerTexts[key], {
+        x: rebalancedColumns[key].x,
+        y: headerTextY,
+        size: 11,
+        font,
+        color: jzDark,
+      })
     })
-  })
 
   const dataFontSize = 10
   const dataLineHeight = 12
@@ -423,7 +423,12 @@ export async function generatePDF({
       const exchangeRate = await getExchangeRate(expense.currency, expenseDate)
       const base = `${formatCurrency(expense.amount)} ${expense.currency}`
       exchangeText =
-        exchangeRate !== null ? `${base} @ ${exchangeRate.toFixed(4)}` : base
+        exchangeRate !== null
+          ? `${base} @ ${formatCurrency(exchangeRate, "nb-NO", {
+            minimumFractionDigits: 4,
+            maximumFractionDigits: 4,
+          })}`
+          : base
     }
 
     const descriptionLines = wrapToWidth(

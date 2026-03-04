@@ -226,6 +226,10 @@ export function BankDetailsForm({
             <Input
               {...field}
               placeholder={t("expense.bankSwiftBicPlaceholder")}
+              onChange={(event) => {
+                const value = event.target.value.toUpperCase()
+                field.onChange(value)
+              }}
               onBlur={() => {
                 field.onBlur()
                 const cleaned = (field.value || "")
