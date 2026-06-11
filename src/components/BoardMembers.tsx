@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { User } from "lucide-react"
 import { BoardMemberType } from "../data/boardmembers"
 import { useTranslation } from "next-i18next"
 
@@ -8,13 +9,22 @@ const BoardMember = (props: BoardMemberType) => {
   return (
     <div className="flex flex-col items-center text-center">
       <div className="relative mx-auto h-[150px] w-[150px] shrink-0 overflow-hidden rounded-full">
-        <Image
-          src={`/img/styret/${props.img}`}
-          fill
-          className="object-cover"
-          alt={props.name}
-          sizes="150px"
-        />
+        {props.img ? (
+          <Image
+            src={`/img/styret/${props.img}`}
+            fill
+            className="object-cover"
+            alt={props.name}
+            sizes="150px"
+          />
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+            aria-hidden
+          >
+            <User className="h-16 w-16" strokeWidth={1.25} />
+          </div>
+        )}
       </div>
       <h4 className="mt-3 font-semibold">{props.name}</h4>
       <p className="text-muted text-sm">{props.title ? t(props.title) : ""}</p>

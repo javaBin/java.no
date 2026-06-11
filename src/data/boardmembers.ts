@@ -5,29 +5,24 @@ export type BoardMemberType = {
     | "Deputy Chairman"
     | "Financial Controller"
     | "Board Member"
-  img: string
+  img?: string
 }
 
 const members: BoardMemberType[] = [
   {
-    name: "Alexander Samsig",
+    name: "Anders Karlsen",
     title: "Chairman",
-    img: "alexander_samsig.jpg",
+    img: "anders_karlsen.jpg",
   },
   {
-    name: "Øyvind Løkling",
+    name: "Hilde Rødseth",
     title: "Deputy Chairman",
-    img: "øyvind_løkling.jpg",
+    img: "hilde_rødseth.jpg",
   },
   {
     name: "Rafael Winterhalter",
     title: "Financial Controller",
     img: "rafael_winterhalter.jpg",
-  },
-  {
-    name: "Dervis Mansuroglu",
-    title: "Board Member",
-    img: "dervis_mansuroglu.jpg",
   },
   {
     name: "Sandra Lekve",
@@ -45,9 +40,8 @@ const members: BoardMemberType[] = [
     img: "alexander_amiri.jpg",
   },
   {
-    name: "Sverre Moe",
+    name: "Ole Berg",
     title: "Board Member",
-    img: "sverre_moe.jpg",
   },
   {
     name: "Chris Searle",
