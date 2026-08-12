@@ -18,7 +18,7 @@ import { cn, formatBytes } from "@/lib/utils"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ZoomIn, ZoomOut } from "lucide-react"
+import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
@@ -109,12 +109,16 @@ interface CropDialogProps {
 }
 
 /**
- * Keeps output clear of the per-browser canvas caps (iOS Safari allows roughly
- * 16.7M pixels and 4096px per side, past which `toBlob` returns null and the
- * crop silently never completes).
+ * Deliberately matched to the downscale the upload step applies. Emitting
+ * upload-ready output means the crop is the only lossy pass: the resize step
+ * finds the image already within bounds and passes it through untouched,
+ * instead of decoding and re-encoding a large JPEG a second time.
+ *
+ * It also keeps us clear of the per-browser canvas caps (iOS Safari allows
+ * roughly 16.7M pixels and 4096px per side, past which `toBlob` returns null).
  */
-const MAX_OUTPUT_DIMENSION = 4096
-const OUTPUT_QUALITY = 0.95
+const MAX_OUTPUT_DIMENSION = 1800
+const OUTPUT_QUALITY = 0.8
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -133,6 +137,10 @@ function CropDialog({
 
   React.useEffect(() => {
     if (!file) return
+
+    // The dialog is not unmounted between files, so clear the previous
+    // selection rather than briefly applying it to the new image.
+    setCrop(undefined)
 
     const objectUrl = URL.createObjectURL(file)
     setImgSrc(objectUrl)
@@ -156,7 +164,6 @@ function CropDialog({
     // Nothing meaningful selected — pass the original through untouched.
     if (!crop || crop.width <= 0 || crop.height <= 0) {
       onCropComplete(file)
-      onOpenChange(false)
       return
     }
 
@@ -186,7 +193,6 @@ function CropDialog({
     const ctx = canvas.getContext("2d")
     if (!ctx) {
       onCropComplete(file)
-      onOpenChange(false)
       return
     }
 
@@ -209,10 +215,11 @@ function CropDialog({
 
     // toBlob can still fail (memory pressure, tainted canvas). Fall back to the
     // original file rather than silently dropping the receipt.
+    //
+    // Closing is left to the parent, which owns the selected file.
     onCropComplete(
       blob ? new File([blob], file.name, { type: "image/jpeg" }) : file,
     )
-    onOpenChange(false)
   }
 
   return (
@@ -281,13 +288,7 @@ function CropDialog({
                     className="size-8"
                     onClick={() => resetTransform()}
                   >
-                    <NextImage
-                      src={imgSrc}
-                      alt={t("fileUploader.crop.resetZoomAlt")}
-                      width={16}
-                      height={16}
-                      className="size-4 object-cover"
-                    />
+                    <RotateCcw className="size-4" />
                     <span className="sr-only">
                       {t("fileUploader.crop.resetZoom")}
                     </span>
@@ -350,9 +351,38 @@ export function FileUploader(props: FileUploaderProps) {
 
   const [cropDialogFile, setCropDialogFile] = React.useState<File | null>(null)
 
+  const addFiles = React.useCallback(
+    async (newFiles: File[]) => {
+      if (newFiles.length === 0) return
+
+      const updatedFiles = files ? [...files, ...newFiles] : newFiles
+
+      setFiles(updatedFiles)
+
+      if (onUpload && updatedFiles.length <= maxFileCount) {
+        try {
+          await onUpload(updatedFiles)
+        } catch (error) {
+          console.error("Upload failed:", error)
+        }
+      }
+    },
+    [files, maxFileCount, onUpload, setFiles],
+  )
+
   const onDrop = React.useCallback(
     async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-      setErrorMessage(null)
+      // Reported before any early return below, so a rejection is never hidden
+      // by the crop dialog opening for an accepted file in the same drop.
+      setErrorMessage(
+        rejectedFiles.length > 0
+          ? t("fileUploader.errors.fileRejected", {
+              fileName: rejectedFiles.map(({ file }) => file.name).join(", "),
+            })
+          : null,
+      )
+
+      if (acceptedFiles.length === 0) return
 
       if (!multiple && maxFileCount === 1 && acceptedFiles.length > 1) {
         setErrorMessage(t("fileUploader.errors.singleFile"))
@@ -366,43 +396,18 @@ export function FileUploader(props: FileUploaderProps) {
         return
       }
 
-      // Open crop dialog for the first image
-      if (acceptedFiles[0]?.type.startsWith("image/")) {
-        setCropDialogFile(acceptedFiles[0])
+      // An image goes through the crop dialog first; anything else is taken as
+      // is. Only the first file is ever an image here, because the dropzone is
+      // single-file: it rejects a multi-file drop before we see it.
+      const [first] = acceptedFiles
+      if (first?.type.startsWith("image/")) {
+        setCropDialogFile(first)
         return
       }
 
-      const newFiles = acceptedFiles.map((file) =>
-        Object.assign(file, {
-          preview: URL.createObjectURL(file),
-        }),
-      )
-
-      const updatedFiles = files ? [...files, ...newFiles] : newFiles
-
-      setFiles(updatedFiles)
-
-      if (rejectedFiles.length > 0) {
-        rejectedFiles.forEach(({ file }) => {
-          setErrorMessage(
-            t("fileUploader.errors.fileRejected", { fileName: file.name }),
-          )
-        })
-      }
-
-      if (
-        onUpload &&
-        updatedFiles.length > 0 &&
-        updatedFiles.length <= maxFileCount
-      ) {
-        try {
-          await onUpload(updatedFiles)
-        } catch (error) {
-          console.error("Upload failed:", error)
-        }
-      }
+      await addFiles(acceptedFiles)
     },
-    [files, maxFileCount, multiple, onUpload, setFiles, t],
+    [addFiles, files, maxFileCount, multiple, t],
   )
 
   function onRemove(index: number) {
@@ -414,24 +419,21 @@ export function FileUploader(props: FileUploaderProps) {
     onValueChange?.(newFiles)
   }
 
-  React.useEffect(() => {
-    return () => {
-      files?.forEach((file) => {
-        if ("preview" in file) {
-          URL.revokeObjectURL(file.preview as string)
-        }
-      })
-    }
-  }, [files])
-
   const isDisabled = disabled || (files?.length ?? 0) >= maxFileCount
 
   const handleCropComplete = (croppedFile: File) => {
-    const newFiles = [croppedFile]
-    setFiles(files ? [...files, ...newFiles] : newFiles)
-    if (onUpload) {
-      onUpload(newFiles).catch(console.error)
+    // The crop re-encodes the image, so the size the dropzone validated no
+    // longer applies to what we are actually about to hand over.
+    if (croppedFile.size > maxSize) {
+      setErrorMessage(
+        t("fileUploader.errors.fileRejected", { fileName: croppedFile.name }),
+      )
+      setCropDialogFile(null)
+      return
     }
+
+    void addFiles([croppedFile])
+    setCropDialogFile(null)
   }
 
   return (
@@ -516,7 +518,7 @@ export function FileUploader(props: FileUploaderProps) {
         </div>
       ) : null}
       <CropDialog
-        file={cropDialogFile!}
+        file={cropDialogFile}
         isOpen={!!cropDialogFile}
         onOpenChange={(open) => !open && setCropDialogFile(null)}
         onCropComplete={handleCropComplete}
@@ -663,13 +665,7 @@ function ImageSelectionDialog({
                     className="size-8"
                     onClick={() => resetTransform()}
                   >
-                    <NextImage
-                      src={imgSrc}
-                      alt={t("fileUploader.crop.resetZoomAlt")}
-                      width={16}
-                      height={16}
-                      className="size-4 object-cover"
-                    />
+                    <RotateCcw className="size-4" />
                     <span className="sr-only">
                       {t("fileUploader.crop.resetZoom")}
                     </span>
@@ -854,13 +850,7 @@ function FilePreview({ file }: FilePreviewProps) {
                         className="size-8"
                         onClick={() => resetTransform()}
                       >
-                        <NextImage
-                          src={preview}
-                          alt={file.name}
-                          width={16}
-                          height={16}
-                          className="size-4 object-cover"
-                        />
+                        <RotateCcw className="size-4" />
                         <span className="sr-only">
                           {t("fileUploader.crop.resetZoom")}
                         </span>

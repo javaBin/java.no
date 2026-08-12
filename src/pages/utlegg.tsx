@@ -494,6 +494,13 @@ export default function ExpensePage() {
         const canvas = document.createElement("canvas")
         let { naturalWidth: width, naturalHeight: height } = img
 
+        // Already within bounds — the crop step emits upload-ready output, so
+        // re-encoding here would only cost a second generation of JPEG loss.
+        if (width <= options.maxWidth && height <= options.maxHeight) {
+          finish(file)
+          return
+        }
+
         if (width > options.maxWidth) {
           height = (height * options.maxWidth) / width
           width = options.maxWidth
