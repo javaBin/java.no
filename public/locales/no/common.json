@@ -238,13 +238,6 @@
       "maxFiles": "Kan ikke laste opp mer enn {{count}} filer",
       "fileRejected": "Filen {{fileName}} ble avvist"
     },
-    "ocr": {
-      "title": "Velg område for OCR",
-      "imageAlt": "Velg område i bildet",
-      "clearSelection": "Tøm markering",
-      "processSelection": "Behandle markering",
-      "processEntireImage": "Behandle hele bildet"
-    },
     "card": {
       "removeFile": "Fjern fil"
     }

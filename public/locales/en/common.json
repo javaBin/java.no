@@ -242,13 +242,6 @@
       "maxFiles": "Cannot upload more than {{count}} files",
       "fileRejected": "File {{fileName}} was rejected"
     },
-    "ocr": {
-      "title": "Select Area for OCR",
-      "imageAlt": "Select area in the image",
-      "clearSelection": "Clear Selection",
-      "processSelection": "Process Selection",
-      "processEntireImage": "Process Entire Image"
-    },
     "card": {
       "removeFile": "Remove file"
     }
