@@ -478,11 +478,21 @@ export default function ExpensePage() {
   ): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image()
-      img.src = URL.createObjectURL(file)
+      const objectUrl = URL.createObjectURL(file)
+      img.src = objectUrl
+
+      // Every failure path resolves with the original file — a resize that never
+      // settles would leave the form field permanently empty.
+      const finish = (result: File) => {
+        URL.revokeObjectURL(objectUrl)
+        resolve(result)
+      }
+
+      img.onerror = () => finish(file)
 
       img.onload = () => {
         const canvas = document.createElement("canvas")
-        let { width, height } = img
+        let { naturalWidth: width, naturalHeight: height } = img
 
         if (width > options.maxWidth) {
           height = (height * options.maxWidth) / width
@@ -493,23 +503,29 @@ export default function ExpensePage() {
           height = options.maxHeight
         }
 
-        canvas.width = width
-        canvas.height = height
+        canvas.width = Math.max(1, Math.round(width))
+        canvas.height = Math.max(1, Math.round(height))
 
         const ctx = canvas.getContext("2d")
-        ctx?.drawImage(img, 0, 0, width, height)
+        if (!ctx) {
+          finish(file)
+          return
+        }
+
+        ctx.imageSmoothingQuality = "high"
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
         canvas.toBlob(
           (blob) => {
-            if (blob) {
-              resolve(new File([blob], file.name, { type: "image/jpeg" }))
-            }
+            finish(
+              blob
+                ? new File([blob], file.name, { type: "image/jpeg" })
+                : file,
+            )
           },
           "image/jpeg",
           options.quality,
         )
-
-        URL.revokeObjectURL(img.src)
       }
     })
   }
