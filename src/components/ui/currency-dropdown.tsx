@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useState, forwardRef, useEffect } from "react"
+import React, { useCallback, useState, forwardRef } from "react"
 import { useTranslation } from "next-i18next"
 
 // shadcn
@@ -120,22 +120,22 @@ const CurrencyDropdownComponent = (
     [currencyDisplayNames],
   )
   const [open, setOpen] = useState(false)
-  const [selectedCurrency, setSelectedCurrency] = useState<
+
+  // Only tracks the selection when used uncontrolled; when `value` is supplied
+  // the selection is derived from it instead. Deriving rather than syncing via an
+  // effect avoids a cascading render on every value change.
+  const [uncontrolledCurrency, setUncontrolledCurrency] = useState<
     Currency | undefined
   >(undefined)
 
-  useEffect(() => {
-    if (value) {
-      const initial = uniqueCurrencies.find((c) => c.code === value)
-      setSelectedCurrency(initial)
-    } else {
-      setSelectedCurrency(undefined)
-    }
-  }, [value, uniqueCurrencies])
+  const selectedCurrency =
+    value === undefined
+      ? uncontrolledCurrency
+      : uniqueCurrencies.find((c) => c.code === value)
 
   const handleSelect = useCallback(
     (currency: Currency) => {
-      setSelectedCurrency(currency)
+      setUncontrolledCurrency(currency)
       onValueChange?.(currency.code)
       onCurrencySelect?.(currency)
       setOpen(false)

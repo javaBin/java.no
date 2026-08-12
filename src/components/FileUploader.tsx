@@ -259,6 +259,13 @@ function CropDialog({
                     */
                     className="flex max-h-[60vh] max-w-full items-center justify-center"
                   >
+                    {/*
+                      A raw <img> is required here, not next/image: the crop
+                      reads naturalWidth/naturalHeight off this element and draws
+                      it to a canvas, and the source is a local object URL that
+                      the image optimiser cannot fetch anyway.
+                    */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       ref={imgRef}
                       src={imgSrc}

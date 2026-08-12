@@ -111,7 +111,7 @@ sudo npx playwright install-deps chromium   # Linux only
 ### Forms (React Hook Form + Zod)
 
 - Use the shadcn/ui Form pattern with `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage`
-- Zod schemas with localized errors: `createExpenseSchemas(t, language)` in `@/lib/expense`
+- Zod schemas with localized errors: `createExpenseSchemas(t)` in `@/lib/expense`; the resulting form shape is exported as `ExpenseFormValues`
 - Use `useWatch` from react-hook-form for fields that depend on other field values (e.g. `BankDetailsForm`)
 
 ### i18n

@@ -19,6 +19,7 @@ import {
   getBankCountryType,
   validateABARoutingNumber,
   validateBIC,
+  type ExpenseFormValues,
 } from "@/lib/expense"
 import {
   Select,
@@ -30,7 +31,7 @@ import {
 import { Country, CountryDropdown } from "./ui/country-dropdown"
 
 type BankDetailsFormProps = {
-  form: UseFormReturn<any>
+  form: UseFormReturn<ExpenseFormValues>
   t: (key: string, options?: Record<string, unknown>) => string
   language: string
   isInternational: boolean
@@ -68,11 +69,34 @@ export function BankDetailsForm({
     : "sepa"
   const previousTypeRef = React.useRef(type)
 
-  useEffect(() => {
+  // Resetting React state when the validated inputs change is an adjustment
+  // during render, not a synchronisation with an external system, so it does not
+  // belong in an effect — doing it there commits a render with stale validation
+  // still on screen and then immediately re-renders.
+  //
+  // Switching account type or residence invalidates every validation result...
+  const validationScope = `${isInternational}|${type}`
+  const [prevValidationScope, setPrevValidationScope] =
+    useState(validationScope)
+  if (prevValidationScope !== validationScope) {
+    setPrevValidationScope(validationScope)
     setSkipValidation(false)
     setAccountValidationFailed(false)
     setOtherValidationFailed(false)
     setValidationResult(null)
+  }
+
+  // ...while editing an account number only clears the "skip validation" opt-out.
+  const accountIdentifiers = `${watchedBankIban ?? ""}|${watchedBankAccountNumber ?? ""}`
+  const [prevAccountIdentifiers, setPrevAccountIdentifiers] =
+    useState(accountIdentifiers)
+  if (prevAccountIdentifiers !== accountIdentifiers) {
+    setPrevAccountIdentifiers(accountIdentifiers)
+    setSkipValidation(false)
+  }
+
+  // The RHF field genuinely is an external store, so it stays in effects.
+  useEffect(() => {
     form.setValue("skipBankValidation", false)
   }, [isInternational, form])
 
@@ -80,7 +104,6 @@ export function BankDetailsForm({
   useEffect(() => {
     if (prevBankIbanRef.current !== watchedBankIban) {
       prevBankIbanRef.current = watchedBankIban
-      setSkipValidation(false)
       form.setValue("skipBankValidation", false)
     }
   }, [watchedBankIban, form])
@@ -89,7 +112,6 @@ export function BankDetailsForm({
   useEffect(() => {
     if (prevAccountNumberRef.current !== watchedBankAccountNumber) {
       prevAccountNumberRef.current = watchedBankAccountNumber
-      setSkipValidation(false)
       form.setValue("skipBankValidation", false)
     }
   }, [watchedBankAccountNumber, form])
@@ -98,10 +120,6 @@ export function BankDetailsForm({
     if (previousTypeRef.current === type) return
     previousTypeRef.current = type
 
-    setSkipValidation(false)
-    setAccountValidationFailed(false)
-    setOtherValidationFailed(false)
-    setValidationResult(null)
     form.setValue("skipBankValidation", false)
   }, [type, form])
 

@@ -159,7 +159,6 @@ export const Region = ({ region }: Props) => {
 }
 
 export const RegionCard = ({ region }: Props) => {
-  const { t } = useTranslation("common", { keyPrefix: "region" })
   const dukePath = getRegionDukePath(region.name)
 
   return (

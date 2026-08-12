@@ -55,10 +55,7 @@ export function formatNorwegianBBANForDisplay(bban: string): string {
 }
 
 // Create schemas with localized error messages
-export const createExpenseSchemas = (
-  t: (key: string) => string,
-  language: string = "no",
-) => {
+export const createExpenseSchemas = (t: (key: string) => string) => {
   const expenseItemSchema = z.object({
     description: z
       .string({
@@ -341,6 +338,15 @@ export const createExpenseSchemas = (
 }
 
 /**
+ * Shape of the expense form. The schema is rebuilt per render to pick up
+ * translated messages, but its shape does not depend on them, so this can be
+ * derived once at module scope and shared by anything typing the form.
+ */
+export type ExpenseFormValues = z.infer<
+  ReturnType<typeof createExpenseSchemas>["formSchema"]
+>
+
+/**
  * Validates a bank account number, supporting both Norwegian BBAN and international IBAN formats.
  * Automatically detects the format based on the input.
  */
@@ -453,7 +459,7 @@ async function fetchExchangeRateData(
             }
           }
         }
-      } catch (e) {
+      } catch {
         // Could not parse UNIT_MULT from API response; fall back to default 1
       }
 
@@ -484,7 +490,7 @@ async function fetchExchangeRateData(
       }
 
       return { rate, unitMultiplier }
-    } catch (e) {
+    } catch {
       // Could not extract rate from dataset
     }
 

@@ -8,11 +8,10 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Mail, Plus, Copy, Check } from "lucide-react"
-import { createExpenseSchemas } from "@/lib/expense"
+import { createExpenseSchemas, type ExpenseFormValues } from "@/lib/expense"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
 import { format } from "date-fns"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -161,6 +160,8 @@ function parseFormQueryParams(
 
 type InitialFormValues = ReturnType<typeof parseFormQueryParams>
 
+type FormValues = ExpenseFormValues
+
 /** Build query record from client-side search string (e.g. window.location.search). */
 function searchToQueryRecord(
   search: string,
@@ -170,7 +171,7 @@ function searchToQueryRecord(
 }
 
 type ExpenseAmountInputProps = {
-  control: Control<any>
+  control: Control<FormValues>
   name: `expenses.${number}.amount`
   currencyName: `expenses.${number}.currency`
   label: string
@@ -295,8 +296,7 @@ export default function ExpensePage() {
 
   const { t, i18n } = useTranslation("common")
 
-  const { formSchema } = createExpenseSchemas(t, i18n.language)
-  type FormValues = z.infer<typeof formSchema>
+  const { formSchema } = createExpenseSchemas(t)
 
   const [isLoading, setIsLoading] = useState(false)
   const [reimbursementTargetIsLocked, setReimbursementTargetIsLocked] =
