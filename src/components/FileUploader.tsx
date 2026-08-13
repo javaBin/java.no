@@ -644,12 +644,20 @@ function FilePreview({ file }: FilePreviewProps) {
                       wrapperClass="!w-full !h-full"
                       contentClass="!w-full !h-full flex items-center justify-center"
                     >
+                      {/*
+                        Definite cap, for the same reason as the crop dialog:
+                        the dialog only sets `max-h-[90vh]`, and a max-height
+                        does not make a height definite, so `max-h-full` here
+                        resolved against an indefinite parent and was dropped —
+                        leaving a tall receipt at natural height, clipped by
+                        `overflow: hidden` with only its top visible.
+                      */}
                       <NextImage
                         src={preview}
                         alt={file.name}
                         width={1200}
                         height={800}
-                        className="max-h-full max-w-full w-auto h-auto object-contain"
+                        className="max-h-[70vh] max-w-full w-auto h-auto object-contain"
                         loading="lazy"
                         unoptimized
                       />

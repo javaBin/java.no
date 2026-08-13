@@ -251,3 +251,40 @@ test("cropping the bottom of a tall image returns the bottom of the image", asyn
     1,
   )
 })
+
+test("the preview of a cropped tall image shows the whole image", async ({
+  page,
+}) => {
+  await openCropDialogWithTallImage(page)
+
+  // Accept the default full-image selection; the result is still ~1:10.
+  await page
+    .getByRole("button", { name: "Crop og fortsett", exact: true })
+    .click()
+
+  await page.getByRole("button", { name: "tall-receipt.png" }).click()
+
+  const preview = page.locator('[role="dialog"] img[alt="tall-receipt.png"]')
+  await expect(preview).toBeVisible()
+
+  const metrics = await preview.evaluate((element) => {
+    const img = element as HTMLImageElement
+    const box = img.getBoundingClientRect()
+    const containerBox = img.parentElement!.getBoundingClientRect()
+    return {
+      naturalHeight: img.naturalHeight,
+      renderedHeight: box.height,
+      bottom: box.bottom,
+      containerBottom: containerBox.bottom,
+      maxHeight: getComputedStyle(img).maxHeight,
+      viewportHeight: window.innerHeight,
+    }
+  })
+
+  // A tall receipt is far taller than the viewport at its natural size, so a
+  // percentage cap that fails to resolve leaves it overflowing rather than fitted.
+  expect(metrics.maxHeight).toMatch(/^\d+(\.\d+)?px$/)
+  expect(metrics.renderedHeight).toBeGreaterThan(50)
+  expect(metrics.renderedHeight).toBeLessThanOrEqual(metrics.viewportHeight)
+  expect(metrics.bottom).toBeLessThanOrEqual(metrics.containerBottom + 1)
+})
