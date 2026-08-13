@@ -176,6 +176,8 @@
     "addExpense": "Add Expense",
     "description": "Description",
     "amount": "Amount (incl. VAT)",
+    "exchangeRate": "Exchange rate from Norges Bank ({{date}}): {{rate}} NOK per {{unit}} {{currency}}",
+    "youGetBack": "You will get back {{amount}} kr",
     "currency": "Currency",
     "selectCurrency": "Select currency",
     "attachment": "Attachment",

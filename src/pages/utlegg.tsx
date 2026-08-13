@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray, useWatch, type Control } from "react-hook-form"
+import { useQuery } from "@tanstack/react-query"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import React from "react"
@@ -12,6 +13,11 @@ import {
   createExpenseSchemas,
   type ExpenseFormValues,
 } from "@/lib/expense-schema"
+import {
+  exchangeRateDisplayInfo,
+  fetchExchangeRateData,
+  formatExchangeRate,
+} from "@/lib/exchange-rates"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
 import { format } from "date-fns"
@@ -31,7 +37,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
 import { enGB, nb } from "date-fns/locale"
 import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
@@ -177,6 +183,7 @@ type ExpenseAmountInputProps = {
   control: Control<FormValues>
   name: `expenses.${number}.amount`
   currencyName: `expenses.${number}.currency`
+  dateName: `expenses.${number}.date`
   label: string
   /** Locale for formatting (e.g. from selected country). Falls back to browser language. */
   displayLocale?: string
@@ -214,21 +221,52 @@ function parseAmountInput(raw: string): number {
   return Math.round(num * 100) / 100
 }
 
+/**
+ * Looks up the Norges Bank rate for a currency and date.
+ *
+ * Keyed on currency + day, so every expense row quoting the same currency on the
+ * same date shares one request, and switching a currency away and back is served
+ * from cache instead of refetched.
+ */
+function useExchangeRateDatum(
+  currency: string | undefined,
+  date: Date | undefined,
+) {
+  const dateKey =
+    date instanceof Date && !isNaN(date.getTime())
+      ? format(date, "yyyy-MM-dd")
+      : ""
+
+  const { data } = useQuery({
+    queryKey: ["norgesBankExchangeRate", currency, dateKey] as const,
+    queryFn: () => fetchExchangeRateData(currency as string, date as Date),
+    enabled: Boolean(currency && currency !== "NOK" && dateKey),
+    staleTime: 1000 * 60 * 60,
+  })
+
+  return data ?? null
+}
+
 function ExpenseAmountInput({
   control,
   name,
   currencyName,
+  dateName,
   label,
   displayLocale: displayLocaleProp,
 }: ExpenseAmountInputProps) {
+  const { t } = useTranslation("common")
   const [isFocused, setIsFocused] = useState(false)
   const [localValue, setLocalValue] = useState("")
 
   const selectedCurrencyCode = useWatch({ control, name: currencyName })
+  const selectedDate = useWatch({ control, name: dateName })
   const symbol =
     selectedCurrencyCode && typeof selectedCurrencyCode === "string"
       ? getSymbolFromCurrency(selectedCurrencyCode)
       : ""
+
+  const rateDatum = useExchangeRateDatum(selectedCurrencyCode, selectedDate)
 
   return (
     <FormField
@@ -284,6 +322,36 @@ function ExpenseAmountInput({
                 </span>
               ) : null}
             </div>
+            {(() => {
+              const rateInfo = exchangeRateDisplayInfo(
+                selectedCurrencyCode,
+                selectedDate,
+                field.value ?? 0,
+                rateDatum,
+              )
+              if (!rateInfo) return null
+
+              return (
+                <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
+                  <div>
+                    {t("expense.exchangeRate", {
+                      date: format(rateInfo.date, "yyyy-MM-dd"),
+                      rate: formatExchangeRate(
+                        rateInfo.rate,
+                        rateInfo.unitMultiplier,
+                      ),
+                      unit: rateInfo.unitMultiplier,
+                      currency: selectedCurrencyCode,
+                    })}
+                  </div>
+                  <div className="font-medium text-foreground">
+                    {t("expense.youGetBack", {
+                      amount: formatCurrency(rateInfo.nokAmount, "nb-NO"),
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
             <FormMessage />
           </FormItem>
         )
@@ -815,6 +883,7 @@ export default function ExpensePage() {
                       control={form.control}
                       name={`expenses.${index}.amount`}
                       currencyName={`expenses.${index}.currency`}
+                      dateName={`expenses.${index}.date`}
                       label={t("expense.amount")}
                       displayLocale={amountDisplayLocale}
                     />

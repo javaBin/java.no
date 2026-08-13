@@ -1,15 +1,38 @@
+export type ExchangeRateDatum = {
+  rate: number
+  unitMultiplier: number
+  /** The business day the rate is actually quoted for, which may precede the expense date. */
+  rateDate: Date
+}
+
+export type ExchangeRateDisplayInfo = {
+  rate: number
+  unitMultiplier: number
+  date: Date
+  nokAmount: number
+}
+
+/** Converts an amount using the raw Norges Bank rate and its UNIT_MULT. */
+export function nokAmountFromExchangeRateData(
+  amount: number,
+  data: { rate: number; unitMultiplier: number },
+): number {
+  const normalizedRate = data.rate / data.unitMultiplier
+  return Math.round(amount * normalizedRate * 100) / 100
+}
+
 /**
- * Internal helper to fetch exchange rate data from Norges Bank API
+ * Fetches exchange rate data from Norges Bank API
  * @param currency The currency code
  * @param date The date to get the exchange rate for
- * @returns Object with rate and unitMultiplier, or null if not found
+ * @returns Object with rate, unitMultiplier and the date the rate is quoted for
  */
-async function fetchExchangeRateData(
+export async function fetchExchangeRateData(
   currency: string,
   date: Date,
-): Promise<{ rate: number; unitMultiplier: number } | null> {
+): Promise<ExchangeRateDatum | null> {
   if (currency === "NOK") {
-    return { rate: 1, unitMultiplier: 1 }
+    return { rate: 1, unitMultiplier: 1, rateDate: date }
   }
 
   try {
@@ -51,6 +74,20 @@ async function fetchExchangeRateData(
         // Could not parse UNIT_MULT from API response; fall back to default 1
       }
 
+      // The observation keys are indexes into the TIME_PERIOD dimension, which is
+      // where the actual quote dates live.
+      let dimensionValues: Array<{ id: string } | string> = []
+      const observationDimensions =
+        responseData.data?.structure?.dimensions?.observation
+      if (Array.isArray(observationDimensions)) {
+        const timeDimension = observationDimensions.find(
+          (d: { id?: string }) => d.id === "TIME_PERIOD",
+        )
+        if (Array.isArray(timeDimension?.values)) {
+          dimensionValues = timeDimension.values
+        }
+      }
+
       const observations =
         responseData.data.dataSets[0].series["0:0:0:0"].observations
 
@@ -69,6 +106,13 @@ async function fetchExchangeRateData(
         return null
       }
 
+      const dimValue = dimensionValues[parseInt(lastKey, 10)]
+      const rateDateStr =
+        typeof dimValue === "string" ? dimValue : dimValue?.id
+      const rateDate = rateDateStr
+        ? parseISODateString(rateDateStr.substring(0, 10))
+        : date
+
       const rateStr = observations[lastKey][0]
       const rate = Number(rateStr)
 
@@ -77,7 +121,7 @@ async function fetchExchangeRateData(
         return null
       }
 
-      return { rate, unitMultiplier }
+      return { rate, unitMultiplier, rateDate }
     } catch {
       // Could not extract rate from dataset
     }
@@ -137,4 +181,46 @@ export async function convertToNOK(
   // This ensures we always get clean currency values (e.g., 123.45 instead of 123.4500000001)
   const converted = amount * normalizedRate
   return Math.round(converted * 100) / 100
+}
+
+/**
+ * Everything the form needs to show a rate, or null when there is nothing
+ * meaningful to show (NOK, no date, no amount, or the lookup failed).
+ */
+export function exchangeRateDisplayInfo(
+  currency: string | undefined,
+  expenseDate: Date | undefined,
+  amount: number,
+  rateDatum: ExchangeRateDatum | null | undefined,
+): ExchangeRateDisplayInfo | null {
+  if (!currency || currency === "NOK" || !expenseDate || amount <= 0) return null
+  if (!rateDatum) return null
+
+  return {
+    rate: rateDatum.rate,
+    unitMultiplier: rateDatum.unitMultiplier,
+    date: rateDatum.rateDate,
+    nokAmount: nokAmountFromExchangeRateData(amount, rateDatum),
+  }
+}
+
+/**
+ * Formats the quoted rate. Per-unit quotes need more precision than per-100
+ * quotes to stay meaningful.
+ */
+export function formatExchangeRate(
+  rate: number,
+  unitMultiplier: number,
+): string {
+  const fractionDigits = unitMultiplier === 100 ? 2 : 4
+  return new Intl.NumberFormat("nb-NO", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(rate)
+}
+
+/** Parses "YYYY-MM-DD" into a local midnight Date, avoiding a timezone shift. */
+function parseISODateString(str: string): Date {
+  const [y, m, d] = str.split("-").map(Number) as [number, number, number]
+  return new Date(y, m - 1, d)
 }
