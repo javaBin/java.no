@@ -623,7 +623,7 @@ export async function generatePDF({
         month: "long",
         day: "numeric",
       })
-      const headerText = `Vedlegg for utlegg #${index + 1}: ${expense.description} (${formattedDate})`
+      const headerText = `Bilag for utlegg #${index + 1}: ${expense.description} (${formattedDate})`
       const attachmentHeaderWidth = attachmentPage.getWidth() - 2 * margin
       const headerLines = wrapToWidth(headerText, attachmentHeaderWidth, font, 12)
       const headerLineHeight = 14

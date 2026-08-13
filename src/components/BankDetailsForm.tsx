@@ -156,8 +156,10 @@ export function BankDetailsForm({
             })
       }
       if (result.errorType === "checksum") {
+        // Naming the checksum specifically beats the generic "could not be
+        // validated", but the override hint stays: the details may still be right.
         return (
-          t("expense.invalidAccountGeneric") +
+          t("expense.invalidIbanChecksum") +
           " " +
           t("expense.validationOverridePrompt")
         )
