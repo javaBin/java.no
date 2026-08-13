@@ -1,13 +1,13 @@
+import { createExpenseSchemas } from "@/lib/expense-schema"
 import {
-  createExpenseSchemas,
   formatIBANForDisplay,
   formatNorwegianBBANForDisplay,
   getBankCountryType,
-} from "@/lib/expense"
+} from "@/lib/banking"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 import { formatCurrency } from "./utils"
-import { convertToNOK, getExchangeRate } from "./expense"
+import { convertToNOK, getExchangeRate } from "./exchange-rates"
 
 function bankDetailsLines(
   residesInNorway: boolean,

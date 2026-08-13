@@ -8,7 +8,10 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 import nextI18nConfig from "../../next-i18next.config.mjs"
 import { generatePDF } from "@/lib/pdf"
 import { CalendarIcon, Trash2, Mail, Plus, Copy, Check } from "lucide-react"
-import { createExpenseSchemas, type ExpenseFormValues } from "@/lib/expense"
+import {
+  createExpenseSchemas,
+  type ExpenseFormValues,
+} from "@/lib/expense-schema"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
 import { format } from "date-fns"

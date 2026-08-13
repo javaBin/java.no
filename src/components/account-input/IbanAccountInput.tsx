@@ -4,7 +4,7 @@ import {
   formatIBANForDisplay,
   getIBANBbanLength,
   validateIBAN,
-} from "@/lib/expense"
+} from "@/lib/banking"
 import type { AccountInputBaseProps, AccountValidationResult } from "./types"
 
 type IbanAccountInputProps = AccountInputBaseProps & {

@@ -4,7 +4,7 @@ import { banks } from "@/data/NorwegianBanks"
 import {
   formatNorwegianBBANForDisplay,
   validateNorwegianBBAN,
-} from "@/lib/expense"
+} from "@/lib/banking"
 import { BankLogo } from "./BankLogo"
 import type { AccountInputBaseProps, AccountValidationResult } from "./types"
 

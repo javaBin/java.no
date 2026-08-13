@@ -19,8 +19,8 @@ import {
   getBankCountryType,
   validateABARoutingNumber,
   validateBIC,
-  type ExpenseFormValues,
-} from "@/lib/expense"
+} from "@/lib/banking"
+import type { ExpenseFormValues } from "@/lib/expense-schema"
 import {
   Select,
   SelectContent,
