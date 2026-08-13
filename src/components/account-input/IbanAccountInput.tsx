@@ -96,7 +96,8 @@ export const IbanAccountInput = React.forwardRef<
         (props.placeholder as string | undefined) ??
         "e.g. NO93 8601 1117 947"
       }
-      className="flex h-9 w-full rounded-md border border-neutral-200 bg-transparent px-3 py-1 text-sm uppercase shadow-sm transition-colors placeholder:text-neutral-500 placeholder:normal-case focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:placeholder:text-neutral-400 dark:focus-visible:ring-neutral-300"
+      inputMode="text"
+      className="flex h-9 w-full rounded-md border border-neutral-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:placeholder:text-neutral-400 dark:focus-visible:ring-neutral-300"
     />
   )
 })

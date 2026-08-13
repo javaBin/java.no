@@ -337,9 +337,10 @@ export function BankDetailsForm({
                   form.setValue("bankCountryIso2", alpha2)
 
                   const countryState = form.getFieldState("country")
-                  const hasUserTouchedCountry =
-                    countryState.isTouched || countryState.isDirty
-                  if (!hasUserTouchedCountry) {
+                  // Only auto-fill when untouched *and* still empty: a country
+                  // prefilled from the query string must not be overwritten.
+                  const currentCountry = form.getValues("country")
+                  if (!countryState.isTouched && !currentCountry) {
                     form.setValue("country", alpha3)
                   }
                 }}
@@ -432,7 +433,8 @@ export function BankDetailsForm({
                   <FormControl>
                     <Input
                       {...field}
-                    placeholder={t("expense.bankAccountNumberUsPlaceholder")}
+                      inputMode="numeric"
+                      placeholder={t("expense.bankAccountNumberUsPlaceholder")}
                       onBlur={() => {
                         field.onBlur()
                         const trimmed = field.value.trim()
@@ -478,7 +480,10 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankName")}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="e.g. Chase Bank" />
+                  <Input
+                    {...field}
+                    placeholder={t("expense.bankNamePlaceholder")}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

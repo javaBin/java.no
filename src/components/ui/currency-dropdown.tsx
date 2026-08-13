@@ -145,8 +145,13 @@ const CurrencyDropdownComponent = (
 
   const triggerClasses = cn(
     "flex h-9 items-center justify-between gap-1 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-    selectedCurrency ? "w-fit" : "w-full",
-    slim && "w-20",
+    slim
+      ? selectedCurrency
+        ? "w-full sm:w-fit"
+        : "w-full sm:w-20"
+      : selectedCurrency
+        ? "w-fit"
+        : "w-full",
   )
 
   return (
@@ -177,7 +182,7 @@ const CurrencyDropdownComponent = (
       <PopoverContent
         collisionPadding={10}
         side="bottom"
-        className="min-w-[--radix-popper-anchor-width] p-0"
+        className="w-[--radix-popper-anchor-width] min-w-[--radix-popper-anchor-width] p-0"
       >
         <Command className="max-h-[200px] w-full sm:max-h-[270px]">
           <CommandList>

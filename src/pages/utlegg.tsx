@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "next-i18next"
-import { nb } from "date-fns/locale"
+import { enGB, nb } from "date-fns/locale"
 import { Country, CountryDropdown } from "@/components/ui/country-dropdown"
 import { CurrencyDropdown } from "@/components/ui/currency-dropdown"
 import { getSymbolFromCurrency } from "country-data-list"
@@ -777,7 +777,7 @@ export default function ExpensePage() {
                                   {field.value ? (
                                     format(field.value, "PPP", {
                                       locale:
-                                        i18n.language === "no" ? nb : undefined,
+                                        i18n.language === "no" ? nb : enGB,
                                     })
                                   ) : (
                                     <span>{t("expense.selectDate")}</span>
@@ -794,7 +794,7 @@ export default function ExpensePage() {
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                locale={i18n.language === "no" ? nb : undefined}
+                                locale={i18n.language === "no" ? nb : enGB}
                                 disabled={(date) =>
                                   date > new Date() ||
                                   date < new Date("2020-01-01")

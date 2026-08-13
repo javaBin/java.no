@@ -236,6 +236,9 @@ export const createExpenseSchemas = (t: (key: string) => string) => {
         return
       }
       if (type === "us") {
+        // Skip all US bank validation when the user opted out
+        if (skip) return
+
         const routing = (data.bankRoutingNumber || "").trim()
         if (!routing) {
           ctx.addIssue({
@@ -243,7 +246,7 @@ export const createExpenseSchemas = (t: (key: string) => string) => {
             message: t("expense.errors.bankRoutingRequired"),
             path: ["bankRoutingNumber"],
           })
-        } else if (!skip && !validateABARoutingNumber(routing)) {
+        } else if (!validateABARoutingNumber(routing)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidRoutingNumber"),
@@ -257,7 +260,7 @@ export const createExpenseSchemas = (t: (key: string) => string) => {
             message: t("expense.errors.bankAccountNumberRequired"),
             path: ["bankAccountNumber"],
           })
-        } else if (!skip) {
+        } else {
           const digitsOnly = accountNum.replace(/\D/g, "")
           if (digitsOnly.length < 4 || digitsOnly.length > 17) {
             ctx.addIssue({
@@ -274,7 +277,7 @@ export const createExpenseSchemas = (t: (key: string) => string) => {
             message: t("expense.errors.bankSwiftRequired"),
             path: ["bankSwiftBic"],
           })
-        } else if (!skip && !validateBIC(usSwift)) {
+        } else if (!validateBIC(usSwift)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("expense.errors.invalidSwift"),

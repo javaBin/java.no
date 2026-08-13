@@ -148,6 +148,7 @@
     "bankSwiftBic": "SWIFT/BIC",
     "bankSwiftBicPlaceholder": "F.eks. DNBANOKK",
     "bankName": "Banknavn",
+    "bankNamePlaceholder": "F.eks. DNB",
     "bankAddress": "Bankadresse",
     "bankAccountHolderName": "Kontoinnehaver",
     "email": "E-post",
