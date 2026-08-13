@@ -19,7 +19,7 @@ import { cn, formatBytes } from "@/lib/utils"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
+import { Maximize, RotateCw, ZoomIn, ZoomOut } from "lucide-react"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
@@ -113,6 +113,14 @@ interface CropDialogProps {
 const MAX_OUTPUT_DIMENSION = 1800
 const OUTPUT_QUALITY = 0.8
 
+/**
+ * A rotate is a full-resolution canvas op, same as the crop, so it needs the
+ * same per-browser cap (iOS Safari: ~16.7M pixels, 4096px per side). Kept well
+ * above MAX_OUTPUT_DIMENSION on purpose: rotating shouldn't throw away detail
+ * a later, smaller crop selection might still want.
+ */
+const MAX_ROTATE_DIMENSION = 4096
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
@@ -128,17 +136,31 @@ function CropDialog({
   const [imgSrc, setImgSrc] = React.useState("")
   const imgRef = React.useRef<HTMLImageElement>(null)
 
+  // Rotation replaces `imgSrc` with a freshly rendered object URL, so the URL
+  // actually on screen has to be tracked separately from the file: it may no
+  // longer be the one the file effect created.
+  const currentUrlRef = React.useRef<string | null>(null)
+  const showImage = React.useCallback((url: string) => {
+    if (currentUrlRef.current) URL.revokeObjectURL(currentUrlRef.current)
+    currentUrlRef.current = url
+    setImgSrc(url)
+  }, [])
+
   React.useEffect(() => {
     if (!file) return
 
     // The dialog is not unmounted between files, so clear the previous
     // selection rather than briefly applying it to the new image.
     setCrop(undefined)
+    showImage(URL.createObjectURL(file))
 
-    const objectUrl = URL.createObjectURL(file)
-    setImgSrc(objectUrl)
-    return () => URL.revokeObjectURL(objectUrl)
-  }, [file])
+    return () => {
+      if (currentUrlRef.current) {
+        URL.revokeObjectURL(currentUrlRef.current)
+        currentUrlRef.current = null
+      }
+    }
+  }, [file, showImage])
 
   function onImageLoad() {
     // Percent units are independent of the rendered size, so the whole image is
@@ -146,6 +168,46 @@ function CropDialog({
     // tall, and the old 16:9 default threw most of them away before the user
     // touched anything.
     setCrop({ unit: "%", x: 0, y: 0, width: 100, height: 100 })
+  }
+
+  // Bakes the turn into the actual pixels rather than a CSS transform, so the
+  // crop below keeps mapping percentages onto natural width/height exactly as
+  // it already does — no separate coordinate space to account for rotation in.
+  async function rotateImage() {
+    const image = imgRef.current
+    if (!image) return
+
+    const scale = Math.min(
+      1,
+      MAX_ROTATE_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight),
+    )
+    const drawWidth = Math.round(image.naturalWidth * scale)
+    const drawHeight = Math.round(image.naturalHeight * scale)
+
+    const canvas = document.createElement("canvas")
+    canvas.width = drawHeight
+    canvas.height = drawWidth
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    ctx.translate(canvas.width / 2, canvas.height / 2)
+    ctx.rotate(Math.PI / 2)
+    ctx.imageSmoothingQuality = "high"
+    ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight)
+
+    // PNG, not JPEG: this is a working copy that may be rotated several times
+    // before the user is done, and JPEG would compound generation loss on
+    // every turn. The final crop below is still the one lossy encode.
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/png")
+    })
+    if (!blob) return
+
+    // The image's dimensions just changed, so any existing selection is
+    // meaningless against it — reset rather than remap.
+    setCrop(undefined)
+    showImage(URL.createObjectURL(blob))
   }
 
   async function cropImage() {
@@ -281,6 +343,22 @@ function CropDialog({
                     variant="outline"
                     size="icon"
                     className="size-8"
+                    onClick={() => {
+                      // The rotated image is a different size, so the old
+                      // zoom/pan no longer frames it usefully.
+                      void rotateImage().then(() => resetTransform())
+                    }}
+                  >
+                    <RotateCw className="size-4" />
+                    <span className="sr-only">
+                      {t("fileUploader.crop.rotate")}
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
                     onClick={() => zoomOut()}
                   >
                     <ZoomOut className="size-4" />
@@ -295,7 +373,7 @@ function CropDialog({
                     className="size-8"
                     onClick={() => resetTransform()}
                   >
-                    <RotateCcw className="size-4" />
+                    <Maximize className="size-4" />
                     <span className="sr-only">
                       {t("fileUploader.crop.resetZoom")}
                     </span>
@@ -664,7 +742,7 @@ function FilePreview({ file }: FilePreviewProps) {
                         className="size-8"
                         onClick={() => resetTransform()}
                       >
-                        <RotateCcw className="size-4" />
+                        <Maximize className="size-4" />
                         <span className="sr-only">
                           {t("fileUploader.crop.resetZoom")}
                         </span>

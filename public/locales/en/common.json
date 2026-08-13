@@ -230,6 +230,7 @@
       "title": "Crop Image",
       "description": "Drag the handles to select the part of the receipt you want to keep.",
       "imageAlt": "Image preview",
+      "rotate": "Rotate 90 degrees",
       "zoomOut": "Zoom out",
       "resetZoom": "Reset zoom",
       "resetZoomAlt": "Reset zoom",

@@ -227,6 +227,7 @@
       "title": "Crop bilde",
       "description": "Dra i håndtakene for å velge den delen av kvitteringen du vil beholde.",
       "imageAlt": "Forhåndsvisning av bilde",
+      "rotate": "Roter 90 grader",
       "zoomOut": "Zoom ut",
       "resetZoom": "Nullstill zoom",
       "resetZoomAlt": "Nullstill zoom",
