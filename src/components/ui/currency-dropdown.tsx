@@ -182,7 +182,12 @@ const CurrencyDropdownComponent = (
       <PopoverContent
         collisionPadding={10}
         side="bottom"
-        className="w-[--radix-popper-anchor-width] min-w-[--radix-popper-anchor-width] p-0"
+        // Only a floor, not a match: binding `w-` to the anchor shrinks the
+        // popover down to the trigger's own width, which is ~76px for the
+        // `slim` trigger — too narrow for the search box and currency names.
+        // `min-w` alone keeps the shared `w-72` default while still growing
+        // for a wider, non-slim trigger.
+        className="min-w-[--radix-popper-anchor-width] p-0"
       >
         <Command className="max-h-[200px] w-full sm:max-h-[270px]">
           <CommandList>
