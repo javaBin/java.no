@@ -10,6 +10,7 @@ import Dropzone, {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -227,6 +228,13 @@ function CropDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{t("fileUploader.crop.title")}</DialogTitle>
+          {/*
+            Radix warns when a DialogContent has no description. Kept sr-only so
+            the height-constrained layout is unchanged.
+          */}
+          <DialogDescription className="sr-only">
+            {t("fileUploader.crop.description")}
+          </DialogDescription>
         </DialogHeader>
         <div className="relative flex-1 min-h-0 w-full overflow-hidden">
           <TransformWrapper
@@ -330,7 +338,15 @@ function CropDialog({
   )
 }
 
-export function FileUploader(props: FileUploaderProps) {
+/**
+ * Forwards a ref because it is rendered inside shadcn's `FormControl`, which
+ * clones it through a Radix `Slot`, and react-hook-form spreads `field.ref` onto
+ * it as well. Without this, React drops both refs and warns.
+ */
+export const FileUploader = React.forwardRef<
+  HTMLDivElement,
+  FileUploaderProps
+>(function FileUploader(props, ref) {
   const {
     value: valueProp,
     onValueChange,
@@ -444,7 +460,7 @@ export function FileUploader(props: FileUploaderProps) {
   }
 
   return (
-    <div className="relative flex flex-col gap-3 overflow-hidden">
+    <div ref={ref} className="relative flex flex-col gap-3 overflow-hidden">
       {!isDisabled && (
         <Dropzone
           onDrop={onDrop}
@@ -532,7 +548,7 @@ export function FileUploader(props: FileUploaderProps) {
       />
     </div>
   )
-}
+})
 
 interface FileCardProps {
   file: File
@@ -625,6 +641,9 @@ function FilePreview({ file }: FilePreviewProps) {
           <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("fileUploader.preview.imageDescription")}
+              </DialogDescription>
             </DialogHeader>
             <div className="relative flex-1 min-h-[20vh] w-full overflow-hidden flex items-center justify-center">
               <TransformWrapper
@@ -730,6 +749,9 @@ function FilePreview({ file }: FilePreviewProps) {
           <DialogContent className="max-w-4xl h-[80vh] flex flex-col overflow-hidden">
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{file.name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("fileUploader.preview.pdfDescription")}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex-1 min-h-0 w-full overflow-hidden">
               <iframe
