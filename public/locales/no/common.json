@@ -59,6 +59,7 @@
     "attendees_one": "{{count}} deltaker",
     "attendees_other": "{{count}} deltakere",
     "aboutRegion": "Om javaBin {{name}}",
+    "aboutRegionDescription": "En kort introduksjon til regionen og møtene der.",
     "moreUpcomingMeetups": "Flere kommende meetups"
   },
   "main": {
@@ -220,6 +221,7 @@
   "fileUploader": {
     "crop": {
       "title": "Crop bilde",
+      "description": "Dra i håndtakene for å velge den delen av kvitteringen du vil beholde.",
       "imageAlt": "Forhåndsvisning av bilde",
       "zoomOut": "Zoom ut",
       "resetZoom": "Nullstill zoom",
@@ -240,6 +242,10 @@
     },
     "card": {
       "removeFile": "Fjern fil"
+    },
+    "preview": {
+      "imageDescription": "Zoom og panorer for å se det vedlagte bildet nærmere.",
+      "pdfDescription": "Forhåndsvisning av den vedlagte PDF-en."
     }
   }
 }

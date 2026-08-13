@@ -59,6 +59,7 @@
     "attendees_one": "{{count}} attendee",
     "attendees_other": "{{count}} attendees",
     "aboutRegion": "About javaBin {{name}}",
+    "aboutRegionDescription": "A short introduction to the region and its meetups.",
     "moreUpcomingMeetups": "More upcoming meetups"
   },
   "main": {
@@ -224,6 +225,7 @@
   "fileUploader": {
     "crop": {
       "title": "Crop Image",
+      "description": "Drag the handles to select the part of the receipt you want to keep.",
       "imageAlt": "Image preview",
       "zoomOut": "Zoom out",
       "resetZoom": "Reset zoom",
@@ -244,6 +246,10 @@
     },
     "card": {
       "removeFile": "Remove file"
+    },
+    "preview": {
+      "imageDescription": "Zoom and pan to inspect the attached image.",
+      "pdfDescription": "Preview of the attached PDF."
     }
   }
 }

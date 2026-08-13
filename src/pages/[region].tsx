@@ -12,6 +12,7 @@ import { useState } from "react"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
@@ -98,6 +99,12 @@ export default function RegionPage({
                         <DialogTitle className="text-xl font-semibold text-gray-900">
                           {t("region.aboutRegion", { name: region.name })}
                         </DialogTitle>
+                        {/* sr-only: the visible body below is rich text, so it
+                            cannot be the description element without inheriting
+                            its typography. */}
+                        <DialogDescription className="sr-only">
+                          {t("region.aboutRegionDescription")}
+                        </DialogDescription>
                         <div
                           className="mt-2 leading-relaxed text-gray-700 [&_a]:text-[#a11c38] [&_a]:underline hover:[&_a]:text-[#a11c38]/90"
                           dangerouslySetInnerHTML={{

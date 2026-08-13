@@ -288,3 +288,31 @@ test("the preview of a cropped tall image shows the whole image", async ({
   expect(metrics.renderedHeight).toBeLessThanOrEqual(metrics.viewportHeight)
   expect(metrics.bottom).toBeLessThanOrEqual(metrics.containerBottom + 1)
 })
+
+test("the upload, crop and preview flow logs no React or a11y warnings", async ({
+  page,
+}) => {
+  // React reports both of these through console.error at runtime only, so a
+  // rendering test is the only thing that catches them.
+  const problems: string[] = []
+  page.on("console", (message) => {
+    if (message.type() !== "error" && message.type() !== "warning") return
+    const text = message.text()
+    if (
+      /cannot be given refs|Missing `Description`|aria-describedby/i.test(text)
+    ) {
+      problems.push(text)
+    }
+  })
+
+  await openCropDialogWithTallImage(page)
+  await page
+    .getByRole("button", { name: "Crop og fortsett", exact: true })
+    .click()
+  await page.getByRole("button", { name: "tall-receipt.png" }).click()
+  await expect(
+    page.locator('[role="dialog"] img[alt="tall-receipt.png"]'),
+  ).toBeVisible()
+
+  expect(problems).toEqual([])
+})
