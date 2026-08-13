@@ -70,14 +70,6 @@ interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   accept?: DropzoneProps["accept"]
 
   /**
-   * Maximum file size for the uploader.
-   * @type number | undefined
-   * @default 1024 * 1024 * 2 // 2MB
-   * @example maxSize={1024 * 1024 * 2} // 2MB
-   */
-  maxSize?: DropzoneProps["maxSize"]
-
-  /**
    * Maximum number of files for the uploader.
    * @type number | undefined
    * @default 1
@@ -355,7 +347,6 @@ export const FileUploader = React.forwardRef<
     accept = {
       "image/*": [],
     },
-    maxSize = 1024 * 1024 * 2,
     maxFileCount = 1,
     multiple = false,
     disabled = false,
@@ -445,16 +436,6 @@ export const FileUploader = React.forwardRef<
   const isDisabled = disabled || (files?.length ?? 0) >= maxFileCount
 
   const handleCropComplete = (croppedFile: File) => {
-    // The crop re-encodes the image, so the size the dropzone validated no
-    // longer applies to what we are actually about to hand over.
-    if (croppedFile.size > maxSize) {
-      setErrorMessage(
-        t("fileUploader.errors.fileRejected", { fileName: croppedFile.name }),
-      )
-      setCropDialogFile(null)
-      return
-    }
-
     void addFiles([croppedFile])
     setCropDialogFile(null)
   }
@@ -465,7 +446,6 @@ export const FileUploader = React.forwardRef<
         <Dropzone
           onDrop={onDrop}
           accept={accept}
-          maxSize={maxSize}
           maxFiles={maxFileCount}
           multiple={maxFileCount > 1 || multiple}
           disabled={isDisabled}
@@ -501,23 +481,6 @@ export const FileUploader = React.forwardRef<
                   />
                   <p className="text-muted-foreground text-sm font-medium">
                     {t("fileUploader.clickOrDrag")}
-                  </p>
-                  <p className="text-muted-foreground/70 text-xs">
-                    {(() => {
-                      const size = formatBytes(maxSize)
-                      const countLabel =
-                        maxFileCount === Infinity
-                          ? t("fileUploader.multiple")
-                          : maxFileCount
-
-                      return maxFileCount > 1
-                        ? t("fileUploader.limitMany", {
-                            count:
-                              typeof countLabel === "number" ? countLabel : 0,
-                            size,
-                          })
-                        : t("fileUploader.limitSingle", { size })
-                    })()}
                   </p>
                 </div>
               )}

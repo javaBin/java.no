@@ -867,7 +867,6 @@ export default function ExpensePage() {
                               "image/*": [],
                               "application/pdf": [],
                             }}
-                            maxSize={10 * 1024 * 1024}
                             {...field}
                             value={field.value?.size > 0 ? [field.value] : []}
                             onValueChange={(files) => {

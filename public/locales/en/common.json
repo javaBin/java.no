@@ -236,9 +236,6 @@
     },
     "dropHere": "Drop the files here",
     "clickOrDrag": "Click to upload or drag and drop",
-    "multiple": "multiple",
-    "limitMany": "Up to {{count}} files, {{size}} max each",
-    "limitSingle": "{{size}} max",
     "errors": {
       "singleFile": "Cannot upload more than 1 file at a time",
       "maxFiles": "Cannot upload more than {{count}} files",

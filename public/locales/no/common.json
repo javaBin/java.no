@@ -232,9 +232,6 @@
     },
     "dropHere": "Slipp filene her",
     "clickOrDrag": "Klikk for å laste opp eller dra og slipp",
-    "multiple": "flere",
-    "limitMany": "Opptil {{count}} filer, {{size}} maks per fil",
-    "limitSingle": "{{size}} maks",
     "errors": {
       "singleFile": "Kan ikke laste opp mer enn 1 fil om gangen",
       "maxFiles": "Kan ikke laste opp mer enn {{count}} filer",
