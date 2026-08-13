@@ -51,3 +51,29 @@ export function getDisplayLocaleFromCountry(
   }
   return `${country.languages[0]}-${country.alpha2}`
 }
+
+/**
+ * Returns the first day of the week for the given BCP 47 locale, using
+ * Intl.Locale week-info data where available (0 = Sunday .. 6 = Saturday,
+ * matching react-day-picker's `weekStartsOn`). Falls back to 1 (Monday)
+ * when the locale can't be resolved or the runtime lacks week-info support.
+ */
+export function getWeekStartsOnFromLocale(
+  locale: string | undefined,
+): 0 | 1 | 2 | 3 | 4 | 5 | 6 {
+  const FALLBACK = 1
+  if (!locale) return FALLBACK
+  try {
+    const intlLocale = new Intl.Locale(locale) as Intl.Locale & {
+      weekInfo?: { firstDay: number }
+      getWeekInfo?: () => { firstDay: number }
+    }
+    const firstDay =
+      intlLocale.getWeekInfo?.().firstDay ?? intlLocale.weekInfo?.firstDay
+    if (!firstDay) return FALLBACK
+    // Intl week-info numbers Mon=1..Sun=7; react-day-picker wants Sun=0..Sat=6.
+    return (firstDay % 7) as 0 | 1 | 2 | 3 | 4 | 5 | 6
+  } catch {
+    return FALLBACK
+  }
+}

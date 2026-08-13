@@ -46,6 +46,7 @@ import { getSymbolFromCurrency } from "country-data-list"
 import {
   findCountryByCodeOrName,
   getDisplayLocaleFromCountry,
+  getWeekStartsOnFromLocale,
 } from "@/lib/country"
 
 const LOGO_URL = "/img/logos/javaBin-logo-horizontal-WHITE.png"
@@ -462,14 +463,20 @@ export default function ExpensePage() {
   }
 
   const watchedCountry = form.watch("country")
-  const amountDisplayLocale = React.useMemo(() => {
+  const homeLocale = React.useMemo(() => {
     if (residesInNorway) return "nb-NO"
-    if (watchedCountry) {
-      const locale = getDisplayLocaleFromCountry(watchedCountry)
-      if (locale) return locale
-    }
-    return typeof navigator !== "undefined" ? navigator.language : "en-GB"
+    if (watchedCountry) return getDisplayLocaleFromCountry(watchedCountry)
+    return undefined
   }, [residesInNorway, watchedCountry])
+  const amountDisplayLocale =
+    homeLocale ??
+    (typeof navigator !== "undefined" ? navigator.language : "en-GB")
+  // Deliberately doesn't fall back to navigator.language: with no country
+  // picked yet, Monday is a better default than a guess from the browser.
+  const calendarWeekStartsOn = React.useMemo(
+    () => getWeekStartsOnFromLocale(homeLocale),
+    [homeLocale],
+  )
   const isDirty = form.formState.isDirty
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -866,6 +873,7 @@ export default function ExpensePage() {
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 locale={i18n.language === "no" ? nb : enGB}
+                                weekStartsOn={calendarWeekStartsOn}
                                 disabled={(date) =>
                                   date > new Date() ||
                                   date < new Date("2020-01-01")

@@ -37,24 +37,6 @@ pnpm lint --fix   # Run ESLint with auto-fix
 
 With **Mise**: `mise run dev` | `mise run build` | `mise run start` (see `mise.toml`).
 
-## Tests
-
-Playwright end-to-end tests live in `e2e/`, currently covering receipt image
-cropping only.
-
-```bash
-pnpm test                      # Run the Playwright suite
-pnpm test --grep "returns the" # Run matching tests
-```
-
-The config starts `pnpm dev` itself, so no server needs to be running. A first
-run on a new machine needs the browser and its system libraries:
-
-```bash
-npx playwright install chromium
-sudo npx playwright install-deps chromium   # Linux only
-```
-
 ## Code Style Guidelines
 
 ### TypeScript
