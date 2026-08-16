@@ -531,6 +531,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    autoComplete="name"
                     placeholder={t("expense.namePlaceholder")}
                   />
                 </FormControl>
@@ -600,6 +601,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    autoComplete="name"
                     placeholder={t("expense.namePlaceholder")}
                   />
                 </FormControl>

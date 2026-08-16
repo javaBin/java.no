@@ -724,6 +724,7 @@ export default function ExpensePage() {
                     <FormControl>
                       <Input
                         placeholder={t("expense.namePlaceholder")}
+                        autoComplete="name"
                         {...field}
                       />
                     </FormControl>
@@ -741,6 +742,7 @@ export default function ExpensePage() {
                     <FormControl>
                       <Input
                         type="email"
+                        autoComplete="email"
                         placeholder={t("expense.emailPlaceholder")}
                         {...field}
                       />
@@ -759,6 +761,7 @@ export default function ExpensePage() {
                     <FormControl>
                       <Input
                         placeholder={t("expense.addressPlaceholder")}
+                        autoComplete="street-address"
                         {...field}
                       />
                     </FormControl>
@@ -777,6 +780,7 @@ export default function ExpensePage() {
                       <FormControl>
                         <Input
                           placeholder={t("expense.postalCodePlaceholder")}
+                          autoComplete="postal-code"
                           {...field}
                           onChange={(e) => {
                             const value = residesInNorway
@@ -800,6 +804,7 @@ export default function ExpensePage() {
                       <FormControl>
                         <Input
                           placeholder={t("expense.cityPlaceholder")}
+                          autoComplete="address-level2"
                           {...field}
                         />
                       </FormControl>
@@ -820,6 +825,7 @@ export default function ExpensePage() {
                         <CountryDropdown
                           {...field}
                           defaultValue={field.value}
+                          autoComplete="country-name"
                           onChange={(country: Country) => {
                             form.setValue(field.name, country?.alpha3 || "")
                           }}
