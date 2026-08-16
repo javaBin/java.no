@@ -210,10 +210,10 @@ const CountryDropdownComponent = (
                 .sort((a, b) =>
                   getRegionName(a).localeCompare(getRegionName(b), "nb"),
                 )
-                .map((option, key: number) => (
+                .map((option) => (
                   <CommandItem
                     className="flex w-full items-center gap-2"
-                    key={key}
+                    key={option.alpha2}
                     onSelect={() => handleSelect(option)}
                   >
                     <div className="flex w-0 flex-grow space-x-2 overflow-hidden">
