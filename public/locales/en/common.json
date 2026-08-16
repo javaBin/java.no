@@ -1,5 +1,8 @@
 {
   "notFound": "Not Found",
+  "dialog": {
+    "close": "Close"
+  },
   "menu": {
     "about": "About javaBin",
     "contribute": "Join us",
@@ -132,6 +135,7 @@
     "country": "Country",
     "residesInNorway": "I reside in Norway",
     "residesAbroad": "I reside abroad",
+    "residenceLabel": "Residence",
     "bankAccount": "Bank Account",
     "bankDescriptionNorwegian": "You only need your Norwegian account number (11 digits).",
     "bankDescriptionInternational": "Select the country of your bank account below.",
@@ -174,6 +178,7 @@
     "date": "Date",
     "expenses": "Expenses",
     "addExpense": "Add Expense",
+    "removeExpense": "Remove expense",
     "description": "Description",
     "amount": "Amount (incl. VAT)",
     "exchangeRate": "1 {{sourceCurrency}} = {{rate}} {{targetCurrency}} ({{date}})",
@@ -185,6 +190,8 @@
     "processing": "Processing...",
     "generateReport": "Generate Report",
     "sendEmail": "Send Email",
+    "emailSubject": "Expense {{date}} - {{name}}",
+    "emailBody": "Hi, I have expenses for {{descriptions}}.\n\nA PDF with the expenses is attached.\n\nKind regards,\n{{name}}",
     "copyEmail": "Copy email address",
     "emailCopied": "Copied",
     "selectDate": "Select a date",

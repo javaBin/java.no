@@ -69,9 +69,7 @@ export function BankDetailsForm({
     name: "targetCurrency",
   })
 
-  const type = bankCountryIso2
-    ? getBankCountryType(bankCountryIso2)
-    : "sepa"
+  const type = bankCountryIso2 ? getBankCountryType(bankCountryIso2) : "sepa"
   const previousTypeRef = React.useRef(type)
 
   // Resetting React state when the validated inputs change is an adjustment
@@ -148,7 +146,11 @@ export function BankDetailsForm({
 
   const getIbanErrorMessage = React.useCallback(
     (result: AccountValidationResult) => {
-      if (result.errorType === "length" && result.expectedLength != null && result.actualLength != null) {
+      if (
+        result.errorType === "length" &&
+        result.expectedLength != null &&
+        result.actualLength != null
+      ) {
         return bankCountryName
           ? t("expense.invalidIbanLength", {
               expectedLength: result.expectedLength,
@@ -250,6 +252,7 @@ export function BankDetailsForm({
           <FormControl>
             <Input
               {...field}
+              required
               placeholder={t("expense.bankSwiftBicPlaceholder")}
               onChange={(event) => {
                 const value = event.target.value.toUpperCase()
@@ -282,13 +285,13 @@ export function BankDetailsForm({
 
   const skipValidationUi = validationFailed ? (
     <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-500">
-        <input
-          type="checkbox"
-          checked={skipValidation}
-          onChange={(e) => handleSkipToggle(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        {t("expense.skipValidationLabel")}
+      <input
+        type="checkbox"
+        checked={skipValidation}
+        onChange={(e) => handleSkipToggle(e.target.checked)}
+        className="h-4 w-4 rounded border-gray-300"
+      />
+      {t("expense.skipValidationLabel")}
     </label>
   ) : null
 
@@ -304,6 +307,7 @@ export function BankDetailsForm({
               <FormControl>
                 <NorwegianAccountInput
                   {...field}
+                  required
                   placeholder={t("expense.bankAccountNumberPlaceholder")}
                   onValidationChange={(result) => {
                     handleAccountValidationChange(result)
@@ -337,6 +341,7 @@ export function BankDetailsForm({
             <FormControl>
               <CountryDropdown
                 defaultValue={field.value}
+                aria-required="true"
                 onChange={(country: Country) => {
                   const alpha3 = country?.alpha3 ?? ""
                   const alpha2 = country?.alpha2 || ""
@@ -381,6 +386,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <IbanAccountInput
                     {...field}
+                    required
                     countryIso2={bankCountryIso2 || ""}
                     placeholder={t("expense.bankIbanPlaceholder")}
                     onValidationChange={(result) => {
@@ -416,7 +422,8 @@ export function BankDetailsForm({
                   <FormControl>
                     <Input
                       {...field}
-                    placeholder={t("expense.bankRoutingNumberPlaceholder")}
+                      required
+                      placeholder={t("expense.bankRoutingNumberPlaceholder")}
                       inputMode="numeric"
                       onBlur={() => {
                         field.onBlur()
@@ -425,9 +432,7 @@ export function BankDetailsForm({
                         if (skipValidation) return
                         if (digits && !validateABARoutingNumber(digits)) {
                           form.setError("bankRoutingNumber", {
-                            message: t(
-                              "expense.errors.invalidRoutingNumber",
-                            ),
+                            message: t("expense.errors.invalidRoutingNumber"),
                           })
                           setOtherValidationFailed(true)
                         } else {
@@ -450,6 +455,7 @@ export function BankDetailsForm({
                   <FormControl>
                     <Input
                       {...field}
+                      required
                       inputMode="numeric"
                       placeholder={t("expense.bankAccountNumberUsPlaceholder")}
                       onBlur={() => {
@@ -472,7 +478,7 @@ export function BankDetailsForm({
                 <FormLabel>{t("expense.bankAccountType")}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger aria-required="true">
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
@@ -499,6 +505,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    required
                     placeholder={t("expense.bankNamePlaceholder")}
                   />
                 </FormControl>
@@ -515,6 +522,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    required
                     placeholder={t("expense.bankAddressPlaceholder")}
                   />
                 </FormControl>
@@ -531,6 +539,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    required
                     autoComplete="name"
                     placeholder={t("expense.namePlaceholder")}
                   />
@@ -553,6 +562,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    required
                     placeholder={t("expense.bankAccountOrIbanPlaceholder")}
                     onBlur={() => {
                       field.onBlur()
@@ -573,7 +583,7 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankName")}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} required />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -586,7 +596,7 @@ export function BankDetailsForm({
               <FormItem>
                 <FormLabel>{t("expense.bankAddress")}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} required />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -601,6 +611,7 @@ export function BankDetailsForm({
                 <FormControl>
                   <Input
                     {...field}
+                    required
                     autoComplete="name"
                     placeholder={t("expense.namePlaceholder")}
                   />

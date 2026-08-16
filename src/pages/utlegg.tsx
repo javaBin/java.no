@@ -317,6 +317,7 @@ function ExpenseAmountInput({
                   type="text"
                   inputMode="decimal"
                   autoComplete="off"
+                  required
                   {...field}
                   value={displayValue}
                   disabled={!selectedCurrencyCode}
@@ -371,7 +372,7 @@ function ExpenseAmountInput({
                       date: format(rateInfo.date, "yyyy-MM-dd"),
                     })}
                   </div>
-                  <div className="font-medium text-foreground">
+                  <div className="text-foreground font-medium">
                     {t("expense.youGetBack", {
                       amount: formatCurrency(rateInfo.targetAmount, "nb-NO"),
                       currency: rateInfo.targetCurrency,
@@ -490,11 +491,30 @@ export default function ExpensePage() {
     })
   }, [targetCurrency, form])
   const reimbursementTarget = form.watch("reimbursementTarget")
+  const watchedName = form.watch("name") ?? ""
+  const watchedExpenses = form.watch("expenses") ?? []
   const targetEmail =
     reimbursementTarget === "javaBin"
       ? "faktura-javabin@java.no"
       : "faktura-javazone@java.no"
   const [hasCopiedEmail, setHasCopiedEmail] = useState(false)
+  const emailDate =
+    watchedExpenses[0]?.date instanceof Date
+      ? watchedExpenses[0].date
+      : new Date()
+  const emailDateStr = emailDate.toLocaleDateString("sv")
+  const emailDescriptions = watchedExpenses
+    .map((expense) => expense.description)
+    .filter(Boolean)
+    .join(", ")
+  const mailtoHref = `mailto:${targetEmail}?subject=${encodeURIComponent(
+    t("expense.emailSubject", { date: emailDateStr, name: watchedName }),
+  )}&body=${encodeURIComponent(
+    t("expense.emailBody", {
+      descriptions: emailDescriptions,
+      name: watchedName,
+    }),
+  )}`
 
   const handleResidenceChange = (value: string) => {
     const isNorway = value === "norway"
@@ -650,9 +670,7 @@ export default function ExpensePage() {
         canvas.toBlob(
           (blob) => {
             finish(
-              blob
-                ? new File([blob], file.name, { type: "image/jpeg" })
-                : file,
+              blob ? new File([blob], file.name, { type: "image/jpeg" }) : file,
             )
           },
           "image/jpeg",
@@ -672,14 +690,21 @@ export default function ExpensePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6"
+        >
           {/* Residence toggle */}
           <Tabs
             value={residesInNorway ? "norway" : "abroad"}
             onValueChange={handleResidenceChange}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList
+              className="grid w-full grid-cols-2"
+              aria-label={t("expense.residenceLabel")}
+            >
               <TabsTrigger value="norway">
                 {t("expense.residesInNorway")}
               </TabsTrigger>
@@ -725,6 +750,7 @@ export default function ExpensePage() {
                       <Input
                         placeholder={t("expense.namePlaceholder")}
                         autoComplete="name"
+                        required
                         {...field}
                       />
                     </FormControl>
@@ -743,6 +769,7 @@ export default function ExpensePage() {
                       <Input
                         type="email"
                         autoComplete="email"
+                        required
                         placeholder={t("expense.emailPlaceholder")}
                         {...field}
                       />
@@ -762,6 +789,7 @@ export default function ExpensePage() {
                       <Input
                         placeholder={t("expense.addressPlaceholder")}
                         autoComplete="street-address"
+                        required
                         {...field}
                       />
                     </FormControl>
@@ -781,6 +809,7 @@ export default function ExpensePage() {
                         <Input
                           placeholder={t("expense.postalCodePlaceholder")}
                           autoComplete="postal-code"
+                          required
                           {...field}
                           onChange={(e) => {
                             const value = residesInNorway
@@ -805,6 +834,7 @@ export default function ExpensePage() {
                         <Input
                           placeholder={t("expense.cityPlaceholder")}
                           autoComplete="address-level2"
+                          required
                           {...field}
                         />
                       </FormControl>
@@ -826,6 +856,7 @@ export default function ExpensePage() {
                           {...field}
                           defaultValue={field.value}
                           autoComplete="country-name"
+                          aria-required="true"
                           onChange={(country: Country) => {
                             form.setValue(field.name, country?.alpha3 || "")
                           }}
@@ -861,9 +892,10 @@ export default function ExpensePage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => remove(index)}
+                        aria-label={t("expense.removeExpense")}
                         className="gap-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   )}
@@ -880,6 +912,7 @@ export default function ExpensePage() {
                         <FormControl>
                           <Input
                             {...field}
+                            required
                             placeholder={t("expense.descriptionPlaceholder")}
                           />
                         </FormControl>
@@ -900,6 +933,7 @@ export default function ExpensePage() {
                               <FormControl>
                                 <Button
                                   variant="outline"
+                                  aria-required="true"
                                   className={cn(
                                     "w-full pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground",
@@ -913,7 +947,10 @@ export default function ExpensePage() {
                                   ) : (
                                     <span>{t("expense.selectDate")}</span>
                                   )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  <CalendarIcon
+                                    className="ml-auto h-4 w-4 opacity-50"
+                                    aria-hidden="true"
+                                  />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -963,6 +1000,7 @@ export default function ExpensePage() {
                               onValueChange={field.onChange}
                               placeholder={t("expense.selectCurrency")}
                               currencies="custom"
+                              aria-required="true"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1002,6 +1040,7 @@ export default function ExpensePage() {
                               "application/pdf": [],
                             }}
                             {...field}
+                            required
                             value={field.value?.size > 0 ? [field.value] : []}
                             onValueChange={(files) => {
                               const file = files?.[0]
@@ -1035,7 +1074,7 @@ export default function ExpensePage() {
                   }
                   className="gap-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" aria-hidden="true" />
                   {t("expense.addExpense")}
                 </Button>
               </div>
@@ -1057,6 +1096,7 @@ export default function ExpensePage() {
                       <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 text-sm">
                         <button
                           type="button"
+                          aria-pressed={field.value === "javaBin"}
                           className={cn(
                             "flex-1 rounded px-3 py-1.5 text-center transition-colors",
                             field.value === "javaBin"
@@ -1072,6 +1112,7 @@ export default function ExpensePage() {
                         </button>
                         <button
                           type="button"
+                          aria-pressed={field.value === "javaZone"}
                           className={cn(
                             "flex-1 rounded px-3 py-1.5 text-center transition-colors",
                             field.value === "javaZone"
@@ -1129,19 +1170,8 @@ export default function ExpensePage() {
               asChild
               className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              <a
-                target="_blank"
-                href={`mailto:${targetEmail}?subject=Utlegg ${form.getValues("expenses")[0]?.date?.toLocaleDateString("sv") || new Date().toLocaleDateString("sv")} - ${form.getValues("name")}&body=${encodeURIComponent(`Hei, jeg har gjort utlegg for ${form
-                  .getValues("expenses")
-                  .map((expense) => expense.description)
-                  .join(", ")}.
-
-Vedlagt er en PDF-fil med utleggene.
-
-Med vennlig hilsen,
-${form.getValues("name")}`)}`}
-              >
-                <Mail className="h-4 w-4" />
+              <a target="_blank" href={mailtoHref}>
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 {t("expense.sendEmail")}
               </a>
             </Button>
@@ -1159,9 +1189,9 @@ ${form.getValues("name")}`)}`}
               }}
             >
               {hasCopiedEmail ? (
-                <Check className="h-4 w-4" />
+                <Check className="h-4 w-4" aria-hidden="true" />
               ) : (
-                <Copy className="h-4 w-4" />
+                <Copy className="h-4 w-4" aria-hidden="true" />
               )}
               {hasCopiedEmail
                 ? t("expense.emailCopied")

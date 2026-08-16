@@ -1,5 +1,8 @@
 {
   "notFound": "Ikke Funnet",
+  "dialog": {
+    "close": "Lukk"
+  },
   "menu": {
     "about": "Om javaBin",
     "contribute": "Vil du være med?",
@@ -132,6 +135,7 @@
     "country": "Land",
     "residesInNorway": "Jeg bor i Norge",
     "residesAbroad": "Jeg bor i utlandet",
+    "residenceLabel": "Bosted",
     "bankAccount": "Bankkonto",
     "bankDescriptionNorwegian": "Du trenger bare ditt norske kontonummer (11 siffer).",
     "bankDescriptionInternational": "Velg landet for din bankkonto nedenfor.",
@@ -171,6 +175,7 @@
     "date": "Dato",
     "expenses": "Utgifter",
     "addExpense": "Legg til utgift",
+    "removeExpense": "Fjern utgift",
     "description": "Beskrivelse",
     "amount": "Beløp (inkl. mva)",
     "exchangeRate": "1 {{sourceCurrency}} = {{rate}} {{targetCurrency}} ({{date}})",
@@ -182,6 +187,8 @@
     "processing": "Behandler...",
     "generateReport": "Generer rapport",
     "sendEmail": "Send e-post",
+    "emailSubject": "Utlegg {{date}} - {{name}}",
+    "emailBody": "Hei, jeg har gjort utlegg for {{descriptions}}.\n\nVedlagt er en PDF-fil med utleggene.\n\nMed vennlig hilsen,\n{{name}}",
     "copyEmail": "Kopier e-postadresse",
     "emailCopied": "Kopiert",
     "selectDate": "Velg en dato",

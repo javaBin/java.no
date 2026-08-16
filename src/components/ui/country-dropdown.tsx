@@ -51,6 +51,7 @@ interface CountryDropdownProps {
   name?: string
   autoComplete?: string
   enableAutofill?: boolean
+  "aria-required"?: boolean | "true" | "false"
 }
 
 const CountryDropdownComponent = (
@@ -94,8 +95,7 @@ const CountryDropdownComponent = (
     undefined,
   )
 
-  const resolvedAutoComplete =
-    autoComplete ?? name ?? "country-name"
+  const resolvedAutoComplete = autoComplete ?? name ?? "country-name"
 
   const handleHiddenInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +162,7 @@ const CountryDropdownComponent = (
           autoComplete={resolvedAutoComplete}
           value={selectedCountry ? getRegionName(selectedCountry) : ""}
           onChange={handleHiddenInputChange}
-          className="absolute h-0 w-px opacity-0 pointer-events-none"
+          className="pointer-events-none absolute h-0 w-px opacity-0"
           tabIndex={-1}
         />
       )}

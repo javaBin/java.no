@@ -46,6 +46,7 @@ interface CurrencyDropdownProps {
   slim?: boolean
   name?: string
   "data-valid"?: boolean
+  "aria-required"?: boolean | "true" | "false"
 }
 
 const CurrencyDropdownComponent = (
@@ -110,9 +111,7 @@ const CurrencyDropdownComponent = (
   const getCurrencyName = useCallback(
     (currency: Currency): string => {
       try {
-        return (
-          currencyDisplayNames.of(currency.code) ?? currency.name
-        )
+        return currencyDisplayNames.of(currency.code) ?? currency.name
       } catch {
         return currency.name
       }
