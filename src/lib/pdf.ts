@@ -4,10 +4,11 @@ import {
   formatNorwegianBBANForDisplay,
   getBankCountryType,
 } from "@/lib/banking"
+import { resolvePayoutCurrency } from "@/lib/currency-country"
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { z } from "zod"
 import { formatCurrency } from "./utils"
-import { convertToNOK, getExchangeRate } from "./exchange-rates"
+import { convertCurrency, formatExchangeRate } from "./exchange-rates"
 
 function bankDetailsLines(
   residesInNorway: boolean,
@@ -120,6 +121,12 @@ export async function generatePDF({
   const jzGray = rgb(0.92, 0.92, 0.92)
   const borderGray = rgb(0.5, 0.5, 0.5)
 
+  // Payout in the bank country's currency (NOK for Norwegian accounts)
+  const payoutCurrency = resolvePayoutCurrency(
+    residesInNorway ?? true,
+    bankCountryIso2 || "",
+  )
+
   const hasLogo = logoPngBytes != null && logoPngBytes.byteLength > 0
   const headerBarHeight = hasLogo ? 36 : 8
   const headerTop = height - headerBarHeight
@@ -201,6 +208,7 @@ export async function generatePDF({
     { label: "E-post:", value: email },
     { label: "", value: "Bankinformasjon", sectionHeader: true },
     ...bankLines,
+    { label: "Utbetalingsvaluta:", value: payoutCurrency },
   ]
 
   // Section: Rapportinfo
@@ -341,7 +349,7 @@ export async function generatePDF({
   })
 
   const tableTop = tableTopY
-  const headerHeight = 22
+  const headerHeight = 30
 
   const headerTextY = tableTop - 14
   const headerBottomY = tableTop - headerHeight
@@ -369,20 +377,30 @@ export async function generatePDF({
     attachment: "#",
     description: "Beskrivelse",
     date: "Dato",
-    exchange: "Valuta / kurs",
-    amount: "Beløp (NOK)",
+    exchange: "Valutakurs",
+    exchangeSubtext: "Norges Bank",
+    amount: `Beløp (${payoutCurrency})`,
   }
-    ; (
-      Object.keys(rebalancedColumns) as Array<keyof typeof rebalancedColumns>
-    ).forEach((key) => {
-      coverPage.drawText(headerTexts[key], {
-        x: rebalancedColumns[key].x,
-        y: headerTextY,
-        size: 11,
-        font,
-        color: jzDark,
-      })
+  for (const key of Object.keys(rebalancedColumns) as Array<
+    keyof typeof rebalancedColumns
+  >) {
+    coverPage.drawText(headerTexts[key], {
+      x: rebalancedColumns[key].x,
+      y: headerTextY,
+      size: 11,
+      font,
+      color: jzDark,
     })
+    if (key === "exchange") {
+      coverPage.drawText(headerTexts.exchangeSubtext, {
+        x: rebalancedColumns[key].x,
+        y: headerTextY - 12,
+        size: 8,
+        font: regularFont,
+        color: borderGray,
+      })
+    }
+  }
 
   const dataFontSize = 10
   const dataLineHeight = 12
@@ -409,35 +427,53 @@ export async function generatePDF({
       day: "2-digit",
     })
 
-    const amountInNOK = await convertToNOK(
-      expense.amount,
-      expense.currency,
-      expenseDate,
-    )
-    totalAmount += amountInNOK
+    let amountInTarget: number | null
+    let exchangeRawLines: string[]
 
-    const amountText = formatCurrency(amountInNOK)
-
-    let exchangeText = "-"
-    if (expense.currency !== "NOK") {
-      const exchangeRate = await getExchangeRate(expense.currency, expenseDate)
-      const base = `${formatCurrency(expense.amount)} ${expense.currency}`
-      exchangeText =
-        exchangeRate !== null
-          ? `${base} @ ${formatCurrency(exchangeRate, "nb-NO", {
-            minimumFractionDigits: 4,
-            maximumFractionDigits: 4,
-          })}`
-          : base
+    // Convert expense currency to payout currency
+    if (expense.currency === payoutCurrency) {
+      amountInTarget = expense.amount
+      exchangeRawLines = ["-"]
+    } else {
+      const conversion = await convertCurrency(
+        expense.amount,
+        expense.currency,
+        payoutCurrency,
+        expenseDate,
+      )
+      if (conversion) {
+        amountInTarget = conversion.amount
+        exchangeRawLines = [
+          `${formatCurrency(expense.amount)} ${expense.currency}`,
+          `1 ${expense.currency} = ${formatExchangeRate(conversion.rate, conversion.unitMultiplier)} ${payoutCurrency}`,
+          `Kursdato: ${conversion.rateDate.toLocaleDateString("no-NO", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })}`,
+        ]
+      } else {
+        // Don't mix an unconverted amount into the payout-currency total
+        amountInTarget = null
+        exchangeRawLines = [
+          `${formatCurrency(expense.amount)} ${expense.currency}`,
+          "Kurs: ikke tilgjengelig",
+        ]
+      }
     }
+    if (amountInTarget != null) {
+      totalAmount += amountInTarget
+    }
+
+    const amountText =
+      amountInTarget != null ? formatCurrency(amountInTarget) : "—"
 
     const descriptionLines = wrapToWidth(
       expense.description,
       rebalancedColumns.description.width,
     )
-    const exchangeLines = wrapToWidth(
-      exchangeText,
-      rebalancedColumns.exchange.width,
+    const exchangeLines = exchangeRawLines.flatMap((line) =>
+      wrapToWidth(line, rebalancedColumns.exchange.width),
     )
 
     const normalizedDescriptionLines =
@@ -549,7 +585,7 @@ export async function generatePDF({
     color: jzGray,
   })
 
-  const formattedTotalAmount = formatCurrency(totalAmount)
+  const formattedTotalAmount = `${formatCurrency(totalAmount)} ${payoutCurrency}`
   const totalAmountWidth = font.widthOfTextAtSize(formattedTotalAmount, 12)
   const totalLabelWidth = font.widthOfTextAtSize("Total:", 12)
   const totalLabelSpacing = 10

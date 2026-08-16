@@ -14,10 +14,12 @@ import {
   type ExpenseFormValues,
 } from "@/lib/expense-schema"
 import {
+  type ExchangeRateDatum,
   exchangeRateDisplayInfo,
   fetchExchangeRateData,
   formatExchangeRate,
 } from "@/lib/exchange-rates"
+import { resolvePayoutCurrency } from "@/lib/currency-country"
 import { BankDetailsForm } from "@/components/BankDetailsForm"
 import { FileUploader } from "@/components/FileUploader"
 import { format } from "date-fns"
@@ -165,6 +167,8 @@ function parseFormQueryParams(
     bankName: getString(query, "bankName", ""),
     bankAddress: getString(query, "bankAddress", ""),
     bankAccountHolderName: getString(query, "bankAccountHolderName", ""),
+    // Payout currency based on bank country, defaulting to NOK
+    targetCurrency: resolvePayoutCurrency(residesInNorway, bankCountryIso2),
   }
 }
 
@@ -188,6 +192,8 @@ type ExpenseAmountInputProps = {
   label: string
   /** Locale for formatting (e.g. from selected country). Falls back to browser language. */
   displayLocale?: string
+  /** Target currency for conversion (bank country currency) */
+  targetCurrency: string
 }
 
 function formatAmountDisplay(value: number, locale: string): string {
@@ -232,16 +238,22 @@ function parseAmountInput(raw: string): number {
 function useExchangeRateDatum(
   currency: string | undefined,
   date: Date | undefined,
+  enabled: boolean,
 ) {
   const dateKey =
     date instanceof Date && !isNaN(date.getTime())
       ? format(date, "yyyy-MM-dd")
       : ""
 
-  const { data } = useQuery({
+  const { data } = useQuery<
+    ExchangeRateDatum | null,
+    Error,
+    ExchangeRateDatum | null,
+    readonly ["norgesBankExchangeRate", string | undefined, string]
+  >({
     queryKey: ["norgesBankExchangeRate", currency, dateKey] as const,
     queryFn: () => fetchExchangeRateData(currency as string, date as Date),
-    enabled: Boolean(currency && currency !== "NOK" && dateKey),
+    enabled: Boolean(currency && dateKey) && enabled,
     staleTime: 1000 * 60 * 60,
   })
 
@@ -255,6 +267,7 @@ function ExpenseAmountInput({
   dateName,
   label,
   displayLocale: displayLocaleProp,
+  targetCurrency,
 }: ExpenseAmountInputProps) {
   const { t } = useTranslation("common")
   const [isFocused, setIsFocused] = useState(false)
@@ -267,7 +280,21 @@ function ExpenseAmountInput({
       ? getSymbolFromCurrency(selectedCurrencyCode)
       : ""
 
-  const rateDatum = useExchangeRateDatum(selectedCurrencyCode, selectedDate)
+  // Show exchange rate info when expense currency differs from target currency
+  const needsConversion = Boolean(
+    selectedCurrencyCode && selectedCurrencyCode !== targetCurrency,
+  )
+
+  const sourceRateDatum = useExchangeRateDatum(
+    selectedCurrencyCode,
+    selectedDate,
+    needsConversion,
+  )
+  const targetRateDatum = useExchangeRateDatum(
+    targetCurrency,
+    selectedDate,
+    needsConversion,
+  )
 
   return (
     <FormField
@@ -326,9 +353,11 @@ function ExpenseAmountInput({
             {(() => {
               const rateInfo = exchangeRateDisplayInfo(
                 selectedCurrencyCode,
+                targetCurrency,
                 selectedDate,
                 field.value ?? 0,
-                rateDatum,
+                sourceRateDatum,
+                targetRateDatum,
               )
               if (!rateInfo) return null
 
@@ -336,18 +365,16 @@ function ExpenseAmountInput({
                 <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
                   <div>
                     {t("expense.exchangeRate", {
+                      sourceCurrency: rateInfo.sourceCurrency,
+                      rate: formatExchangeRate(rateInfo.crossRate, 1),
+                      targetCurrency: rateInfo.targetCurrency,
                       date: format(rateInfo.date, "yyyy-MM-dd"),
-                      rate: formatExchangeRate(
-                        rateInfo.rate,
-                        rateInfo.unitMultiplier,
-                      ),
-                      unit: rateInfo.unitMultiplier,
-                      currency: selectedCurrencyCode,
                     })}
                   </div>
                   <div className="font-medium text-foreground">
                     {t("expense.youGetBack", {
-                      amount: formatCurrency(rateInfo.nokAmount, "nb-NO"),
+                      amount: formatCurrency(rateInfo.targetAmount, "nb-NO"),
+                      currency: rateInfo.targetCurrency,
                     })}
                   </div>
                 </div>
@@ -403,6 +430,7 @@ export default function ExpensePage() {
       bankAddress: initialFormValues.bankAddress,
       bankAccountHolderName: initialFormValues.bankAccountHolderName,
       skipBankValidation: false,
+      targetCurrency: initialFormValues.targetCurrency,
       email: initialFormValues.email,
       reimbursementTarget: initialFormValues.reimbursementTarget as
         | "javaBin"
@@ -411,7 +439,7 @@ export default function ExpensePage() {
         {
           description: "",
           amount: 0,
-          currency: "NOK",
+          currency: initialFormValues.targetCurrency || "NOK",
           date: new Date(),
           attachment: undefined as unknown as File,
         },
@@ -446,6 +474,21 @@ export default function ExpensePage() {
   })
 
   const residesInNorway = form.watch("residesInNorway")
+  const targetCurrency = form.watch("targetCurrency") ?? "NOK"
+  const previousTargetCurrencyRef = React.useRef(targetCurrency)
+  React.useEffect(() => {
+    const previousTargetCurrency = previousTargetCurrencyRef.current
+    if (previousTargetCurrency === targetCurrency) return
+    previousTargetCurrencyRef.current = targetCurrency
+
+    // Follow the new target currency on rows still set to the old default,
+    // but leave rows the user has explicitly switched to something else.
+    form.getValues("expenses").forEach((expense, index) => {
+      if (expense.currency === previousTargetCurrency) {
+        form.setValue(`expenses.${index}.currency`, targetCurrency)
+      }
+    })
+  }, [targetCurrency, form])
   const reimbursementTarget = form.watch("reimbursementTarget")
   const targetEmail =
     reimbursementTarget === "javaBin"
@@ -456,6 +499,10 @@ export default function ExpensePage() {
   const handleResidenceChange = (value: string) => {
     const isNorway = value === "norway"
     form.setValue("residesInNorway", isNorway)
+    form.setValue(
+      "targetCurrency",
+      resolvePayoutCurrency(isNorway, form.getValues("bankCountryIso2")),
+    )
 
     if (!reimbursementTargetIsLocked) {
       form.setValue("reimbursementTarget", isNorway ? "javaBin" : "javaZone")
@@ -894,6 +941,7 @@ export default function ExpensePage() {
                       dateName={`expenses.${index}.date`}
                       label={t("expense.amount")}
                       displayLocale={amountDisplayLocale}
+                      targetCurrency={targetCurrency}
                     />
 
                     <FormField
@@ -974,7 +1022,7 @@ export default function ExpensePage() {
                     append({
                       description: "",
                       amount: 0,
-                      currency: "NOK",
+                      currency: targetCurrency,
                       date: new Date(),
                       attachment: new File([], ""),
                     })

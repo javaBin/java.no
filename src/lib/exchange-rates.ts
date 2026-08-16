@@ -6,14 +6,40 @@ export type ExchangeRateDatum = {
 }
 
 export type ExchangeRateDisplayInfo = {
-  rate: number
-  unitMultiplier: number
+  /** Cross rate: X targetCurrency per 1 sourceCurrency (for calculation) */
+  crossRate: number
+  /** Original rate from Norges Bank for display */
+  sourceRate: number
+  sourceUnitMultiplier: number
+  targetRate: number
+  targetUnitMultiplier: number
   date: Date
-  nokAmount: number
+  targetAmount: number
+  sourceCurrency: string
+  targetCurrency: string
+}
+
+/**
+ * Calculate cross rate from two Norges Bank rates (both relative to NOK).
+ */
+export function calculateCrossRate(
+  fromRate: ExchangeRateDatum,
+  toRate: ExchangeRateDatum,
+): { rate: number; rateDate: Date; unitMultiplier: number } {
+  const fromNormalized = fromRate.rate / fromRate.unitMultiplier
+  const toNormalized = toRate.rate / toRate.unitMultiplier
+  const crossRate = fromNormalized / toNormalized
+  const rateDate =
+    fromRate.rateDate > toRate.rateDate ? fromRate.rateDate : toRate.rateDate
+  return {
+    rate: crossRate,
+    rateDate,
+    unitMultiplier: 1, // Cross rates are always per-unit
+  }
 }
 
 /** Converts an amount using the raw Norges Bank rate and its UNIT_MULT. */
-export function nokAmountFromExchangeRateData(
+export function targetAmountFromExchangeRateData(
   amount: number,
   data: { rate: number; unitMultiplier: number },
 ): number {
@@ -133,74 +159,92 @@ export async function fetchExchangeRateData(
   }
 }
 
-/**
- * Fetches exchange rate from Norges Bank API for a given currency and date
- * @param currency The currency code (e.g., 'USD', 'EUR')
- * @param date The date to get the exchange rate for
- * @returns The exchange rate as returned by the API (for display), or null if not found
- */
-export async function getExchangeRate(
-  currency: string,
-  date: Date,
-): Promise<number | null> {
-  const data = await fetchExchangeRateData(currency, date)
-  return data?.rate ?? null
+export type ConversionResult = {
+  amount: number
+  rate: number
+  rateDate: Date
+  unitMultiplier: number
+  sourceCurrency: string
+  targetCurrency: string
 }
 
 /**
- * Converts an amount from one currency to NOK using Norges Bank exchange rates
- * @param amount The amount to convert
- * @param currency The source currency code
- * @param date The date to use for the exchange rate
- * @returns The converted amount in NOK, or the original amount if conversion fails
+ * Converts an amount from one currency to another using Norges Bank rates.
+ * Since Norges Bank rates are relative to NOK, we calculate the cross rate.
  */
-export async function convertToNOK(
+export async function convertCurrency(
   amount: number,
-  currency: string,
-  date: Date,
-): Promise<number> {
-  if (currency === "NOK") {
-    return amount
+  fromCurrency: string,
+  toCurrency: string,
+  expenseDate: Date,
+): Promise<ConversionResult | null> {
+  // If same currency, no conversion needed
+  if (fromCurrency === toCurrency) {
+    return {
+      amount,
+      rate: 1,
+      rateDate: expenseDate,
+      unitMultiplier: 1,
+      sourceCurrency: fromCurrency,
+      targetCurrency: toCurrency,
+    }
   }
 
-  const data = await fetchExchangeRateData(currency, date)
+  // Fetch both rates relative to NOK
+  const [fromRate, toRate] = await Promise.all([
+    fetchExchangeRateData(fromCurrency, expenseDate),
+    fetchExchangeRateData(toCurrency, expenseDate),
+  ])
 
-  if (data === null) {
-    console.warn(
-      `Could not fetch exchange rate for ${currency} on ${date.toISOString()}, using original amount`,
-    )
-    return amount
+  if (!fromRate || !toRate) {
+    return null
   }
 
-  // Normalize the rate for calculation
-  // Example: If API returns 157.80 for DKK with UNIT_MULT=2 (per 100 units),
-  // we need to divide by 100 to get the rate per unit: 157.80 / 100 = 1.578
-  const normalizedRate = data.rate / data.unitMultiplier
+  const crossRate = calculateCrossRate(fromRate, toRate)
 
-  // Round to 2 decimal places to avoid floating-point precision issues
-  // This ensures we always get clean currency values (e.g., 123.45 instead of 123.4500000001)
-  const converted = amount * normalizedRate
-  return Math.round(converted * 100) / 100
+  return {
+    amount: targetAmountFromExchangeRateData(amount, crossRate),
+    rate: crossRate.rate,
+    rateDate: crossRate.rateDate,
+    unitMultiplier: crossRate.unitMultiplier,
+    sourceCurrency: fromCurrency,
+    targetCurrency: toCurrency,
+  }
 }
 
 /**
  * Everything the form needs to show a rate, or null when there is nothing
- * meaningful to show (NOK, no date, no amount, or the lookup failed).
+ * meaningful to show (same currency, no date, no amount, or a lookup failed).
  */
 export function exchangeRateDisplayInfo(
-  currency: string | undefined,
+  sourceCurrency: string | undefined,
+  targetCurrency: string,
   expenseDate: Date | undefined,
   amount: number,
-  rateDatum: ExchangeRateDatum | null | undefined,
+  sourceRate: ExchangeRateDatum | null | undefined,
+  targetRate: ExchangeRateDatum | null | undefined,
 ): ExchangeRateDisplayInfo | null {
-  if (!currency || currency === "NOK" || !expenseDate || amount <= 0) return null
-  if (!rateDatum) return null
+  if (!sourceCurrency || !expenseDate || amount <= 0) return null
+
+  // No conversion needed if same currency
+  if (sourceCurrency === targetCurrency) return null
+
+  // Need both rates to calculate cross rate
+  if (!sourceRate || !targetRate) return null
+
+  const crossRate = calculateCrossRate(sourceRate, targetRate)
+  const targetAmount = targetAmountFromExchangeRateData(amount, crossRate)
 
   return {
-    rate: rateDatum.rate,
-    unitMultiplier: rateDatum.unitMultiplier,
-    date: rateDatum.rateDate,
-    nokAmount: nokAmountFromExchangeRateData(amount, rateDatum),
+    crossRate: crossRate.rate,
+    sourceRate: sourceRate.rate,
+    sourceUnitMultiplier: sourceRate.unitMultiplier,
+    targetRate: targetRate.rate,
+    targetUnitMultiplier: targetRate.unitMultiplier,
+    date: crossRate.rateDate,
+    targetAmount,
+    sourceCurrency,
+    targetCurrency,
   }
 }
 

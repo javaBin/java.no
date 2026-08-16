@@ -20,6 +20,7 @@ import {
   validateABARoutingNumber,
   validateBIC,
 } from "@/lib/banking"
+import { resolvePayoutCurrency } from "@/lib/currency-country"
 import type { ExpenseFormValues } from "@/lib/expense-schema"
 import {
   Select,
@@ -62,6 +63,10 @@ export function BankDetailsForm({
   const watchedBankAccountNumber = useWatch({
     control: form.control,
     name: "bankAccountNumber",
+  })
+  const targetCurrency = useWatch({
+    control: form.control,
+    name: "targetCurrency",
   })
 
   const type = bankCountryIso2
@@ -337,6 +342,10 @@ export function BankDetailsForm({
                   const alpha2 = country?.alpha2 || ""
                   field.onChange(alpha3)
                   form.setValue("bankCountryIso2", alpha2)
+                  form.setValue(
+                    "targetCurrency",
+                    resolvePayoutCurrency(false, alpha2),
+                  )
 
                   const countryState = form.getFieldState("country")
                   // Only auto-fill when untouched *and* still empty: a country
@@ -354,6 +363,12 @@ export function BankDetailsForm({
           </FormItem>
         )}
       />
+
+      {bankCountryIso2 && targetCurrency && (
+        <p className="text-sm text-muted-foreground">
+          {t("expense.payoutCurrency", { currency: targetCurrency })}
+        </p>
+      )}
 
       {type === "sepa" && (
         <>

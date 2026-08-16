@@ -95,6 +95,8 @@ export const createExpenseSchemas = (t: (key: string) => string) => {
       bankAddress: z.string().optional().default(""),
       bankAccountHolderName: z.string().optional().default(""),
       skipBankValidation: z.boolean().optional().default(false),
+      /** Target currency based on bank country (auto-populated when bank country changes) */
+      targetCurrency: z.string().optional().default("NOK"),
       email: z
         .string({
           required_error: t("expense.errors.invalidEmail"),
